@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"github.com/rancher/rancher/pkg/controllers/user/helm"
 
 	monitoringv1 "github.com/coreos/prometheus-operator/pkg/client/monitoring/v1"
 	"github.com/rancher/norman/store/crd"
@@ -15,7 +16,6 @@ import (
 	"github.com/rancher/rancher/pkg/controllers/user/externalservice"
 	"github.com/rancher/rancher/pkg/controllers/user/globaldns"
 	"github.com/rancher/rancher/pkg/controllers/user/healthsyncer"
-	"github.com/rancher/rancher/pkg/controllers/user/helm"
 	"github.com/rancher/rancher/pkg/controllers/user/ingress"
 	"github.com/rancher/rancher/pkg/controllers/user/ingresshostgen"
 	"github.com/rancher/rancher/pkg/controllers/user/logging"

@@ -19,6 +19,7 @@ limitations under the License.
 package v1
 
 import (
+	"github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
@@ -73,6 +74,7 @@ func (c *componentStatuses) Get(name string, options metav1.GetOptions) (result 
 // List takes label and field selectors, and returns the list of ComponentStatuses that match those selectors.
 func (c *componentStatuses) List(opts metav1.ListOptions) (result *v1.ComponentStatusList, err error) {
 	result = &v1.ComponentStatusList{}
+	logrus.Info("TEST in component status list")
 	err = c.client.Get().
 		Resource("componentstatuses").
 		VersionedParams(&opts, scheme.ParameterCodec).

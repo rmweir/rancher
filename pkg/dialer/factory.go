@@ -120,7 +120,6 @@ func (f *Factory) clusterDialer(clusterName, address string) (dialer.Dialer, err
 		// For cloud drivers we just connect directly to the k8s API, not through the tunnel.  All other go through tunnel
 		return native()
 	}
-
 	if f.TunnelServer.HasSession(cluster.Name) {
 		cd := f.TunnelServer.Dialer(cluster.Name, 15*time.Second)
 		return func(network, address string) (net.Conn, error) {
@@ -130,9 +129,8 @@ func (f *Factory) clusterDialer(clusterName, address string) (dialer.Dialer, err
 			return cd(network, address)
 		}, nil
 	}
-
 	if cluster.Status.Driver != v3.ClusterDriverRKE {
-		return nil, fmt.Errorf("waiting for cluster agent to connect")
+		return nil, fmt.Errorf("1 waiting for cluster agent to connect 1")
 	}
 
 	// Only for RKE will we try to connect to a node for the cluster dialer
@@ -155,7 +153,7 @@ func (f *Factory) clusterDialer(clusterName, address string) (dialer.Dialer, err
 		}
 	}
 
-	return nil, fmt.Errorf("waiting for cluster agent to connect")
+	return nil, fmt.Errorf("2 waiting for cluster agent to connect 2")
 }
 
 func hostPort(cluster *v3.Cluster) string {

@@ -2,6 +2,7 @@ package v3
 
 import (
 	"context"
+	"github.com/sirupsen/logrus"
 	"sync"
 
 	"github.com/rancher/norman/controller"
@@ -374,6 +375,7 @@ type WorkloadsGetter interface {
 
 func (c *Client) Workloads(namespace string) WorkloadInterface {
 	objectClient := objectclient.NewObjectClient(namespace, c.restClient, &WorkloadResource, WorkloadGroupVersionKind, workloadFactory{})
+	logrus.Info("TEST enter workloads")
 	return &workloadClient{
 		ns:           namespace,
 		client:       c,

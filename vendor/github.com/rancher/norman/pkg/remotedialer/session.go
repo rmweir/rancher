@@ -125,7 +125,7 @@ func (s *Session) serveMessage(reader io.Reader) error {
 	if err != nil {
 		return err
 	}
-
+	logrus.Infof("TEST Msg in session: ", string(fmt.Sprint(message.body)))
 	if PrintTunnelData {
 		logrus.Debug("REQUEST ", message)
 	}
@@ -267,6 +267,7 @@ func (s *Session) serverConnect(deadline time.Duration, proto, address string) (
 }
 
 func (s *Session) writeMessage(message *message) (int, error) {
+	// logrus.Info("TEST WRITE MSG: ", message)
 	if PrintTunnelData {
 		logrus.Debug("WRITE ", message)
 	}

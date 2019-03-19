@@ -132,6 +132,7 @@ func getServiceWorkloadIDs(obj *corev1.Service) []string {
 }
 
 func (c *Controller) fetchWorkload(workloadID string) (*util.Workload, error) {
+	logrus.Infof("TEST Fetching workloads")
 	workload, err := c.workloadLister.GetByWorkloadIDRetryAPIIfNotFound(workloadID)
 	if err != nil && apierrors.IsNotFound(err) {
 		logrus.Warnf("Failed to fetch workload [%s]: [%v]", workloadID, err)
@@ -142,6 +143,7 @@ func (c *Controller) fetchWorkload(workloadID string) (*util.Workload, error) {
 }
 
 func (c *Controller) updateServiceWorkloadPods(key string, workloadIDsToCleanup map[string]bool) error {
+	logrus.Infof("TEST update service workload")
 	if len(workloadIDsToCleanup) == 0 {
 		return nil
 	}
@@ -174,6 +176,7 @@ func (c *Controller) updateServiceWorkloadPods(key string, workloadIDsToCleanup 
 }
 
 func (c *Controller) reconcilePods(key string, obj *corev1.Service, workloadIDs []string) (map[string]bool, error) {
+	logrus.Infof("TEST reconcile pods")
 	if len(workloadIDs) == 0 {
 		return nil, nil
 	}
@@ -194,6 +197,7 @@ func (c *Controller) reconcilePods(key string, obj *corev1.Service, workloadIDs 
 }
 
 func (c *Controller) getPodsForWorkload(workload *util.Workload) ([]*corev1.Pod, error) {
+	logrus.Infof("TEST getting pods for workload")
 	set := labels.Set{}
 	for key, val := range workload.SelectorLabels {
 		set[key] = val
@@ -203,6 +207,7 @@ func (c *Controller) getPodsForWorkload(workload *util.Workload) ([]*corev1.Pod,
 }
 
 func (c *Controller) updatePods(serviceName string, obj *corev1.Service, workloadIDs []string) (map[string]bool, error) {
+	logrus.Infof("TEST update pods")
 	var podsToUpdate []*corev1.Pod
 	targetWorkloadIDs := map[string]bool{}
 	for _, workloadID := range workloadIDs {
@@ -255,6 +260,7 @@ func getServiceSelector(serviceName string) string {
 }
 
 func (c *PodController) sync(key string, obj *corev1.Pod) (runtime.Object, error) {
+	logrus.Infof("TEST sync pods")
 	if obj == nil || obj.DeletionTimestamp != nil {
 		return nil, nil
 	}

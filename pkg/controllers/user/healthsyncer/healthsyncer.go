@@ -53,15 +53,21 @@ func Register(ctx context.Context, workload *config.UserContext, clusterManager 
 }
 
 func (h *HealthSyncer) syncHealth(ctx context.Context, syncHealth time.Duration) {
+	logrus.Infof("TEST syncHealth")
+	start := time.Now()
 	for range ticker.Context(ctx, syncHealth) {
 		err := h.updateClusterHealth()
 		if err != nil && !apierrors.IsConflict(err) {
 			logrus.Error(err)
 		}
 	}
+	elapsed := time.Since(start)
+	logrus.Infof("TEST took %s to sync health", elapsed)
 }
 
 func (h *HealthSyncer) getComponentStatus(cluster *v3.Cluster) error {
+	logrus.Infof("TEST Get component status in health syncer")
+	start := time.Now()
 	cses, err := h.componentStatuses.List(metav1.ListOptions{})
 	if err != nil {
 		return condition.Error("ComponentStatsFetchingFailure", errors.Wrap(err, "Failed to communicate with API server"))
@@ -74,10 +80,14 @@ func (h *HealthSyncer) getComponentStatus(cluster *v3.Cluster) error {
 	sort.Slice(cluster.Status.ComponentStatuses, func(i, j int) bool {
 		return cluster.Status.ComponentStatuses[i].Name < cluster.Status.ComponentStatuses[j].Name
 	})
+	elapsed := time.Since(start)
+	logrus.Infof("TEST took %s to Read component status", elapsed)
 	return nil
 }
 
 func (h *HealthSyncer) updateClusterHealth() error {
+	logrus.Infof("TEST in update cluster health")
+	start := time.Now()
 	oldCluster, err := h.getCluster()
 	if err != nil {
 		return err
@@ -98,6 +108,7 @@ func (h *HealthSyncer) updateClusterHealth() error {
 			case <-h.ctx.Done():
 				return cluster, err
 			case <-time.After(5 * time.Second):
+				logrus.Info("TEST waiting 5 seconds")
 			}
 		}
 	})
@@ -115,6 +126,8 @@ func (h *HealthSyncer) updateClusterHealth() error {
 
 	// Purposefully not return error.  This is so when the cluster goes unavailable we don't just keep failing
 	// which will essentially keep the controller alive forever, instead of shutting down.
+	elapsed := time.Since(start)
+	logrus.Infof("TEST took %s to Update status", elapsed)
 	return nil
 }
 

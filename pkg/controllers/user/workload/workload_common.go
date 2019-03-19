@@ -3,8 +3,10 @@ package workload
 import (
 	"context"
 	"github.com/rancher/norman/types/convert"
+	"github.com/sirupsen/logrus"
 	"strconv"
 	"strings"
+	"time"
 
 	"k8s.io/apimachinery/pkg/runtime"
 
@@ -126,16 +128,19 @@ func NewWorkloadController(ctx context.Context, workload *config.UserOnlyContext
 }
 
 func (c *CommonController) syncDeployments(key string, obj *corev1beta2.Deployment) (runtime.Object, error) {
+	logrus.Info("TEST sync deployments")
+	start := time.Now()
 	if obj == nil || obj.DeletionTimestamp != nil {
 		return nil, nil
 	}
-
 	w, err := c.getWorkload(key, DeploymentType)
 	if err != nil || w == nil {
 		return nil, err
 	}
-
-	return nil, c.Sync(key, w)
+	csync := c.Sync(key, w)
+	elapsed := time.Since(start)
+	logrus.Infof("TEST took %s to sync deployment for %s", elapsed, key)
+	return nil, csync
 }
 
 func (c *CommonController) syncReplicationControllers(key string, obj *corev1.ReplicationController) (runtime.Object, error) {

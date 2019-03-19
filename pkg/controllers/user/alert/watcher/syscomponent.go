@@ -73,6 +73,7 @@ func (w *SysComponentWatcher) watchRule() error {
 }
 
 func (w *SysComponentWatcher) checkComponentHealthy(statuses *v1.ComponentStatusList, alert *v3.ClusterAlertRule) {
+	logrus.Info("TEST health check on component statuses")
 	for _, cs := range statuses.Items {
 		if strings.HasPrefix(cs.Name, alert.Spec.SystemServiceRule.Condition) {
 			for _, cond := range cs.Conditions {

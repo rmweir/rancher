@@ -3,8 +3,10 @@ package remotedialer
 import (
 	"context"
 	"errors"
+	"github.com/sirupsen/logrus"
 	"io"
 	"net"
+	"strings"
 	"sync"
 	"time"
 )
@@ -73,15 +75,18 @@ func (c *connection) copyData(b []byte) int {
 }
 
 func (c *connection) Read(b []byte) (int, error) {
+	// logrus.Info("TEST reading in connection")
 	if len(b) == 0 {
 		return 0, nil
 	}
-
+	// start := time.Now()
+	if strings.Contains(string(b), "sstsstsst") {
+		logrus.Info("TEST msg(bytes) from %s: ", string(b), c.addr)
+	}
 	n := c.copyData(b)
 	if n > 0 {
 		return n, nil
 	}
-
 	next, ok := <-c.buf
 	if !ok {
 		err := io.EOF
@@ -95,10 +100,18 @@ func (c *connection) Read(b []byte) (int, error) {
 
 	c.readBuf = next
 	n = c.copyData(b)
+	//elapsed := time.Since(start)
+	// if int(elapsed.Seconds()) > 8 {
+	//	logrus.Infof("TEST took %s to Read for", elapsed)
+	//	logrus.Info("TEST msg(bytes): ", string(b))
+	//}
 	return n, nil
 }
 
 func (c *connection) Write(b []byte) (int, error) {
+	if strings.Contains(string(b), "sstsstsst") {
+		logrus.Info("TEST write msg(bytes): ", string(b))
+	}
 	c.Lock()
 	if c.err != nil {
 		defer c.Unlock()

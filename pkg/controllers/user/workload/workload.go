@@ -213,6 +213,7 @@ func (c *Controller) updateService(toUpdate Service, existing *corev1.Service) e
 }
 
 func (c *Controller) getServicesOwnedByWorkload(workload *Workload) ([]*corev1.Service, error) {
+	logrus.Infof("TEST get services owned by workload")
 	var toReturn []*corev1.Service
 	services, err := c.serviceLister.List(workload.Namespace, labels.NewSelector())
 	if err != nil {
