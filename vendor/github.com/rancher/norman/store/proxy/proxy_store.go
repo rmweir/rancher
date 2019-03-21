@@ -209,19 +209,24 @@ func (s *Store) List(apiContext *types.APIContext, schema *types.Schema, opt *ty
 }
 
 func (s *Store) retryList(namespace string, apiContext *types.APIContext) (*unstructured.UnstructuredList, error) {
+	logrus.Info("TEST START")
 	var resultList *unstructured.UnstructuredList
 	k8sClient, err := s.k8sClient(apiContext)
 	if err != nil {
 		return nil, err
 	}
-
+	logrus.Info("TEST 1")
 	for i := 0; i < 3; i++ {
+		logrus.Info("TEST ENTER LOOP")
 		req := s.common(namespace, k8sClient.Get())
 		start := time.Now()
 		resultList = &unstructured.UnstructuredList{}
+		logrus.Infof("TEST BEFORE INTO %s", namespace)
 		err = req.Do().Into(resultList)
+		logrus.Infof("TEST AFTER INTO %s", namespace)
 		logrus.Debugf("LIST: %v, %v", time.Now().Sub(start), s.resourcePlural)
 		if err != nil {
+			logrus.Infof("TEST ERR IN GETTING LIST OF %s: %v", s.resourcePlural, err)
 			if i < 2 && strings.Contains(err.Error(), "Client.Timeout exceeded") {
 				logrus.Infof("Error on LIST %v: %v. Attempt: %v. Retrying", s.resourcePlural, err, i+1)
 				continue

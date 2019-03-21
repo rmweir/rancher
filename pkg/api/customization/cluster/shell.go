@@ -3,6 +3,7 @@ package cluster
 import (
 	"encoding/base64"
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"net/http"
 	"net/url"
 
@@ -22,6 +23,7 @@ type ShellLinkHandler struct {
 }
 
 func (s *ShellLinkHandler) LinkHandler(apiContext *types.APIContext, next types.RequestHandler) error {
+	logrus.Info("TEST in link handler")
 	context, err := s.ClusterManager.UserContext(apiContext.ID)
 	if err != nil {
 		return err

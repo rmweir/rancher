@@ -78,6 +78,7 @@ func (s *CustomizeStore) Create(apiContext *types.APIContext, schema *types.Sche
 }
 
 func (s *CustomizeStore) Update(apiContext *types.APIContext, schema *types.Schema, data map[string]interface{}, id string) (map[string]interface{}, error) {
+	logrus.Info("TEST updating workload store")
 	splitted := strings.Split(id, ":")
 	if err := setPorts(splitted[1], data); err != nil {
 		return nil, err
@@ -96,6 +97,7 @@ func (s *CustomizeStore) Update(apiContext *types.APIContext, schema *types.Sche
 }
 
 func (s *CustomizeStore) validateStatefulSetVolume(schema *types.Schema, data map[string]interface{}) error {
+	logrus.Info("TEST validating statefulset")
 	if schema.ID == "statefulSet" {
 		// retrieve volumeMounts.subPath
 		containers, _ := values.GetSlice(data, "containers")
@@ -132,6 +134,7 @@ func (s *CustomizeStore) validateSubPath(subPath string) error {
 }
 
 func (s *CustomizeStore) ByID(apiContext *types.APIContext, schema *types.Schema, id string) (map[string]interface{}, error) {
+	// logrus.Info("TEST getting workload.")
 	shortID := id
 	if strings.Count(id, ":") > 1 {
 		_, shortID = splitTypeAndID(id)
@@ -140,6 +143,7 @@ func (s *CustomizeStore) ByID(apiContext *types.APIContext, schema *types.Schema
 }
 
 func setScheduling(apiContext *types.APIContext, data map[string]interface{}) {
+	logrus.Info("TEST scheduling.")
 	if _, ok := values.GetValue(data, "scheduling", "node"); ok {
 		if nodeID := convert.ToString(values.GetValueN(data, "scheduling", "node", "nodeId")); nodeID != "" {
 			nodeName := getNodeName(apiContext, nodeID)
@@ -368,6 +372,7 @@ func setState(data map[string]interface{}, stateMap map[string]string) {
 }
 
 func getState(data map[string]interface{}) map[string]string {
+	// logrus.Info("TEST getting workload state")
 	state := map[string]string{}
 
 	v, ok := values.GetValue(data, "annotations", "workload.cattle.io/state")

@@ -4,8 +4,6 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"strings"
-
 	"github.com/rancher/norman/httperror"
 	"github.com/rancher/norman/types"
 	"github.com/rancher/norman/types/convert"
@@ -15,6 +13,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 	corev1 "k8s.io/api/core/v1"
+	"strings"
 )
 
 const (
@@ -212,7 +211,6 @@ func getKey(key string) string {
 func capabilitiesToUpperCase(data map[string]interface{}) map[string]interface{} {
 	containers := convert.ToMapSlice(data["containers"])
 	elements := []string{"capDrop", "capAdd"}
-
 	for _, c := range containers {
 		for _, element := range elements {
 			caps := convert.ToStringSlice(c[element])

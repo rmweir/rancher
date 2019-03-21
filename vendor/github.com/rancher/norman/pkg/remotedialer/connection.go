@@ -79,10 +79,11 @@ func (c *connection) Read(b []byte) (int, error) {
 	if len(b) == 0 {
 		return 0, nil
 	}
-	// start := time.Now()
+	start := time.Now()
+	/*
 	if strings.Contains(string(b), "sstsstsst") {
 		logrus.Info("TEST msg(bytes) from %s: ", string(b), c.addr)
-	}
+	}*/
 	n := c.copyData(b)
 	if n > 0 {
 		return n, nil
@@ -97,14 +98,12 @@ func (c *connection) Read(b []byte) (int, error) {
 		c.Unlock()
 		return 0, err
 	}
-
 	c.readBuf = next
 	n = c.copyData(b)
-	//elapsed := time.Since(start)
-	// if int(elapsed.Seconds()) > 8 {
-	//	logrus.Infof("TEST took %s to Read for", elapsed)
-	//	logrus.Info("TEST msg(bytes): ", string(b))
-	//}
+	_ = time.Since(start)
+	if strings.Contains(string(b), "sstsstsst") {
+		// logrus.Infof("TEST took %s to Read for", elapsed)
+	}
 	return n, nil
 }
 

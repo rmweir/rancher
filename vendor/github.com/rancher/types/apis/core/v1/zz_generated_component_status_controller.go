@@ -2,6 +2,7 @@ package v1
 
 import (
 	"context"
+	"github.com/sirupsen/logrus"
 
 	"github.com/rancher/norman/controller"
 	"github.com/rancher/norman/objectclient"
@@ -86,6 +87,7 @@ type componentStatusLister struct {
 }
 
 func (l *componentStatusLister) List(namespace string, selector labels.Selector) (ret []*v1.ComponentStatus, err error) {
+	logrus.Info("TEST LIST in component status")
 	err = cache.ListAllByNamespace(l.controller.Informer().GetIndexer(), namespace, selector, func(obj interface{}) {
 		ret = append(ret, obj.(*v1.ComponentStatus))
 	})
@@ -93,6 +95,7 @@ func (l *componentStatusLister) List(namespace string, selector labels.Selector)
 }
 
 func (l *componentStatusLister) Get(namespace, name string) (*v1.ComponentStatus, error) {
+	logrus.Info("TEST get in component status")
 	var key string
 	if namespace != "" {
 		key = namespace + "/" + name

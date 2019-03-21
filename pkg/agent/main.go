@@ -198,7 +198,7 @@ func run() error {
 
 		return nil
 	}
-
+	logrus.Infof("TEST agent node")
 	for {
 		wsURL := fmt.Sprintf("wss://%s/v3/connect", serverURL.Host)
 		if !isConnect() {

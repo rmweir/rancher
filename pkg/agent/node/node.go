@@ -29,7 +29,7 @@ func Params() map[string]interface{} {
 		"worker":            slice.ContainsString(roles, "worker"),
 		"requestedHostname": os.Getenv("CATTLE_NODE_NAME"),
 	}
-
+	logrus.Info("TEST node params")
 	for k, v := range params {
 		if m, ok := v.(map[string]string); ok {
 			for k, v := range m {

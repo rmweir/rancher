@@ -1,11 +1,10 @@
 package healthsyncer
 
 import (
+	"reflect"
 	"time"
 
 	"context"
-
-	"reflect"
 
 	"sort"
 

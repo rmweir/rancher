@@ -21,19 +21,11 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
+	"github.com/golang/glog"
+	"github.com/sirupsen/logrus"
+	"golang.org/x/net/http2"
 	"io"
 	"io/ioutil"
-	"mime"
-	"net/http"
-	"net/url"
-	"path"
-	"reflect"
-	"strconv"
-	"strings"
-	"time"
-
-	"github.com/golang/glog"
-	"golang.org/x/net/http2"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -44,6 +36,14 @@ import (
 	restclientwatch "k8s.io/client-go/rest/watch"
 	"k8s.io/client-go/tools/metrics"
 	"k8s.io/client-go/util/flowcontrol"
+	"mime"
+	"net/http"
+	"net/url"
+	"path"
+	"reflect"
+	"strconv"
+	"strings"
+	"time"
 )
 
 var (
@@ -68,6 +68,8 @@ type ResponseWrapper interface {
 type RequestConstructionError struct {
 	Err error
 }
+
+
 
 // Error returns a textual description of 'r'.
 func (r *RequestConstructionError) Error() string {
@@ -704,6 +706,7 @@ func (r *Request) request(fn func(*http.Request, *http.Response)) error {
 	maxRetries := 10
 	retries := 0
 	for {
+		logrus.Info("TEST retries:", retries)
 		url := r.URL().String()
 		req, err := http.NewRequest(r.verb, url, r.body)
 		if err != nil {
@@ -801,7 +804,25 @@ func (r *Request) Do() Result {
 	r.tryThrottle()
 
 	var result Result
+	logrus.Info("TEST K8s Starting request")
+	start := time.Now()
 	err := r.request(func(req *http.Request, resp *http.Response) {
+		/*if strings.Contains(req.URL.Path, "/pods") && !strings.Contains(req.URL.Path, "/podsecurity") {
+			logrus.Infof("TEST In pods request")
+			logrus.Info("TEST K8s Finishin[g request: %v", time.Now().Sub(start))
+		}*/
+		//if time.Now().Sub(start) > 1 *time.Second {
+		logrus.Info("TEST K8s Finishing URL request from [%s]: %v ", time.Now().Sub(start), req.URL.Path)
+		//}
+		//}
+		// logrus.Info("TEST K8s Finishin[g request: %v", time.Now().Sub(start))
+		var b []byte
+		resp.Body.Read(b)
+		result = Result {
+			body: b,
+			contentType: r.content.ContentType,
+			statusCode: 200,
+		}
 		result = r.transformResponse(resp, req)
 	})
 	if err != nil {
@@ -830,9 +851,16 @@ func (r *Request) DoRaw() ([]byte, error) {
 
 // transformResponse converts an API response into a structured API object
 func (r *Request) transformResponse(resp *http.Response, req *http.Request) Result {
+	if strings.Contains(req.URL.Path, "pods") {
+		logrus.Infof("TEST In pods request")
+	}
+	logrus.Infof("TEST Start response transform")
+	start := time.Now()
 	var body []byte
 	if resp.Body != nil {
+
 		data, err := ioutil.ReadAll(resp.Body)
+
 		switch err.(type) {
 		case nil:
 			body = data
@@ -859,7 +887,7 @@ func (r *Request) transformResponse(resp *http.Response, req *http.Request) Resu
 	}
 
 	glogBody("Response Body", body)
-
+	// logrus.Infof("TEST transform 2")
 	// verify the content type is accurate
 	contentType := resp.Header.Get("Content-Type")
 	decoder := r.serializers.Decoder
@@ -893,6 +921,7 @@ func (r *Request) transformResponse(resp *http.Response, req *http.Request) Resu
 		// did not return a structured error.
 		retryAfter, _ := retryAfterSeconds(resp)
 		err := r.newUnstructuredResponseError(body, isTextResponse(resp), resp.StatusCode, req.Method, retryAfter)
+		logrus.Info("TEST finishing response transform (< OK): %v", time.Now().Sub(start))
 		return Result{
 			body:        body,
 			contentType: contentType,
@@ -901,7 +930,8 @@ func (r *Request) transformResponse(resp *http.Response, req *http.Request) Resu
 			err:         err,
 		}
 	}
-
+	// logrus.Infof("TEST transform 3")
+	logrus.Info("TEST finishing response transform: %v", time.Now().Sub(start), req.URL.Path)
 	return Result{
 		body:        body,
 		contentType: contentType,

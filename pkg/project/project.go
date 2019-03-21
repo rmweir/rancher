@@ -2,6 +2,7 @@ package project
 
 import (
 	mgmtv3 "github.com/rancher/types/apis/management.cattle.io/v3"
+	"github.com/sirupsen/logrus"
 
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/labels"
@@ -22,6 +23,7 @@ var (
 )
 
 func GetSystemProject(clusterName string, projectLister mgmtv3.ProjectLister) (*mgmtv3.Project, error) {
+	logrus.Info("TEST getting projects")
 	projects, err := projectLister.List(clusterName, labels.Set(SystemProjectLabel).AsSelector())
 	if err != nil {
 		return nil, errors.Wrapf(err, "list project failed")
@@ -30,6 +32,6 @@ func GetSystemProject(clusterName string, projectLister mgmtv3.ProjectLister) (*
 	if len(projects) == 0 {
 		return nil, errors.New("can't find system project")
 	}
-
+	logrus.Info("TEST done getting projects")
 	return projects[0], nil
 }

@@ -4,11 +4,9 @@ import (
 	"context"
 	"github.com/rancher/norman/types/convert"
 	"github.com/sirupsen/logrus"
+	"k8s.io/apimachinery/pkg/runtime"
 	"strconv"
 	"strings"
-	"time"
-
-	"k8s.io/apimachinery/pkg/runtime"
 
 	"fmt"
 
@@ -128,8 +126,8 @@ func NewWorkloadController(ctx context.Context, workload *config.UserOnlyContext
 }
 
 func (c *CommonController) syncDeployments(key string, obj *corev1beta2.Deployment) (runtime.Object, error) {
-	logrus.Info("TEST sync deployments")
-	start := time.Now()
+	// logrus.Info("TEST sync deployments")
+	// start := time.Now()
 	if obj == nil || obj.DeletionTimestamp != nil {
 		return nil, nil
 	}
@@ -138,8 +136,8 @@ func (c *CommonController) syncDeployments(key string, obj *corev1beta2.Deployme
 		return nil, err
 	}
 	csync := c.Sync(key, w)
-	elapsed := time.Since(start)
-	logrus.Infof("TEST took %s to sync deployment for %s", elapsed, key)
+	// elapsed := time.Since(start)
+	// logrus.Infof("TEST took %s to sync deployment for %s", elapsed, key)
 	return nil, csync
 }
 
@@ -210,6 +208,7 @@ func (c *CommonController) syncCronJob(key string, obj *corebatchv1beta1.CronJob
 }
 
 func (c CommonController) getWorkload(key string, objectType string) (*Workload, error) {
+	// logrus.Info("TEST get workload in workload common")
 	splitted := strings.Split(key, "/")
 	namespace := splitted[0]
 	name := splitted[1]
@@ -354,6 +353,7 @@ func getWorkload(namespace string, name string, kind string, apiVersion string, 
 }
 
 func (c CommonController) GetAllWorkloads(namespace string) ([]*Workload, error) {
+	logrus.Info("TEST getting all workloads")
 	var workloads []*Workload
 
 	// deployments
