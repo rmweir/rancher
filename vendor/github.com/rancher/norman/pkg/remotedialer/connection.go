@@ -80,10 +80,10 @@ func (c *connection) Read(b []byte) (int, error) {
 		return 0, nil
 	}
 	start := time.Now()
-	/*
-	if strings.Contains(string(b), "sstsstsst") {
-		logrus.Info("TEST msg(bytes) from %s: ", string(b), c.addr)
-	}*/
+
+	//if strings.Contains(string(b), "sstsstsst") {
+	logrus.Info("TEST msg(bytes) from %s: ", string(b), c.addr)
+	//}
 	n := c.copyData(b)
 	if n > 0 {
 		return n, nil
