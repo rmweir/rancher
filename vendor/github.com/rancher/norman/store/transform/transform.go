@@ -14,11 +14,14 @@ type ListTransformerFunc func(apiContext *types.APIContext, schema *types.Schema
 
 type StreamTransformerFunc func(apiContext *types.APIContext, schema *types.Schema, data chan map[string]interface{}, opt *types.QueryOptions) (chan map[string]interface{}, error)
 
+type OptionsTransformerFunc func(apiContext *types.APIContext, schema *types.Schema, opt *types.QueryOptions) error
+
 type Store struct {
-	Store             types.Store
-	Transformer       TransformerFunc
-	ListTransformer   ListTransformerFunc
-	StreamTransformer StreamTransformerFunc
+	Store              types.Store
+	Transformer        TransformerFunc
+	ListTransformer    ListTransformerFunc
+	StreamTransformer  StreamTransformerFunc
+	OptionsTransformer OptionsTransformerFunc
 }
 
 func (s *Store) Context() types.StorageContext {
@@ -65,6 +68,9 @@ func (s *Store) Watch(apiContext *types.APIContext, schema *types.Schema, opt *t
 
 func (s *Store) List(apiContext *types.APIContext, schema *types.Schema, opt *types.QueryOptions) ([]map[string]interface{}, error) {
 	// start := time.Now()
+	if s.OptionsTransformer != nil {
+		s.OptionsTransformer(apiContext, schema, opt)
+	}
 	data, err := s.Store.List(apiContext, schema, opt)
 	if apiContext.Type == "project" || apiContext.Type == "projects" {
 		logrus.Info("TEST project or projects")
@@ -77,7 +83,11 @@ func (s *Store) List(apiContext *types.APIContext, schema *types.Schema, opt *ty
 
 	if s.ListTransformer != nil {
 		// logrus.Infof("TEST rest of transform1: %v", time.Now().Sub(start))
-		return s.ListTransformer(apiContext, schema, data, opt)
+		if apiContext.Type == "project" || apiContext.Type == "projects" {
+			logrus.Info("TEST project or projects")
+		}
+		a, _ := s.ListTransformer(apiContext, schema, data, opt)
+		return a, nil
 	}
 
 	if s.Transformer == nil {

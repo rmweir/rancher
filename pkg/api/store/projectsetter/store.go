@@ -21,6 +21,7 @@ func New(store types.Store, manager *clustermanager.Manager) types.Store {
 		Transformer:       t.object,
 		ListTransformer:   t.list,
 		StreamTransformer: t.stream,
+		OptionsTransformer: t.options,
 	}
 }
 
@@ -34,6 +35,10 @@ func (t *transformer) object(apiContext *types.APIContext, schema *types.Schema,
 }
 
 func (t *transformer) list(apiContext *types.APIContext, schema *types.Schema, data []map[string]interface{}, opt *types.QueryOptions) ([]map[string]interface{}, error) {
+	if apiContext.Type == "project" {
+		logrus.Info("TEST project opts")
+	}
+	t.options(apiContext, schema, opt)
 	namespaceLister := t.lister(apiContext, schema)
 	if namespaceLister == nil {
 		return data, nil
@@ -43,30 +48,33 @@ func (t *transformer) list(apiContext *types.APIContext, schema *types.Schema, d
 		setProjectID(namespaceLister, item)
 	}
 
-	t.setProjectNamespaceOpts(apiContext, schema, data, opt)
+	// t.setProjectNamespaceOpts(apiContext, schema, data, opt)
 
 	return data, nil
 }
 
-func (t *transformer) setProjectNamespaceOpts(apiContext *types.APIContext, schema *types.Schema, data []map[string]interface{}, opt *types.QueryOptions) {
+func (t *transformer) options(apiContext *types.APIContext, schema *types.Schema, opt *types.QueryOptions) error {
+	if apiContext.Type == "project" {
+		logrus.Info("TEST project opts")
+	}
 	if apiContext.SubContext == nil || apiContext.SubContext["/v3/schemas/project"] == "" {
-		return
+		return nil
 	}
 	projectID := strings.Split(apiContext.SubContext["/v3/schemas/project"], ":")[1]
 
 	clusterName := t.ClusterManager.ClusterName(apiContext)
 	if clusterName == "" {
-		return
+		return nil
 	}
 
 	clusterContext, err := t.ClusterManager.UserContext(clusterName)
 	if err != nil {
-		return
+		return err
 	}
 
 	namespaces, err := clusterContext.Core.Namespaces("").Controller().Lister().List("", labels.NewSelector())
 	if err != nil {
-		return
+		return err
 	}
 
 	var nsKeys []string
@@ -79,6 +87,7 @@ func (t *transformer) setProjectNamespaceOpts(apiContext *types.APIContext, sche
 	}
 
 	opt.Conditions = append(opt.Conditions, types.NewConditionFromString("namespaceId", "eq", nsKeys...))
+	return nil
 }
 
 func (t *transformer) stream(apiContext *types.APIContext, schema *types.Schema, data chan map[string]interface{}, opt *types.QueryOptions) (chan map[string]interface{}, error) {

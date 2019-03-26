@@ -196,7 +196,14 @@ func (s *Store) List(apiContext *types.APIContext, schema *types.Schema, opt *ty
 	if namespace != "" {
 		logrus.Info("TEST NAMESPACE", namespace, "TYPE:", apiContext.Type)
 	}
+
+	// TODO: Make new, cleaner branch and set up goroutines when namespaces len > 1
 	start := time.Now()
+	if apiContext.Type == "workload" {
+		logrus.Info("TEST WL LIST", namespace)
+		namespace = "cattle-system"
+	}
+
 	resultList, err := s.retryList(namespace, apiContext)
 	if err != nil {
 		return nil, err
@@ -327,7 +334,7 @@ func (d *unstructuredDecoder) Decode(data []byte, defaults *schema.GroupVersionK
 }
 
 func getNamespace(apiContext *types.APIContext, opt *types.QueryOptions) string {
-	if apiContext.Type == "pod" || apiContext.Type == "pods:" {
+	if apiContext.Type == "pod" || apiContext.Type == "pods" || apiContext.Type == "project" {
 		logrus.Info("TEST get namespace pod")
 	}
 
