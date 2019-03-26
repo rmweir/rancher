@@ -2,10 +2,10 @@ package transform
 
 import (
 	"fmt"
-
 	"github.com/rancher/norman/httperror"
 	"github.com/rancher/norman/types"
 	"github.com/rancher/norman/types/convert"
+	"github.com/sirupsen/logrus"
 )
 
 type TransformerFunc func(apiContext *types.APIContext, schema *types.Schema, data map[string]interface{}, opt *types.QueryOptions) (map[string]interface{}, error)
@@ -64,16 +64,24 @@ func (s *Store) Watch(apiContext *types.APIContext, schema *types.Schema, opt *t
 }
 
 func (s *Store) List(apiContext *types.APIContext, schema *types.Schema, opt *types.QueryOptions) ([]map[string]interface{}, error) {
+	// start := time.Now()
 	data, err := s.Store.List(apiContext, schema, opt)
+	if apiContext.Type == "project" || apiContext.Type == "projects" {
+		logrus.Info("TEST project or projects")
+	}
+	// logrus.Infof("TEST List in transform: %v", time.Now().Sub(start))
+	// start = time.Now()
 	if err != nil {
 		return nil, err
 	}
 
 	if s.ListTransformer != nil {
+		// logrus.Infof("TEST rest of transform1: %v", time.Now().Sub(start))
 		return s.ListTransformer(apiContext, schema, data, opt)
 	}
 
 	if s.Transformer == nil {
+		// logrus.Infof("TEST rest of transform2: %v", time.Now().Sub(start))
 		return data, nil
 	}
 
@@ -81,13 +89,14 @@ func (s *Store) List(apiContext *types.APIContext, schema *types.Schema, opt *ty
 	for _, item := range data {
 		item, err := s.Transformer(apiContext, schema, item, opt)
 		if err != nil {
+			// logrus.Infof("TEST rest of transform3: %v", time.Now().Sub(start))
 			return nil, err
 		}
 		if item != nil {
 			result = append(result, item)
 		}
 	}
-
+	// logrus.Infof("TEST rest of transform4: %v", time.Now().Sub(start))
 	return result, nil
 }
 

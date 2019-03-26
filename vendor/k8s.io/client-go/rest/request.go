@@ -823,7 +823,9 @@ func (r *Request) Do() Result {
 			contentType: r.content.ContentType,
 			statusCode: 200,
 		}
+		start = time.Now()
 		result = r.transformResponse(resp, req)
+		logrus.Info("TEST K8s Finishing transform [%s]: %v ", time.Now().Sub(start), req.URL.Path)
 	})
 	if err != nil {
 		return Result{err: err}

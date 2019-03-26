@@ -52,21 +52,21 @@ func Register(ctx context.Context, workload *config.UserContext, clusterManager 
 }
 
 func (h *HealthSyncer) syncHealth(ctx context.Context, syncHealth time.Duration) {
-	logrus.Infof("TEST syncHealth")
-	start := time.Now()
+	// logrus.Infof("TEST syncHealth")
+	// start := time.Now()
 	for range ticker.Context(ctx, syncHealth) {
 		err := h.updateClusterHealth()
 		if err != nil && !apierrors.IsConflict(err) {
 			logrus.Error(err)
 		}
 	}
-	elapsed := time.Since(start)
-	logrus.Infof("TEST took %s to sync health", elapsed)
+	// elapsed := time.Since(start)
+	// logrus.Infof("TEST took %s to sync health", elapsed)
 }
 
 func (h *HealthSyncer) getComponentStatus(cluster *v3.Cluster) error {
 	logrus.Infof("TEST Get component status in health syncer")
-	start := time.Now()
+	// start := time.Now()
 	cses, err := h.componentStatuses.List(metav1.ListOptions{})
 	if err != nil {
 		return condition.Error("ComponentStatsFetchingFailure", errors.Wrap(err, "Failed to communicate with API server"))
@@ -79,8 +79,8 @@ func (h *HealthSyncer) getComponentStatus(cluster *v3.Cluster) error {
 	sort.Slice(cluster.Status.ComponentStatuses, func(i, j int) bool {
 		return cluster.Status.ComponentStatuses[i].Name < cluster.Status.ComponentStatuses[j].Name
 	})
-	elapsed := time.Since(start)
-	logrus.Infof("TEST took %s to Read component status", elapsed)
+	// elapsed := time.Since(start)
+	// logrus.Infof("TEST took %s to Read component status", elapsed)
 	return nil
 }
 

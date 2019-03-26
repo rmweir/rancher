@@ -7,6 +7,9 @@ import (
 	"github.com/rancher/rancher/pkg/clustermanager"
 	"github.com/rancher/types/apis/core/v1"
 	"github.com/rancher/types/client/cluster/v3"
+	"github.com/sirupsen/logrus"
+	"k8s.io/apimachinery/pkg/labels"
+	"strings"
 )
 
 func New(store types.Store, manager *clustermanager.Manager) types.Store {
@@ -40,7 +43,42 @@ func (t *transformer) list(apiContext *types.APIContext, schema *types.Schema, d
 		setProjectID(namespaceLister, item)
 	}
 
+	t.setProjectNamespaceOpts(apiContext, schema, data, opt)
+
 	return data, nil
+}
+
+func (t *transformer) setProjectNamespaceOpts(apiContext *types.APIContext, schema *types.Schema, data []map[string]interface{}, opt *types.QueryOptions) {
+	if apiContext.SubContext == nil || apiContext.SubContext["/v3/schemas/project"] == "" {
+		return
+	}
+	projectID := strings.Split(apiContext.SubContext["/v3/schemas/project"], ":")[1]
+
+	clusterName := t.ClusterManager.ClusterName(apiContext)
+	if clusterName == "" {
+		return
+	}
+
+	clusterContext, err := t.ClusterManager.UserContext(clusterName)
+	if err != nil {
+		return
+	}
+
+	namespaces, err := clusterContext.Core.Namespaces("").Controller().Lister().List("", labels.NewSelector())
+	if err != nil {
+		return
+	}
+
+	var nsKeys []string
+	for _, ns := range namespaces {
+		if strings.Split(ns.Annotations["field.cattle.io/projectId"], ":")[1] == projectID {
+			nsKeys = append(nsKeys, ns.Name)
+
+		}
+
+	}
+
+	opt.Conditions = append(opt.Conditions, types.NewConditionFromString("namespaceId", "eq", nsKeys...))
 }
 
 func (t *transformer) stream(apiContext *types.APIContext, schema *types.Schema, data chan map[string]interface{}, opt *types.QueryOptions) (chan map[string]interface{}, error) {
@@ -56,6 +94,9 @@ func (t *transformer) stream(apiContext *types.APIContext, schema *types.Schema,
 }
 
 func (t *transformer) lister(apiContext *types.APIContext, schema *types.Schema) v1.NamespaceLister {
+	if apiContext.Type == "projects" || apiContext.Type == "project" {
+		logrus.Info("TEST PODS LISTER TRANSFORM")
+	}
 	if _, ok := schema.ResourceFields[client.NamespaceFieldProjectID]; !ok || schema.ID == client.NamespaceType {
 		return nil
 	}

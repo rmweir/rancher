@@ -193,42 +193,55 @@ func (s *Store) Context() types.StorageContext {
 
 func (s *Store) List(apiContext *types.APIContext, schema *types.Schema, opt *types.QueryOptions) ([]map[string]interface{}, error) {
 	namespace := getNamespace(apiContext, opt)
-
+	if namespace != "" {
+		logrus.Info("TEST NAMESPACE", namespace, "TYPE:", apiContext.Type)
+	}
+	start := time.Now()
 	resultList, err := s.retryList(namespace, apiContext)
 	if err != nil {
 		return nil, err
 	}
+	/*
+	if apiContext.Type == "workload" {
+		logrus.Info("TEST type is workload")
+		namespace2 := getNamespace(apiContext, opt)
+		logrus.Info("TEST Namespaces", namespace2)
 
+	}*/
+
+	logrus.Infof("TEST try list: %v, %v", time.Now().Sub(start), s.resourcePlural)
 	var result []map[string]interface{}
+	start = time.Now()
 
 	for _, obj := range resultList.Items {
 		result = append(result, s.fromInternal(apiContext, schema, obj.Object))
 	}
-
-	return apiContext.AccessControl.FilterList(apiContext, schema, result, s.authContext), nil
+	// logrus.Infof("TEST List appending: %v, %v", time.Now().Sub(start), s.resourcePlural)
+	start = time.Now()
+	a := apiContext.AccessControl.FilterList(apiContext, schema, result, s.authContext)
+	// logrus.Infof("TEST List filter list: %v, %v", time.Now().Sub(start), s.resourcePlural)
+	return a, nil
 }
 
 func (s *Store) retryList(namespace string, apiContext *types.APIContext) (*unstructured.UnstructuredList, error) {
-	logrus.Info("TEST START")
+	// logrus.Info("TEST START")
 	var resultList *unstructured.UnstructuredList
 	k8sClient, err := s.k8sClient(apiContext)
 	if err != nil {
 		return nil, err
 	}
-	logrus.Info("TEST 1")
+	// logrus.Info("TEST 1")
 	for i := 0; i < 3; i++ {
-		logrus.Info("TEST ENTER LOOP")
+		// logrus.Info("TEST ENTER LOOP")
 		req := s.common(namespace, k8sClient.Get())
 		start := time.Now()
 		resultList = &unstructured.UnstructuredList{}
-		logrus.Infof("TEST BEFORE INTO %s", namespace)
 		err = req.Do().Into(resultList)
-		logrus.Infof("TEST AFTER INTO %s", namespace)
 		logrus.Debugf("LIST: %v, %v", time.Now().Sub(start), s.resourcePlural)
 		if err != nil {
-			logrus.Infof("TEST ERR IN GETTING LIST OF %s: %v", s.resourcePlural, err)
+			//logrus.Infof("TEST ERR IN GETTING LIST OF %s: %v", s.resourcePlural, err)
 			if i < 2 && strings.Contains(err.Error(), "Client.Timeout exceeded") {
-				logrus.Infof("Error on LIST %v: %v. Attempt: %v. Retrying", s.resourcePlural, err, i+1)
+				//logrus.Infof("Error on LIST %v: %v. Attempt: %v. Retrying", s.resourcePlural, err, i+1)
 				continue
 			}
 			return resultList, err
@@ -314,6 +327,10 @@ func (d *unstructuredDecoder) Decode(data []byte, defaults *schema.GroupVersionK
 }
 
 func getNamespace(apiContext *types.APIContext, opt *types.QueryOptions) string {
+	if apiContext.Type == "pod" || apiContext.Type == "pods:" {
+		logrus.Info("TEST get namespace pod")
+	}
+
 	if val, ok := apiContext.SubContext["namespaces"]; ok {
 		return convert.ToString(val)
 	}

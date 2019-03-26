@@ -4,6 +4,8 @@ import (
 	"github.com/rancher/norman/httperror"
 	"github.com/rancher/norman/types"
 	"github.com/rancher/norman/types/convert"
+	"github.com/sirupsen/logrus"
+	"time"
 )
 
 func Wrap(store types.Store) types.Store {
@@ -37,8 +39,10 @@ func (s *StoreWrapper) List(apiContext *types.APIContext, schema *types.Schema, 
 	if err != nil {
 		return nil, err
 	}
-
-	return apiContext.FilterList(opts, schema, data), nil
+	start := time.Now()
+	a := apiContext.FilterList(opts, schema, data)
+	logrus.Infof("TEST filter list wrapper: %v", time.Now().Sub(start))
+	return a, nil
 }
 
 func (s *StoreWrapper) Watch(apiContext *types.APIContext, schema *types.Schema, opt *types.QueryOptions) (chan map[string]interface{}, error) {

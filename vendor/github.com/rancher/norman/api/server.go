@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"runtime/debug"
 	"sync"
+	"time"
 
 	"github.com/rancher/norman/api/access"
 	"github.com/rancher/norman/api/builtin"
@@ -176,10 +177,11 @@ func (s *Server) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			rw.WriteHeader(http.StatusInternalServerError)
 		}
 	}()
-
+	start := time.Now()
 	if apiResponse, err := s.handle(rw, req); err != nil {
 		s.handleError(apiResponse, err)
 	}
+	logrus.Infof("TEST RESPONSE FULL TIME: %v", time.Now().Sub(start))
 }
 
 func (s *Server) handle(rw http.ResponseWriter, req *http.Request) (*types.APIContext, error) {

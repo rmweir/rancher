@@ -1,7 +1,9 @@
 package handler
 
 import (
+	"github.com/sirupsen/logrus"
 	"net/http"
+	"time"
 
 	"github.com/rancher/norman/httperror"
 	"github.com/rancher/norman/parse"
@@ -37,7 +39,9 @@ func ListHandler(request *types.APIContext, next types.RequestHandler) error {
 	if err != nil {
 		return err
 	}
+	start := time.Now()
 
 	request.WriteResponse(http.StatusOK, data)
+	logrus.Infof("TEST WRITING DATA: %v", time.Now().Sub(start))
 	return nil
 }

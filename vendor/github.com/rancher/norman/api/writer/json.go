@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/rancher/norman/parse"
 	"github.com/rancher/norman/parse/builder"
@@ -24,8 +25,12 @@ func (j *EncodingResponseWriter) start(apiContext *types.APIContext, code int, o
 }
 
 func (j *EncodingResponseWriter) Write(apiContext *types.APIContext, code int, obj interface{}) {
+	start := time.Now()
 	j.start(apiContext, code, obj)
+	logrus.Infof("TEST WRITE START: %v", time.Now().Sub(start))
+	start = time.Now()
 	j.Body(apiContext, apiContext.Response, obj)
+	logrus.Infof("TEST WRITE BODY: %v", time.Now().Sub(start), apiContext.Request.URL)
 }
 
 func (j *EncodingResponseWriter) Body(apiContext *types.APIContext, writer io.Writer, obj interface{}) error {
@@ -35,8 +40,10 @@ func (j *EncodingResponseWriter) Body(apiContext *types.APIContext, writer io.Wr
 
 func (j *EncodingResponseWriter) VersionBody(apiContext *types.APIContext, version *types.APIVersion, writer io.Writer, obj interface{}) error {
 	var output interface{}
-
+	// start := time.Now()
 	builder := builder.NewBuilder(apiContext)
+	// logrus.Infof("TEST NEW BUILDER: %v", time.Now().Sub(start), apiContext.Request.URL)
+	//start = time.Now()
 	builder.Version = version
 
 	switch v := obj.(type) {
@@ -50,8 +57,12 @@ func (j *EncodingResponseWriter) VersionBody(apiContext *types.APIContext, versi
 		output = v
 	}
 
+	// logrus.Infof("TEST REST OF VERSION BODY BEFORE ENCODER: %v", time.Now().Sub(start), apiContext.Request.URL)
 	if output != nil {
-		return j.Encoder(writer, output)
+		//start := time.Now()
+		a := j.Encoder(writer, output)
+		// logrus.Infof("TEST VERSION BODY ENCODER: %v", time.Now().Sub(start), apiContext.Request.URL)
+		return a
 	}
 
 	return nil

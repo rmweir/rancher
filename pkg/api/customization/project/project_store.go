@@ -3,8 +3,6 @@ package project
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
-
 	"github.com/mitchellh/mapstructure"
 	"github.com/rancher/norman/api/access"
 	"github.com/rancher/norman/httperror"
@@ -19,6 +17,7 @@ import (
 	"github.com/rancher/types/config"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"strings"
 )
 
 const roleTemplatesRequired = "authz.management.cattle.io/creator-role-bindings"
@@ -63,9 +62,9 @@ func (s *projectStore) Update(apiContext *types.APIContext, schema *types.Schema
 	if err := s.validateResourceQuota(apiContext, data, id); err != nil {
 		return nil, err
 	}
-
 	return s.Store.Update(apiContext, schema, data, id)
 }
+
 
 func (s *projectStore) Delete(apiContext *types.APIContext, schema *types.Schema, id string) (map[string]interface{}, error) {
 	parts := strings.Split(id, ":")
@@ -304,6 +303,50 @@ func (s *projectStore) getNamespacesCount(apiContext *types.APIContext, project 
 
 	return count, nil
 }
+
+func (s *projectStore) getNamespaces(apiContext *types.APIContext, project mgmtclient.Project) []string {
+	projectNamespaces := []string{}
+	projectID := apiContext.SubContext["sadf"]
+	cluster, err := s.clusterLister.Get("", project.ClusterID)
+	if err != nil {
+
+	}
+
+	kubeConfig, err := clustermanager.ToRESTConfig(cluster, s.scaledContext)
+	if err != nil {
+
+	}
+
+	clusterContext, err := config.NewUserContext(s.scaledContext, *kubeConfig, cluster.Name)
+	namespaces, err := clusterContext.Core.Namespaces("").List(metav1.ListOptions{})
+	for _, namespace := range namespaces.Items {
+		if namespace.Annotations[cluster.Name + "/projectId"] == projectID {
+			projectNamespaces = append(projectNamespaces, namespace.Name)
+		}
+	}
+	return projectNamespaces
+}
+/*
+func (s *projectStore) getWorkloads(apiContext *types.APIContext, project mgmtclient.Project) {
+	projectID := apiContext.SubContext["sadf"]
+	cluster, err := s.clusterLister.Get("", project.ClusterID)
+	if err != nil {
+
+	}
+
+	kubeConfig, err := clustermanager.ToRESTConfig(cluster, s.scaledContext)
+	if err != nil {
+
+	}
+
+	clusterContext, err := config.NewUserContext(s.scaledContext, *kubeConfig, cluster.Name)
+	namespaces, err := clusterContext.Core.Namespaces("").List(metav1.ListOptions{})
+	for _, namespace := range namespaces.Items {
+		if namespace.Annotations[cluster.Name + "/projectId"] == projectID {
+
+		}
+	}
+}*/
 
 func limitToLimit(from *mgmtclient.ResourceQuotaLimit) (*v3.ResourceQuotaLimit, error) {
 	var to v3.ResourceQuotaLimit

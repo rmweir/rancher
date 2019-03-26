@@ -3,7 +3,7 @@ package remotedialer
 import (
 	"context"
 	"errors"
-	"github.com/sirupsen/logrus"
+	// "github.com/sirupsen/logrus"
 	"io"
 	"net"
 	"strings"
@@ -82,7 +82,7 @@ func (c *connection) Read(b []byte) (int, error) {
 	start := time.Now()
 
 	//if strings.Contains(string(b), "sstsstsst") {
-	logrus.Info("TEST msg(bytes) from %s: ", string(b), c.addr)
+	// logrus.Info("TEST msg(bytes) from %s: ", string(b), c.addr)
 	//}
 	n := c.copyData(b)
 	if n > 0 {
@@ -108,9 +108,9 @@ func (c *connection) Read(b []byte) (int, error) {
 }
 
 func (c *connection) Write(b []byte) (int, error) {
-	if strings.Contains(string(b), "sstsstsst") {
-		logrus.Info("TEST write msg(bytes): ", string(b))
-	}
+	//if strings.Contains(string(b), "sstsstsst") {
+	//	logrus.Info("TEST write msg(bytes): ", string(b))
+	//}
 	c.Lock()
 	if c.err != nil {
 		defer c.Unlock()

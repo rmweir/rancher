@@ -2,6 +2,7 @@ package managementstored
 
 import (
 	"context"
+	"github.com/rancher/rancher/pkg/api/store/projectsetter"
 	"github.com/rancher/rancher/pkg/namespace"
 	"net/http"
 
@@ -574,6 +575,7 @@ func Project(schemas *types.Schemas, management *config.ScaledContext) {
 		ClusterManager: management.ClientGetter.(*clustermanager.Manager),
 	}
 	schema.ActionHandler = handler.Actions
+	schema.Store = projectsetter.New(schema.Store, clusterManager)
 }
 
 func PodSecurityPolicyTemplate(schemas *types.Schemas, management *config.ScaledContext) {

@@ -3,7 +3,7 @@ package workload
 import (
 	"context"
 	"github.com/rancher/norman/types/convert"
-	"github.com/sirupsen/logrus"
+	// "github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/runtime"
 	"strconv"
 	"strings"
@@ -353,7 +353,7 @@ func getWorkload(namespace string, name string, kind string, apiVersion string, 
 }
 
 func (c CommonController) GetAllWorkloads(namespace string) ([]*Workload, error) {
-	logrus.Info("TEST getting all workloads")
+	// logrus.Info("TEST getting all workloads")
 	var workloads []*Workload
 
 	// deployments
