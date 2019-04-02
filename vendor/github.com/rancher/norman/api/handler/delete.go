@@ -1,7 +1,9 @@
 package handler
 
 import (
+	"github.com/sirupsen/logrus"
 	"net/http"
+	"strings"
 
 	"github.com/rancher/norman/httperror"
 	"github.com/rancher/norman/types"
@@ -17,7 +19,15 @@ func DeleteHandler(request *types.APIContext, next types.RequestHandler) error {
 	if err != nil {
 		return err
 	}
+	if strings.Contains(request.Request.Header.Get("Accept-Encoding"), "gzip") {
+		logrus.Info("TEST starting gzip")
+		logrus.Info("TEST setting encoding to gzip")
 
+		request.Response.Header().Del("Content-Length")
+		request.Response.Header().Add("Accept-Charset", "utf-8")
+		request.Response.Header().Set("Content-Encoding", "gzip")
+
+	}
 	if obj == nil {
 		request.WriteResponse(http.StatusNoContent, nil)
 	} else {

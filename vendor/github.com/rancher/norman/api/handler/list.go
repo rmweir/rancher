@@ -1,7 +1,9 @@
 package handler
 
 import (
-	"github.com/rancher/norman/api/writer"
+	"bytes"
+	"encoding/gob"
+	"github.com/sirupsen/logrus"
 	"net/http"
 	"strings"
 
@@ -38,13 +40,24 @@ func ListHandler(request *types.APIContext, next types.RequestHandler) error {
 	if err != nil {
 		return err
 	}
-	// request.WriteResponse(http.StatusOK, data)
+
 	if strings.Contains(request.Request.Header.Get("Accept-Encoding"), "gzip") {
-		writer.Gzip(request, nil)
-		request.Response.Header()
-		// gzipWriter := &
-		// return writer.Gzip(request, nil)
+		logrus.Info("TEST starting gzip")
+		logrus.Info("TEST setting encoding to gzip")
+
+		request.Response.Header().Del("Content-Length")
+		request.Response.Header().Set("Content-Encoding", "gzip")
 	}
 	request.WriteResponse(http.StatusOK, data)
 	return nil
+}
+
+func GetBytes(key interface{}) ([]byte, error) {
+	var buf bytes.Buffer
+	enc := gob.NewEncoder(&buf)
+	err := enc.Encode(key)
+	if err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
 }

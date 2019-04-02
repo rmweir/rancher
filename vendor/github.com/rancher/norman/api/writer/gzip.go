@@ -11,24 +11,24 @@ import (
 	"io"
 )
 
-var gzPool = sync.Pool {
+var GzPool = sync.Pool {
 	New: func() interface{} {
 		w := gzip.NewWriter(ioutil.Discard)
 		return w
 	},
 }
 
-type gzipResponseWriter struct {
+type GzipResponseWriter struct {
 	io.Writer
 	http.ResponseWriter
 }
 
-func (w *gzipResponseWriter) WriteHeader(status int) {
+func (w *GzipResponseWriter) WriteHeader(status int) {
 	w.Header().Del("Content-Length")
 	w.ResponseWriter.WriteHeader(status)
 }
 
-func (w *gzipResponseWriter) Write(b []byte) (int, error) {
+func (w *GzipResponseWriter) Write(b []byte) (int, error) {
 	return w.Writer.Write(b)
 }
 
@@ -40,12 +40,14 @@ func Gzip(request *types.APIContext, next types.RequestHandler) error {
 	}
 	logrus.Info("TEST setting encoding to gzip")
 	request.Request.Header.Set("Content-Encoding", "gzip")
-	gz := gzPool.Get().(*gzip.Writer)
-	defer gzPool.Put(gz)
+	gz := GzPool.Get().(*gzip.Writer)
+	defer GzPool.Put(gz)
 
 	gz.Reset(request.Response)
-	defer gz.Close()
+	// defer gz.Close()
 
-	request.Response = &gzipResponseWriter{ResponseWriter: request.Response, Writer: gz}
+	request.Response = &GzipResponseWriter{ResponseWriter: request.Response, Writer: gz}
+	request.Response.WriteHeader(http.StatusOK)
+	//request.Response.Write(data)
 	return nil
 }
