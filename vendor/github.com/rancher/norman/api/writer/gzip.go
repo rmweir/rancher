@@ -40,11 +40,10 @@ func Gzip(request *types.APIContext, next types.RequestHandler) error {
 	}
 	logrus.Info("TEST setting encoding to gzip")
 	request.Request.Header.Set("Content-Encoding", "gzip")
-
 	gz := gzPool.Get().(*gzip.Writer)
 	defer gzPool.Put(gz)
 
-	//gz.Reset(request.Response)
+	gz.Reset(request.Response)
 	defer gz.Close()
 
 	request.Response = &gzipResponseWriter{ResponseWriter: request.Response, Writer: gz}

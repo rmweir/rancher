@@ -3,6 +3,7 @@ package handler
 import (
 	"github.com/rancher/norman/api/writer"
 	"net/http"
+	"strings"
 
 	"github.com/rancher/norman/httperror"
 	"github.com/rancher/norman/parse"
@@ -37,8 +38,13 @@ func ListHandler(request *types.APIContext, next types.RequestHandler) error {
 	if err != nil {
 		return err
 	}
-	request.WriteResponse(http.StatusOK, data)
-	return writer.Gzip(request, nil)
+	// request.WriteResponse(http.StatusOK, data)
+	if strings.Contains(request.Request.Header.Get("Accept-Encoding"), "gzip") {
+		writer.Gzip(request, nil)
+		request.Response.Header()
+		// gzipWriter := &
+		// return writer.Gzip(request, nil)
+	}
 	request.WriteResponse(http.StatusOK, data)
 	return nil
 }
