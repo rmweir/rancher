@@ -1,13 +1,14 @@
 package handler
 
 import (
+	"github.com/rancher/norman/api/writer"
 	"net/http"
 
 	"github.com/rancher/norman/httperror"
 	"github.com/rancher/norman/parse"
 	"github.com/rancher/norman/types"
 )
-
+type s int
 func ListHandler(request *types.APIContext, next types.RequestHandler) error {
 	var (
 		err  error
@@ -33,11 +34,11 @@ func ListHandler(request *types.APIContext, next types.RequestHandler) error {
 		}
 		return request.Schema.LinkHandler(request, nil)
 	}
-
 	if err != nil {
 		return err
 	}
-
+	request.WriteResponse(http.StatusOK, data)
+	return writer.Gzip(request, nil)
 	request.WriteResponse(http.StatusOK, data)
 	return nil
 }
