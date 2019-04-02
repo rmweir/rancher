@@ -20,6 +20,7 @@ func JSONEncoder(writer io.Writer, v interface{}) error {
 func JSONGzipEncoder(writer io.Writer, v interface{}) error {
 	gz := gzip.NewWriter(writer)
 	defer gz.Close()
+
 	return json.NewEncoder(gz).Encode(v)
 }
 

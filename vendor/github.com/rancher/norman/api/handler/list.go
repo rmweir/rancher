@@ -3,15 +3,15 @@ package handler
 import (
 	"bytes"
 	"encoding/gob"
-	"github.com/sirupsen/logrus"
 	"net/http"
-	"strings"
 
 	"github.com/rancher/norman/httperror"
 	"github.com/rancher/norman/parse"
 	"github.com/rancher/norman/types"
 )
+
 type s int
+
 func ListHandler(request *types.APIContext, next types.RequestHandler) error {
 	var (
 		err  error
@@ -41,13 +41,6 @@ func ListHandler(request *types.APIContext, next types.RequestHandler) error {
 		return err
 	}
 
-	if strings.Contains(request.Request.Header.Get("Accept-Encoding"), "gzip") {
-		logrus.Info("TEST starting gzip")
-		logrus.Info("TEST setting encoding to gzip")
-
-		request.Response.Header().Del("Content-Length")
-		request.Response.Header().Set("Content-Encoding", "gzip")
-	}
 	request.WriteResponse(http.StatusOK, data)
 	return nil
 }
