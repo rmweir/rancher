@@ -8,8 +8,6 @@ import (
 	"github.com/rancher/norman/types"
 )
 
-type s int
-
 func ListHandler(request *types.APIContext, next types.RequestHandler) error {
 	var (
 		err  error
@@ -35,6 +33,7 @@ func ListHandler(request *types.APIContext, next types.RequestHandler) error {
 		}
 		return request.Schema.LinkHandler(request, nil)
 	}
+
 	if err != nil {
 		return err
 	}
