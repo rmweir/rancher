@@ -2,6 +2,7 @@ package transform
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/rancher/norman/httperror"
 	"github.com/rancher/norman/types"
@@ -64,19 +65,22 @@ func (s *Store) Watch(apiContext *types.APIContext, schema *types.Schema, opt *t
 }
 
 func (s *Store) List(apiContext *types.APIContext, schema *types.Schema, opt *types.QueryOptions) ([]map[string]interface{}, error) {
+	start := time.Now()
 	data, err := s.Store.List(apiContext, schema, opt)
 	if err != nil {
 		return nil, err
 	}
-
+	fmt.Printf("TEST List took %v. URL: %v", time.Now().Sub(start), apiContext.Request.URL.Path)
 	if s.ListTransformer != nil {
+		start = time.Now()
 		return s.ListTransformer(apiContext, schema, data, opt)
+		fmt.Printf("TEST List transformer took %v. URL: %v", time.Now().Sub(start), apiContext.Request.URL.Path)
 	}
 
 	if s.Transformer == nil {
 		return data, nil
 	}
-
+	start = time.Now()
 	var result []map[string]interface{}
 	for _, item := range data {
 		item, err := s.Transformer(apiContext, schema, item, opt)
@@ -87,7 +91,7 @@ func (s *Store) List(apiContext *types.APIContext, schema *types.Schema, opt *ty
 			result = append(result, item)
 		}
 	}
-
+	fmt.Printf("TEST List transforming each item took %v. URL: %v", time.Now().Sub(start), apiContext.Request.URL.Path)
 	return result, nil
 }
 

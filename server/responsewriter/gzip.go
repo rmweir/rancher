@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"reflect"
 	"strings"
+	"time"
 )
 
 type wrapWriter struct {
@@ -37,7 +38,9 @@ func Gzip(handler http.Handler) http.Handler {
 
 		gzw := &wrapWriter{gzipResponseWriter{Writer: gz, ResponseWriter: w}, http.StatusOK}
 		gzw.Header().Set("Content-Encoding", "gzip")
+		start := time.Now()
 		handler.ServeHTTP(gzw, r)
+		fmt.Printf("TEST gzip took %v", time.Now().Sub(start))
 	})
 }
 

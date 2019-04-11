@@ -818,6 +818,7 @@ func (r *Request) DoRaw() ([]byte, error) {
 	start := time.Now()
 	err := r.request(func(req *http.Request, resp *http.Response) {
 		fmt.Printf("TEST took %v to finish request before read all. URL: %v", time.Now().Sub(start), r.URL().Path)
+		start = time.Now()
 		result.body, result.err = ioutil.ReadAll(resp.Body)
 		fmt.Printf("TEST took %v to finish request after read all, before marshalling. URL: %v", time.Now().Sub(start), r.URL().Path)
 		glogBody("Response Body", result.body)
