@@ -801,8 +801,12 @@ func (r *Request) Do() Result {
 	r.tryThrottle()
 
 	var result Result
+	start := time.Now()
 	err := r.request(func(req *http.Request, resp *http.Response) {
+		fmt.Printf("TEST took %v to finish request before read all. URL: %v \n", time.Now().Sub(start), r.URL().Path)
+		start = time.Now()
 		result = r.transformResponse(resp, req)
+		fmt.Println("TEST took %v to finish request after read all, before marshalling. URL: %v \n", time.Now().Sub(start), r.URL().Path)
 	})
 	if err != nil {
 		return Result{err: err}
@@ -817,10 +821,8 @@ func (r *Request) DoRaw() ([]byte, error) {
 	var result Result
 	start := time.Now()
 	err := r.request(func(req *http.Request, resp *http.Response) {
-		fmt.Printf("TEST took %v to finish request before read all. URL: %v", time.Now().Sub(start), r.URL().Path)
 		start = time.Now()
 		result.body, result.err = ioutil.ReadAll(resp.Body)
-		fmt.Printf("TEST took %v to finish request after read all, before marshalling. URL: %v", time.Now().Sub(start), r.URL().Path)
 		glogBody("Response Body", result.body)
 		if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusPartialContent {
 			result.err = r.transformUnstructuredResponseError(resp, req, result.body)

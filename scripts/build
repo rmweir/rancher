@@ -2,4 +2,3 @@
 set -e
 
 $(dirname $0)/build-server
-$(dirname $0)/build-agent

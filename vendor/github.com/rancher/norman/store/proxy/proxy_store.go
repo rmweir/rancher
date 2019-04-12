@@ -252,7 +252,7 @@ func (s *Store) retryList(namespace string, apiContext *types.APIContext) (*unst
 		start := time.Now()
 		resultList = &unstructured.UnstructuredList{}
 		err = req.Do().Into(resultList)
-		fmt.Printf("LIST: %v, %v", time.Now().Sub(start), s.resourcePlural)
+		fmt.Printf("LIST: %v, %v \n", time.Now().Sub(start), s.resourcePlural)
 		if err != nil {
 			if i < 2 && strings.Contains(err.Error(), "Client.Timeout exceeded") {
 				logrus.Infof("Error on LIST %v: %v. Attempt: %v. Retrying", s.resourcePlural, err, i+1)

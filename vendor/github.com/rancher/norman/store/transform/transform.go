@@ -70,11 +70,11 @@ func (s *Store) List(apiContext *types.APIContext, schema *types.Schema, opt *ty
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("TEST List took %v. URL: %v", time.Now().Sub(start), apiContext.Request.URL.Path)
+	fmt.Printf("TEST List took %v. URL: %v \n", time.Now().Sub(start), apiContext.Request.URL.Path)
 	if s.ListTransformer != nil {
 		start = time.Now()
 		return s.ListTransformer(apiContext, schema, data, opt)
-		fmt.Printf("TEST List transformer took %v. URL: %v", time.Now().Sub(start), apiContext.Request.URL.Path)
+		fmt.Printf("TEST List transformer took %v. URL: %v \n", time.Now().Sub(start), apiContext.Request.URL.Path)
 	}
 
 	if s.Transformer == nil {
@@ -91,7 +91,7 @@ func (s *Store) List(apiContext *types.APIContext, schema *types.Schema, opt *ty
 			result = append(result, item)
 		}
 	}
-	fmt.Printf("TEST List transforming each item took %v. URL: %v", time.Now().Sub(start), apiContext.Request.URL.Path)
+	fmt.Printf("TEST List transforming each item took %v. URL: %v \n", time.Now().Sub(start), apiContext.Request.URL.Path)
 	return result, nil
 }
 
