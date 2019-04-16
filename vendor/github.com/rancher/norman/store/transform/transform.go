@@ -73,8 +73,9 @@ func (s *Store) List(apiContext *types.APIContext, schema *types.Schema, opt *ty
 	fmt.Printf("TEST List took %v. URL: %v \n", time.Now().Sub(start), apiContext.Request.URL.Path)
 	if s.ListTransformer != nil {
 		start = time.Now()
-		return s.ListTransformer(apiContext, schema, data, opt)
+		list, err := s.ListTransformer(apiContext, schema, data, opt)
 		fmt.Printf("TEST List transformer took %v. URL: %v \n", time.Now().Sub(start), apiContext.Request.URL.Path)
+		return list, err
 	}
 
 	if s.Transformer == nil {
