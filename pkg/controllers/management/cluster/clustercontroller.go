@@ -6,8 +6,8 @@ import (
 	"reflect"
 
 	errorsutil "github.com/pkg/errors"
-	"github.com/rancher/kontainer-engine/service"
-	"github.com/rancher/kontainer-engine/types"
+	"github.com/rancher/rancher/pkg/kontainer-engine/service"
+	"github.com/rancher/rancher/pkg/kontainer-engine/types"
 	"github.com/rancher/rancher/pkg/controllers/management/clusterprovisioner"
 	"github.com/rancher/rke/cloudprovider/aws"
 	"github.com/rancher/rke/cloudprovider/azure"

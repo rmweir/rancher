@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	kcluster "github.com/rancher/kontainer-engine/cluster"
+	kcluster "github.com/rancher/rancher/pkg/kontainer-engine/cluster"
 	"github.com/rancher/rancher/pkg/controllers/user/nslabels"
 	"github.com/rancher/rancher/pkg/monitoring"
 	"github.com/rancher/rancher/pkg/node"

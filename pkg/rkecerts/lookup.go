@@ -3,8 +3,8 @@ package rkecerts
 import (
 	"fmt"
 
-	"github.com/rancher/kontainer-engine/cluster"
-	"github.com/rancher/kontainer-engine/drivers/rke/rkecerts"
+	"github.com/rancher/rancher/pkg/kontainer-engine/cluster"
+	"github.com/rancher/rancher/pkg/kontainer-engine/drivers/rke/rkecerts"
 	"github.com/rancher/rancher/pkg/controllers/management/clusterprovisioner"
 	"github.com/rancher/rke/pki"
 	"github.com/rancher/types/apis/core/v1"

@@ -14,7 +14,7 @@ import (
 	"fmt"
 
 	"github.com/ghodss/yaml"
-	"github.com/rancher/kontainer-engine/drivers/rke/rkecerts"
+	"github.com/rancher/rancher/pkg/kontainer-engine/drivers/rke/rkecerts"
 	"github.com/rancher/norman/types"
 	"github.com/rancher/rancher/pkg/librke"
 	"github.com/rancher/rke/pki"

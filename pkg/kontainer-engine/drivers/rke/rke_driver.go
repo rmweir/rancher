@@ -11,9 +11,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/rancher/kontainer-engine/drivers/rke/rkecerts"
-	"github.com/rancher/kontainer-engine/drivers/util"
-	"github.com/rancher/kontainer-engine/types"
+	"github.com/rancher/rancher/pkg/kontainer-engine/drivers/rke/rkecerts"
+	"github.com/rancher/rancher/pkg/kontainer-engine/drivers/util"
+	"github.com/rancher/rancher/pkg/kontainer-engine/types"
 	"github.com/rancher/norman/types/slice"
 	"github.com/rancher/rke/cluster"
 	"github.com/rancher/rke/cmd"

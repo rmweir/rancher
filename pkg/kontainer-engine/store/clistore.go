@@ -9,8 +9,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/rancher/kontainer-engine/cluster"
-	"github.com/rancher/kontainer-engine/utils"
+	"github.com/rancher/rancher/pkg/kontainer-engine/cluster"
+	"github.com/rancher/rancher/pkg/kontainer-engine/utils"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 )

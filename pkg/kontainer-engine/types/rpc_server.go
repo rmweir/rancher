@@ -3,7 +3,7 @@ package types
 import (
 	"net"
 
-	"github.com/rancher/kontainer-engine/logstream"
+	"github.com/rancher/rancher/pkg/kontainer-engine/logstream"
 	"github.com/rancher/rke/log"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/net/context"

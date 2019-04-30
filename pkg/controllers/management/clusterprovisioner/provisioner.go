@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/mitchellh/mapstructure"
-	"github.com/rancher/kontainer-engine/drivers/rke"
-	"github.com/rancher/kontainer-engine/service"
+	"github.com/rancher/rancher/pkg/kontainer-engine/drivers/rke"
+	"github.com/rancher/rancher/pkg/kontainer-engine/service"
 	"github.com/rancher/norman/controller"
 	"github.com/rancher/norman/types/convert"
 	"github.com/rancher/norman/types/slice"

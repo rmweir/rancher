@@ -5,7 +5,7 @@ import (
 	"io"
 	"sync"
 
-	"github.com/rancher/kontainer-engine/logstream"
+	"github.com/rancher/rancher/pkg/kontainer-engine/logstream"
 	"github.com/rancher/norman/condition"
 	"github.com/rancher/types/apis/management.cattle.io/v3"
 	"github.com/sirupsen/logrus"
