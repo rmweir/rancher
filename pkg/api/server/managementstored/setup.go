@@ -3,7 +3,9 @@ package managementstored
 import (
 	"context"
 	"fmt"
+	"github.com/rancher/rancher/pkg/features"
 	"github.com/rancher/rancher/pkg/namespace"
+	"k8s.io/apiserver/pkg/util/feature"
 	"net/http"
 	"reflect"
 
@@ -114,7 +116,7 @@ var (
 		client.GlobalDNSType,
 		client.GlobalDNSProviderType,
 	}
-
+	fns = []interface{}{}
 )
 type featurePack struct {
 	name string
@@ -132,11 +134,14 @@ func (f *featurePack) addStartFunc(fn interface{}) error {
 }
 
 func (f *featurePack) load() {
-	for _, crd := range f.crds {
-		crds = append(crds, crd)
-	}
-	for _, fn := range f.startFuncs {
-		fns
+	feat := feature.Feature(f.name)
+	if featureflags.GlobalFeatures.Enabled(feat) {
+		for _, crd := range f.crds {
+			crds = append(crds, crd)
+		}
+		for _, fn := range f.startFuncs {
+			fns = append(fns, fn)
+		}
 	}
 }
 

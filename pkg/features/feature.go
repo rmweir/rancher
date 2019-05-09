@@ -11,7 +11,7 @@ const (
 )
 
 var (
-	features       	 = newFeatureGate()
+	GlobalFeatures       	 = newFeatureGate()
 
 	KontainerDrivers = NewFeature("kontainerDriver", "alpha", false)
 )
