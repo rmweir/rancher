@@ -2,8 +2,10 @@ package managementstored
 
 import (
 	"context"
+	"fmt"
 	"github.com/rancher/rancher/pkg/namespace"
 	"net/http"
+	"reflect"
 
 	"github.com/rancher/norman/store/crd"
 	"github.com/rancher/norman/store/proxy"
@@ -57,14 +59,8 @@ import (
 	"github.com/rancher/types/config"
 )
 
-func Setup(ctx context.Context, apiContext *config.ScaledContext, clusterManager *clustermanager.Manager,
-	k8sProxy http.Handler, localClusterEnabled bool) error {
-	// Here we setup all types that will be stored in the Management cluster
-	schemas := apiContext.Schemas
-
-	factory := &crd.Factory{ClientGetter: apiContext.ClientGetter}
-
-	factory.BatchCreateCRDs(ctx, config.ManagementStorageContext, schemas, &managementschema.Version,
+var (
+	crds = []string{
 		client.AuthConfigType,
 		client.CatalogType,
 		client.CatalogTemplateType,
@@ -116,7 +112,46 @@ func Setup(ctx context.Context, apiContext *config.ScaledContext, clusterManager
 		client.UserAttributeType,
 		client.UserType,
 		client.GlobalDNSType,
-		client.GlobalDNSProviderType)
+		client.GlobalDNSProviderType,
+	}
+	
+)
+type featurePack struct {
+	name string
+	crds []string
+	startFuncs []interface{}
+}
+
+func (f *featurePack) addStartFunc(fn interface{}) error {
+	if reflect.TypeOf(fn).Kind() == reflect.Func {
+		f.startFuncs = append(f.startFuncs, fn)
+		return nil
+	} else {
+		return fmt.Errorf("Must add a function")
+	}
+}
+
+func (f *featurePack) load() {
+	for _, crd := range f.crds {
+		crds = append(crds, crd)
+	}
+	for _, fn := range f.startFuncs {
+		fns
+	}
+}
+
+func (f *featurePack) addCrds(crd string) {
+	f.crds = append(f.crds, crd)
+}
+
+func Setup(ctx context.Context, apiContext *config.ScaledContext, clusterManager *clustermanager.Manager,
+	k8sProxy http.Handler, localClusterEnabled bool) error {
+	// Here we setup all types that will be stored in the Management cluster
+	schemas := apiContext.Schemas
+
+	factory := &crd.Factory{ClientGetter: apiContext.ClientGetter}
+
+	factory.BatchCreateCRDs(ctx, config.ManagementStorageContext, schemas, &managementschema.Version, crds...)
 
 	factory.BatchCreateCRDs(ctx, config.ManagementStorageContext, schemas, &projectschema.Version,
 		projectclient.AppType,
