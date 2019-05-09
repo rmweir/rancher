@@ -114,7 +114,7 @@ var (
 		client.GlobalDNSType,
 		client.GlobalDNSProviderType,
 	}
-	
+
 )
 type featurePack struct {
 	name string
