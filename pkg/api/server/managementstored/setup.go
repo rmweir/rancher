@@ -116,13 +116,31 @@ var (
 		client.GlobalDNSType,
 		client.GlobalDNSProviderType,
 	}
+
 	fns = []interface{}{}
+	FeaturePacks = map[string]featurePack{}
 )
+
 type featurePack struct {
 	name string
 	crds []string
 	startFuncs []interface{}
+	args [][]interface{}
 }
+
+func initialFeaturePackLoad() {
+	kd := &featurePack{
+		"kontainerDrivers",
+		[]string{},
+		[]interface{}{
+			KontainerDriver,
+		},
+		[][]interface{}{
+			{},
+		},
+	}
+}
+
 
 func (f *featurePack) addStartFunc(fn interface{}) error {
 	if reflect.TypeOf(fn).Kind() == reflect.Func {
@@ -130,18 +148,6 @@ func (f *featurePack) addStartFunc(fn interface{}) error {
 		return nil
 	} else {
 		return fmt.Errorf("Must add a function")
-	}
-}
-
-func (f *featurePack) load() {
-	feat := feature.Feature(f.name)
-	if featureflags.GlobalFeatures.Enabled(feat) {
-		for _, crd := range f.crds {
-			crds = append(crds, crd)
-		}
-		for _, fn := range f.startFuncs {
-			fns = append(fns, fn)
-		}
 	}
 }
 
@@ -170,6 +176,17 @@ func Setup(ctx context.Context, apiContext *config.ScaledContext, clusterManager
 	)
 
 	factory.BatchWait()
+
+	kd := &featurePack{
+		"kontainerDrivers",
+		[]string{},
+		[]interface{}{
+			KontainerDriver,
+		},
+		[][]interface{}{
+			{schemas, apiContext},
+		},
+	}
 
 	Clusters(schemas, apiContext, clusterManager, k8sProxy)
 	ClusterRoleTemplateBinding(schemas, apiContext)
@@ -215,6 +232,33 @@ func Setup(ctx context.Context, apiContext *config.ScaledContext, clusterManager
 	multiclusterapp.SetMemberStore(ctx, schemas.Schema(&managementschema.Version, client.MultiClusterAppType), apiContext)
 
 	return nil
+}
+
+func setupFeaturePacks(ctx context.Context, apiContext *config.ScaledContext, clusterManager *clustermanager.Manager,
+	k8sProxy http.Handler, localClusterEnabled bool) error {
+	kd := &featurePack{
+		"kontainerDrivers",
+		[]string{},
+		[]interface{}{
+			KontainerDriver,
+		},
+		[][]interface{}{
+			{apiContext.Schemas, apiContext},
+		},
+	}
+	kd.load()
+
+	return nil
+}
+
+func loadCrds(name string) {
+	if feature.FeatureGate.Enabled(feature.Feature(name)) {
+		crds = append(crds, FeaturePacks[name].crds)
+	}
+}
+
+func (f *featurePack) load() {
+	FeaturePacks[f.name] = *f
 }
 
 func setupPasswordTypes(ctx context.Context, schemas *types.Schemas, management *config.ScaledContext) {

@@ -1,7 +1,10 @@
 package featureflags
 
 import (
+	"fmt"
+	"github.com/rancher/rancher/pkg/api/server/managementstored"
 	"k8s.io/apiserver/pkg/util/feature"
+	"reflect"
 )
 
 const (
@@ -12,6 +15,7 @@ const (
 
 var (
 	GlobalFeatures       	 = newFeatureGate()
+	FeaturePackMap			 = map[string]featurePack{}
 
 	KontainerDrivers = NewFeature("kontainerDriver", "alpha", false)
 )
@@ -65,4 +69,41 @@ func NewFeature(name string, release string, def bool) *feature.FeatureSpec {
 	features.Add(map[feature.Feature]feature.FeatureSpec{featureName: *f})
 
 	return nil
+}
+
+func initialFeaturePackLoad() {
+	kd := &featurePack{
+		"kontainerDrivers",
+		[]string{},
+		[]interface{}{
+			managementstored.KontainerDriver,
+		},
+		[][]interface{}{
+			{},
+		},
+	}
+}
+
+type featurePack struct {
+	name string
+	crds []string
+	startFuncs []interface{}
+	args [][]interface{}
+}
+
+func (f *featurePack) addStartFunc(fn interface{}) error {
+	if reflect.TypeOf(fn).Kind() == reflect.Func {
+		f.startFuncs = append(f.startFuncs, fn)
+		return nil
+	} else {
+		return fmt.Errorf("Must add a function")
+	}
+}
+
+func (f *featurePack) load() {
+	FeaturePackMap[f.name] = *f
+}
+
+func (f *featurePack) addCrds(crd string) {
+	f.crds = append(f.crds, crd)
 }
