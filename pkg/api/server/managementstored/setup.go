@@ -3,11 +3,9 @@ package managementstored
 import (
 	"context"
 	"fmt"
-	"github.com/rancher/rancher/pkg/features"
-	"github.com/rancher/rancher/pkg/namespace"
-	"k8s.io/apiserver/pkg/util/feature"
 	"net/http"
 	"reflect"
+	"strings"
 
 	"github.com/rancher/norman/store/crd"
 	"github.com/rancher/norman/store/proxy"
@@ -52,17 +50,116 @@ import (
 	"github.com/rancher/rancher/pkg/auth/providers"
 	"github.com/rancher/rancher/pkg/clustermanager"
 	"github.com/rancher/rancher/pkg/controllers/management/compose/common"
+	featureflags "github.com/rancher/rancher/pkg/features"
+	"github.com/rancher/rancher/pkg/namespace"
 	"github.com/rancher/rancher/pkg/nodeconfig"
 	sourcecodeproviders "github.com/rancher/rancher/pkg/pipeline/providers"
 	managementschema "github.com/rancher/types/apis/management.cattle.io/v3/schema"
 	projectschema "github.com/rancher/types/apis/project.cattle.io/v3/schema"
-	"github.com/rancher/types/client/management/v3"
+	client "github.com/rancher/types/client/management/v3"
 	projectclient "github.com/rancher/types/client/project/v3"
 	"github.com/rancher/types/config"
+	"k8s.io/apiserver/pkg/util/feature"
 )
 
 var (
-	crds = []string{
+
+	featCrds     = []string{}
+	featFns      = []interface{}{}
+	FeaturePacks = map[string]featurePack{}
+)
+
+type featurePack struct {
+	name       string
+	crds       []string
+	startFuncs []interface{}
+	args       [][]interface{}
+}
+
+func initialFeaturePackLoad(ctx context.Context, apiContext *config.ScaledContext, clusterManager *clustermanager.Manager,
+	k8sProxy http.Handler, localClusterEnabled bool) {
+	kd := &featurePack{
+		"kontainerDrivers",
+		[]string{},
+		[]interface{}{
+			KontainerDriver,
+		},
+		[][]interface{}{
+			{},
+		},
+	}
+	kd.load()
+}
+
+func runFeatureCRDS(factory *crd.Factory, ctx context.Context, storageContext types.StorageContext, schemas *types.Schemas, version *types.APIVersion) {
+	enabledFeatureCRDS := []string{}
+	g := featureflags.GlobalFeatures.KnownFeatures()
+	for _, name := range g {
+		n := strings.Split(name, "=")[0]
+		feat := feature.Feature(n)
+		if featureflags.GlobalFeatures.Enabled(feat) {
+			enabledFeatureCRDS = append(enabledFeatureCRDS, FeaturePacks[n].crds...)
+		}
+	}
+
+	factory.BatchCreateCRDs(ctx, storageContext, schemas, version, enabledFeatureCRDS...)
+
+}
+
+func runFeatureFns() {
+	// enabledFeatureFns := []interface{}{}
+	// enabledFeatureArgs := [][]interface{}{}
+
+	for _, name := range featureflags.GlobalFeatures.KnownFeatures() {
+		n := strings.Split(name, "=")[0]
+		feat := feature.Feature(n)
+		if featureflags.GlobalFeatures.Enabled(feat) {
+			fu := FeaturePacks
+			for index, f := range fu[n].startFuncs {
+				args := FeaturePacks[n].args[index]
+				runFunction(f, args)
+			}
+			// enabledFeatureFns = append(enabledFeatureFns, FeaturePacks[name].startFuncs...)
+			// enabledFeatureArgs = append(enabledFeatureArgs, FeaturePacks[name].args...)
+		}
+	}
+}
+
+func runFunction(fn interface{}, args []interface{}) {
+	// args := FeaturePacks[name].args[index]
+	// f := reflect.TypeOf(fn)
+	val := reflect.ValueOf(fn)
+	// params := make([]reflect.Value, f.NumIn())
+	callArgs := make([]reflect.Value, len(args))
+	for i, a := range args {
+		callArgs[i] = reflect.ValueOf(a)
+	}
+	val.Call(callArgs)
+}
+
+func (f *featurePack) addStartFunc(fn interface{}) error {
+	if reflect.TypeOf(fn).Kind() == reflect.Func {
+		f.startFuncs = append(f.startFuncs, fn)
+		return nil
+	} else {
+		return fmt.Errorf("Must add a function")
+	}
+}
+
+func (f *featurePack) addCrds(crd string) {
+	f.crds = append(f.crds, crd)
+}
+
+func Setup(ctx context.Context, apiContext *config.ScaledContext, clusterManager *clustermanager.Manager,
+	k8sProxy http.Handler, localClusterEnabled bool) error {
+	// Here we setup all types that will be stored in the Management cluster
+	schemas := apiContext.Schemas
+
+	setupFeaturePacks(ctx, apiContext, clusterManager, k8sProxy, localClusterEnabled)
+
+	factory := &crd.Factory{ClientGetter: apiContext.ClientGetter}
+
+	factory.BatchCreateCRDs(ctx, config.ManagementStorageContext, schemas, &managementschema.Version,
 		client.AuthConfigType,
 		client.CatalogType,
 		client.CatalogTemplateType,
@@ -114,55 +211,9 @@ var (
 		client.UserAttributeType,
 		client.UserType,
 		client.GlobalDNSType,
-		client.GlobalDNSProviderType,
-	}
+		client.GlobalDNSProviderType)
 
-	fns = []interface{}{}
-	FeaturePacks = map[string]featurePack{}
-)
-
-type featurePack struct {
-	name string
-	crds []string
-	startFuncs []interface{}
-	args [][]interface{}
-}
-
-func initialFeaturePackLoad() {
-	kd := &featurePack{
-		"kontainerDrivers",
-		[]string{},
-		[]interface{}{
-			KontainerDriver,
-		},
-		[][]interface{}{
-			{},
-		},
-	}
-}
-
-
-func (f *featurePack) addStartFunc(fn interface{}) error {
-	if reflect.TypeOf(fn).Kind() == reflect.Func {
-		f.startFuncs = append(f.startFuncs, fn)
-		return nil
-	} else {
-		return fmt.Errorf("Must add a function")
-	}
-}
-
-func (f *featurePack) addCrds(crd string) {
-	f.crds = append(f.crds, crd)
-}
-
-func Setup(ctx context.Context, apiContext *config.ScaledContext, clusterManager *clustermanager.Manager,
-	k8sProxy http.Handler, localClusterEnabled bool) error {
-	// Here we setup all types that will be stored in the Management cluster
-	schemas := apiContext.Schemas
-
-	factory := &crd.Factory{ClientGetter: apiContext.ClientGetter}
-
-	factory.BatchCreateCRDs(ctx, config.ManagementStorageContext, schemas, &managementschema.Version, crds...)
+	runFeatureCRDS(factory, ctx, config.ManagementStorageContext, schemas, &managementschema.Version)
 
 	factory.BatchCreateCRDs(ctx, config.ManagementStorageContext, schemas, &projectschema.Version,
 		projectclient.AppType,
@@ -176,17 +227,6 @@ func Setup(ctx context.Context, apiContext *config.ScaledContext, clusterManager
 	)
 
 	factory.BatchWait()
-
-	kd := &featurePack{
-		"kontainerDrivers",
-		[]string{},
-		[]interface{}{
-			KontainerDriver,
-		},
-		[][]interface{}{
-			{schemas, apiContext},
-		},
-	}
 
 	Clusters(schemas, apiContext, clusterManager, k8sProxy)
 	ClusterRoleTemplateBinding(schemas, apiContext)
@@ -214,7 +254,9 @@ func Setup(ctx context.Context, apiContext *config.ScaledContext, clusterManager
 	GlobalDNSs(schemas, apiContext, localClusterEnabled)
 	GlobalDNSProviders(schemas, apiContext, localClusterEnabled)
 	Monitor(schemas, apiContext, clusterManager)
-	KontainerDriver(schemas, apiContext)
+	// KontainerDriver(schemas, apiContext)
+
+	runFeatureFns()
 
 	if err := NodeTypes(schemas, apiContext); err != nil {
 		return err
@@ -250,12 +292,14 @@ func setupFeaturePacks(ctx context.Context, apiContext *config.ScaledContext, cl
 
 	return nil
 }
-
-func loadCrds(name string) {
-	if feature.FeatureGate.Enabled(feature.Feature(name)) {
-		crds = append(crds, FeaturePacks[name].crds)
+/*
+func load(name string) {
+	feat := feature.Feature(name)
+	if featureflags.GlobalFeatures.Enabled(feat) {
+		featCrds = append(crds, FeaturePacks[name].crds...)
+		featFns = append(featFns, FeaturePacks[name].startFuncs)
 	}
-}
+}*/
 
 func (f *featurePack) load() {
 	FeaturePacks[f.name] = *f
@@ -688,6 +732,7 @@ func RoleTemplate(schemas *types.Schemas, management *config.ScaledContext) {
 }
 
 func KontainerDriver(schemas *types.Schemas, management *config.ScaledContext) {
+	fmt.Println("TEST HELLO")
 	schema := schemas.Schema(&managementschema.Version, client.KontainerDriverType)
 	handler := kontainerdriver.ActionHandler{
 		KontainerDrivers:      management.Management.KontainerDrivers(""),

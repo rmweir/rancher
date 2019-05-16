@@ -2,7 +2,6 @@ package featureflags
 
 import (
 	"fmt"
-	"github.com/rancher/rancher/pkg/api/server/managementstored"
 	"k8s.io/apiserver/pkg/util/feature"
 	"reflect"
 )
@@ -17,7 +16,7 @@ var (
 	GlobalFeatures       	 = newFeatureGate()
 	FeaturePackMap			 = map[string]featurePack{}
 
-	KontainerDrivers = NewFeature("kontainerDriver", "alpha", false)
+	KontainerDrivers = NewFeature("kontainerDrivers", "ga", true)
 )
 
 type FeatureGate interface {
@@ -51,7 +50,7 @@ func NewFeature(name string, release string, def bool) *feature.FeatureSpec {
 	switch release {
 	case Alpha:
 		f = &feature.FeatureSpec{
-			false,
+			def,
 			feature.Alpha,
 		}
 	case Beta:
@@ -61,28 +60,20 @@ func NewFeature(name string, release string, def bool) *feature.FeatureSpec {
 		}
 	case GA:
 		f = &feature.FeatureSpec{
-			true,
+			def,
 			feature.GA,
 		}
 	}
 	featureName := feature.Feature(name)
-	features.Add(map[feature.Feature]feature.FeatureSpec{featureName: *f})
+	GlobalFeatures.Add(map[feature.Feature]feature.FeatureSpec{featureName: *f})
 
+	g := GlobalFeatures
+	if g == nil {
+
+	}
 	return nil
 }
 
-func initialFeaturePackLoad() {
-	kd := &featurePack{
-		"kontainerDrivers",
-		[]string{},
-		[]interface{}{
-			managementstored.KontainerDriver,
-		},
-		[][]interface{}{
-			{},
-		},
-	}
-}
 
 type featurePack struct {
 	name string
