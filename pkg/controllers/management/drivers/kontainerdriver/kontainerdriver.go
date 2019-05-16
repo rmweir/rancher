@@ -3,6 +3,7 @@ package kontainerdriver
 import (
 	"context"
 	"fmt"
+	"github.com/rancher/rancher/pkg/features"
 	"reflect"
 	"regexp"
 	"strings"
@@ -43,6 +44,10 @@ func Register(ctx context.Context, management *config.ManagementContext) {
 	management.Management.KontainerDrivers("").AddLifecycle(ctx, "mgmt-kontainer-driver-lifecycle", lifecycle)
 }
 
+type test interface {
+
+}
+
 type Lifecycle struct {
 	dynamicSchemas        v3.DynamicSchemaInterface
 	dynamicSchemasLister  v3.DynamicSchemaLister
@@ -52,7 +57,12 @@ type Lifecycle struct {
 	kontainerDrivers      v3.KontainerDriverInterface
 }
 
+
+
 func (l *Lifecycle) Create(obj *v3.KontainerDriver) (runtime.Object, error) {
+	if featureflags.GlobalFeatures.Enabled("kontainerDrivers") {
+		return nil, nil
+	}
 	logrus.Infof("create kontainerdriver %v", obj.Name)
 
 	// return early if driver is not active
@@ -333,6 +343,9 @@ func toLowerCamelCase(nodeFlagName string) (string, error) {
 }
 
 func (l *Lifecycle) Updated(obj *v3.KontainerDriver) (runtime.Object, error) {
+	if featureflags.GlobalFeatures.Enabled("kontainerDrivers") {
+		return nil, nil
+	}
 	logrus.Infof("update kontainerdriver %v", obj.Name)
 	if hasStaticSchema(obj) {
 		return obj, nil

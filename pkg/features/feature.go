@@ -2,6 +2,7 @@ package featureflags
 
 import (
 	"fmt"
+	"github.com/rancher/types/client/management/v3"
 	"k8s.io/apiserver/pkg/util/feature"
 	"reflect"
 )
@@ -16,7 +17,7 @@ var (
 	GlobalFeatures       	 = newFeatureGate()
 	FeaturePackMap			 = map[string]featurePack{}
 
-	KontainerDrivers = NewFeature("kontainerDrivers", "ga", true)
+	KontainerDrivers = NewFeature(client.KontainerDriverType, "beta", true)
 )
 
 type FeatureGate interface {

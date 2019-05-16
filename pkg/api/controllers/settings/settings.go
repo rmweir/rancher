@@ -30,6 +30,7 @@ type settingsProvider struct {
 	fallback       map[string]string
 }
 
+
 func (s *settingsProvider) Get(name string) string {
 	value := os.Getenv(settings.GetEnvKey(name))
 	if value != "" {

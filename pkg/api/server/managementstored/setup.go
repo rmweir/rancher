@@ -3,6 +3,7 @@ package managementstored
 import (
 	"context"
 	"fmt"
+	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"net/http"
 	"reflect"
 	"strings"
@@ -50,45 +51,34 @@ import (
 	"github.com/rancher/rancher/pkg/auth/providers"
 	"github.com/rancher/rancher/pkg/clustermanager"
 	"github.com/rancher/rancher/pkg/controllers/management/compose/common"
-	featureflags "github.com/rancher/rancher/pkg/features"
+	"github.com/rancher/rancher/pkg/features"
 	"github.com/rancher/rancher/pkg/namespace"
 	"github.com/rancher/rancher/pkg/nodeconfig"
 	sourcecodeproviders "github.com/rancher/rancher/pkg/pipeline/providers"
 	managementschema "github.com/rancher/types/apis/management.cattle.io/v3/schema"
 	projectschema "github.com/rancher/types/apis/project.cattle.io/v3/schema"
-	client "github.com/rancher/types/client/management/v3"
+	"github.com/rancher/types/client/management/v3"
 	projectclient "github.com/rancher/types/client/project/v3"
 	"github.com/rancher/types/config"
 	"k8s.io/apiserver/pkg/util/feature"
 )
 
 var (
-
-	featCrds     = []string{}
-	featFns      = []interface{}{}
-	FeaturePacks = map[string]featurePack{}
+	FeaturePacks = map[string]*featurePack{}
 )
 
 type featurePack struct {
 	name       string
-	crds       []string
+	isStarted    bool
+	Crds       []string
 	startFuncs []interface{}
-	args       [][]interface{}
+	startArgs  [][]interface{}
+	collection Collection
+	schemas    *types.Schemas
 }
 
-func initialFeaturePackLoad(ctx context.Context, apiContext *config.ScaledContext, clusterManager *clustermanager.Manager,
-	k8sProxy http.Handler, localClusterEnabled bool) {
-	kd := &featurePack{
-		"kontainerDrivers",
-		[]string{},
-		[]interface{}{
-			KontainerDriver,
-		},
-		[][]interface{}{
-			{},
-		},
-	}
-	kd.load()
+type Collection interface {
+	DeleteCollection(deleteOpts *v1.DeleteOptions, listOpts v1.ListOptions) error
 }
 
 func runFeatureCRDS(factory *crd.Factory, ctx context.Context, storageContext types.StorageContext, schemas *types.Schemas, version *types.APIVersion) {
@@ -98,38 +88,38 @@ func runFeatureCRDS(factory *crd.Factory, ctx context.Context, storageContext ty
 		n := strings.Split(name, "=")[0]
 		feat := feature.Feature(n)
 		if featureflags.GlobalFeatures.Enabled(feat) {
-			enabledFeatureCRDS = append(enabledFeatureCRDS, FeaturePacks[n].crds...)
+			enabledFeatureCRDS = append(enabledFeatureCRDS, FeaturePacks[n].Crds...)
 		}
 	}
-
 	factory.BatchCreateCRDs(ctx, storageContext, schemas, version, enabledFeatureCRDS...)
-
 }
 
 func runFeatureFns() {
-	// enabledFeatureFns := []interface{}{}
-	// enabledFeatureArgs := [][]interface{}{}
-
 	for _, name := range featureflags.GlobalFeatures.KnownFeatures() {
 		n := strings.Split(name, "=")[0]
 		feat := feature.Feature(n)
 		if featureflags.GlobalFeatures.Enabled(feat) {
 			fu := FeaturePacks
 			for index, f := range fu[n].startFuncs {
-				args := FeaturePacks[n].args[index]
+				args := FeaturePacks[n].startArgs[index]
 				runFunction(f, args)
 			}
-			// enabledFeatureFns = append(enabledFeatureFns, FeaturePacks[name].startFuncs...)
-			// enabledFeatureArgs = append(enabledFeatureArgs, FeaturePacks[name].args...)
+			FeaturePacks[n].start()
 		}
 	}
 }
 
+func (f *featurePack) start() {
+	s := f.schemas.Schema(&managementschema.Version, f.name)
+	s.Store = &featStore{
+		s.Store,
+		f.name,
+	}
+	f.isStarted = true
+}
+
 func runFunction(fn interface{}, args []interface{}) {
-	// args := FeaturePacks[name].args[index]
-	// f := reflect.TypeOf(fn)
 	val := reflect.ValueOf(fn)
-	// params := make([]reflect.Value, f.NumIn())
 	callArgs := make([]reflect.Value, len(args))
 	for i, a := range args {
 		callArgs[i] = reflect.ValueOf(a)
@@ -147,7 +137,7 @@ func (f *featurePack) addStartFunc(fn interface{}) error {
 }
 
 func (f *featurePack) addCrds(crd string) {
-	f.crds = append(f.crds, crd)
+	f.Crds = append(f.Crds, crd)
 }
 
 func Setup(ctx context.Context, apiContext *config.ScaledContext, clusterManager *clustermanager.Manager,
@@ -279,7 +269,8 @@ func Setup(ctx context.Context, apiContext *config.ScaledContext, clusterManager
 func setupFeaturePacks(ctx context.Context, apiContext *config.ScaledContext, clusterManager *clustermanager.Manager,
 	k8sProxy http.Handler, localClusterEnabled bool) error {
 	kd := &featurePack{
-		"kontainerDrivers",
+		client.KontainerDriverType,
+		false,
 		[]string{},
 		[]interface{}{
 			KontainerDriver,
@@ -287,22 +278,32 @@ func setupFeaturePacks(ctx context.Context, apiContext *config.ScaledContext, cl
 		[][]interface{}{
 			{apiContext.Schemas, apiContext},
 		},
+		apiContext.Management.KontainerDrivers(""),
+		apiContext.Schemas,
 	}
 	kd.load()
-
 	return nil
 }
-/*
-func load(name string) {
-	feat := feature.Feature(name)
-	if featureflags.GlobalFeatures.Enabled(feat) {
-		featCrds = append(crds, FeaturePacks[name].crds...)
-		featFns = append(featFns, FeaturePacks[name].startFuncs)
-	}
-}*/
 
 func (f *featurePack) load() {
-	FeaturePacks[f.name] = *f
+	FeaturePacks[f.name] = f
+
+}
+
+func (f *featurePack) Disable(name string) {
+	feat := feature.Feature(name)
+	if featureflags.GlobalFeatures.Enabled(feat) {
+		// f.collection.DeleteCollection(&v1.DeleteOptions{}, v1.ListOptions{})
+		featureflags.GlobalFeatures.Set(name + "=false")
+	}
+
+}
+
+func (f *featurePack) Enable(name string) {
+	feat := feature.Feature(name)
+	if !featureflags.GlobalFeatures.Enabled(feat) {
+		featureflags.GlobalFeatures.Set(name + "=true")
+	}
 }
 
 func setupPasswordTypes(ctx context.Context, schemas *types.Schemas, management *config.ScaledContext) {
@@ -731,6 +732,20 @@ func RoleTemplate(schemas *types.Schemas, management *config.ScaledContext) {
 	schema.Validator = rt.Validator
 }
 
+type featStore struct {
+	types.Store
+
+	name string
+}
+
+func (f *featStore) Create(apiContext *types.APIContext, schema *types.Schema, data map[string]interface{}) (map[string]interface{}, error) {
+	feat := feature.Feature(f.name)
+	if featureflags.GlobalFeatures.Enabled(feat) {
+		return f.Store.Create(apiContext, schema, data)
+	}
+	return nil, fmt.Errorf("TEST FEATURE disabled")
+}
+
 func KontainerDriver(schemas *types.Schemas, management *config.ScaledContext) {
 	fmt.Println("TEST HELLO")
 	schema := schemas.Schema(&managementschema.Version, client.KontainerDriverType)
@@ -740,7 +755,7 @@ func KontainerDriver(schemas *types.Schemas, management *config.ScaledContext) {
 	}
 	schema.ActionHandler = handler.ActionHandler
 	schema.Formatter = kontainerdriver.NewFormatter(management)
-	schema.Store = kontainerdriver.NewStore(management, schema.Store)
+
 	kontainerDriverValidator := kontainerdriver.Validator{
 		KontainerDriverLister: management.Management.KontainerDrivers("").Controller().Lister(),
 	}
