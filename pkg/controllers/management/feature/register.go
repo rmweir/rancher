@@ -4,13 +4,10 @@ import (
 	"context"
 	"fmt"
 	"github.com/rancher/rancher/pkg/api/server/managementstored"
-	"github.com/rancher/types/apis/management.cattle.io/v3"
-	"github.com/sirupsen/logrus"
-	"k8s.io/apimachinery/pkg/runtime"
-	"strings"
-
 	"github.com/rancher/rancher/pkg/clustermanager"
+	"github.com/rancher/types/apis/management.cattle.io/v3"
 	"github.com/rancher/types/config"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 const (
@@ -36,23 +33,25 @@ func newFeatSettingController(mgmt *config.ManagementContext) *SettingController
 
 //sync is called periodically and on real updates
 func (n *SettingController) sync(key string, obj *v3.Setting) (runtime.Object, error) {
-	if obj == nil || obj.DeletionTimestamp != nil {
-		return nil, nil
+	feature := managementstored.FeaturePacks[key]
+	featureSet := key + "="
+
+	if feature == nil {
+		return nil, fmt.Errorf("TEST FEATURE NIL %v", key)
 	}
 
-	logrus.Infof("TEST feat setting sync: %s", obj.Name)
-	if split := strings.Split(obj.Name, "feat-"); len(split) > 1 {
-		featureSet := obj.Value
-		// TODO use feature packs sets
-		if setting := strings.Split(obj.Value, "="); len(setting) > 1 {
-			if m := managementstored.FeaturePacks[setting[0]]; m ==nil {
-				return nil, fmt.Errorf("TEST FEATURE NIL %v", setting[1])
-			} else {
-				managementstored.Set(featureSet)
-			}
-			logrus.Info("TEST SUCCESS")
+	// If setting for feature is deleted, set feature to its default
+	if obj == nil || obj.DeletionTimestamp != nil {
+		if feature.Def {
+			featureSet += "true"
+		} else {
+			featureSet += "false"
 		}
+	} else {
+		featureSet += obj.Value
 	}
+
+	managementstored.Set(featureSet)
 
 	return nil, nil
 }

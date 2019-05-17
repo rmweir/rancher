@@ -5,6 +5,7 @@ import (
 	"github.com/rancher/types/client/management/v3"
 	"k8s.io/apiserver/pkg/util/feature"
 	"reflect"
+	"strings"
 )
 
 const (
@@ -17,7 +18,7 @@ var (
 	GlobalFeatures       	 = newFeatureGate()
 	FeaturePackMap			 = map[string]featurePack{}
 
-	KontainerDrivers = NewFeature(client.KontainerDriverType, "beta", true)
+	KontainerDrivers = NewFeature(strings.ToLower(client.KontainerDriverType), "beta", true)
 )
 
 type FeatureGate interface {

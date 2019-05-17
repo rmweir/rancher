@@ -69,6 +69,7 @@ var (
 
 type featurePack struct {
 	name       string
+	Def 		bool
 	isStarted    bool
 	Crds       []string
 	startFuncs []interface{}
@@ -269,8 +270,10 @@ func Setup(ctx context.Context, apiContext *config.ScaledContext, clusterManager
 
 func setupFeaturePacks(ctx context.Context, apiContext *config.ScaledContext, clusterManager *clustermanager.Manager,
 	k8sProxy http.Handler, localClusterEnabled bool) error {
+	f := feature.Feature(strings.ToLower(client.KontainerDriverType))
 	kd := &featurePack{
-		client.KontainerDriverType,
+		string(f),
+		featureflags.GlobalFeatures.Enabled(f),
 		false,
 		[]string{client.KontainerDriverType},
 		[]interface{}{
@@ -281,6 +284,7 @@ func setupFeaturePacks(ctx context.Context, apiContext *config.ScaledContext, cl
 		},
 		apiContext.Management.KontainerDrivers(""),
 		apiContext.Schemas,
+
 	}
 	kd.load()
 	return nil
@@ -304,7 +308,7 @@ func (f *featurePack) Set(b string) error {
 
 func Set(name string) error {
 	if split := strings.Split(name, "="); len(split) > 1 {
-		FeaturePacks[split[0]].Disable()
+		// FeaturePacks[split[0]].Disable()
 		FeaturePacks[split[0]].Set(split[1])
 	}
 	return nil
