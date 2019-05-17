@@ -296,21 +296,16 @@ func (f *featurePack) Disable() {
 	schema.Validator = nil
 	schema.ActionHandler = nil
 	schema.Formatter = nil
-	// feat := feature.Feature(name)
-	//if featureflags.GlobalFeatures.Enabled(feat) {
-		// f.collection.DeleteCollection(&v1.DeleteOptions{}, v1.ListOptions{})
-		// featureflags.GlobalFeatures.Set(name + "=false")
-	//}
-
 }
 
-func (f *featurePack) Set(name string) error {
-	return featureflags.GlobalFeatures.Set(name + "=false")
+func (f *featurePack) Set(b string) error {
+	return featureflags.GlobalFeatures.Set(f.name + "=" + b)
 }
 
 func Set(name string) error {
 	if split := strings.Split(name, "="); len(split) > 1 {
 		FeaturePacks[split[0]].Disable()
+		FeaturePacks[split[0]].Set(split[1])
 	}
 	return nil
 }
