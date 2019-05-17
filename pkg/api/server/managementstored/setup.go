@@ -88,7 +88,8 @@ func runFeatureCRDS(factory *crd.Factory, ctx context.Context, storageContext ty
 		n := strings.Split(name, "=")[0]
 		feat := feature.Feature(n)
 		if featureflags.GlobalFeatures.Enabled(feat) {
-			enabledFeatureCRDS = append(enabledFeatureCRDS, FeaturePacks[n].Crds...)
+			f := FeaturePacks[n]
+			enabledFeatureCRDS = append(enabledFeatureCRDS, f.Crds...)
 		}
 	}
 	factory.BatchCreateCRDs(ctx, storageContext, schemas, version, enabledFeatureCRDS...)
@@ -170,7 +171,7 @@ func Setup(ctx context.Context, apiContext *config.ScaledContext, clusterManager
 		client.GlobalRoleType,
 		client.GroupMemberType,
 		client.GroupType,
-		client.KontainerDriverType,
+		// client.KontainerDriverType,
 		client.ListenConfigType,
 		client.MultiClusterAppType,
 		client.MultiClusterAppRevisionType,
@@ -271,7 +272,7 @@ func setupFeaturePacks(ctx context.Context, apiContext *config.ScaledContext, cl
 	kd := &featurePack{
 		client.KontainerDriverType,
 		false,
-		[]string{},
+		[]string{client.KontainerDriverType},
 		[]interface{}{
 			KontainerDriver,
 		},
@@ -299,11 +300,11 @@ func (f *featurePack) Disable(name string) {
 
 }
 
+func (f *featurePack) Set(name string) error {
+	return featureflags.GlobalFeatures.Set(name + "=false")
+}
 func (f *featurePack) Enable(name string) {
-	feat := feature.Feature(name)
-	if !featureflags.GlobalFeatures.Enabled(feat) {
-		featureflags.GlobalFeatures.Set(name + "=true")
-	}
+	featureflags.GlobalFeatures.Set(name + "=true")
 }
 
 func setupPasswordTypes(ctx context.Context, schemas *types.Schemas, management *config.ScaledContext) {

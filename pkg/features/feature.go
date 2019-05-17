@@ -56,7 +56,7 @@ func NewFeature(name string, release string, def bool) *feature.FeatureSpec {
 		}
 	case Beta:
 		f = &feature.FeatureSpec{
-			true,
+			def,
 			feature.Beta,
 		}
 	case GA:

@@ -2,7 +2,6 @@ package feature
 
 import (
 	"context"
-	"github.com/rancher/rancher/pkg/api/server/managementstored"
 	"github.com/rancher/rancher/pkg/features"
 	"github.com/rancher/types/apis/management.cattle.io/v3"
 	"github.com/sirupsen/logrus"
@@ -39,18 +38,15 @@ func (n *SettingController) sync(key string, obj *v3.Setting) (runtime.Object, e
 	if obj == nil || obj.DeletionTimestamp != nil {
 		return nil, nil
 	}
+
 	logrus.Infof("TEST feat setting sync: %s", obj.Name)
 	if split := strings.Split(obj.Name, "feat-"); len(split) > 1 {
-		switch strings.Split(obj.Name, "feat-")[1] {
-		case "kontainer-driver":
-			if !featureflags.GlobalFeatures.Enabled("kontainerDriver") {
-				managementstored.FeaturePacks["kontainerDriver"].Enable("kontainerDriver")
-				logrus.Infof("TEST kontainer ddriver enabled: %s", obj.Name)
-			} else {
-				managementstored.FeaturePacks["kontainer-driver"].Disable("kontainerDriver")
-				logrus.Infof("TEST kontainer driver disabled: %s", obj.Name)
-			}
+		featureSet := obj.Value
+		// TODO use feature packs sets
+		if err := featureflags.GlobalFeatures.Set(featureSet); err !=nil {
+			return nil, err
 		}
+		logrus.Info("TEST SUCCESS")
 	}
 
 	return nil, nil
