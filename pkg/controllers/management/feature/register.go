@@ -2,6 +2,7 @@ package feature
 
 import (
 	"context"
+	"github.com/rancher/rancher/pkg/api/server/managementstored"
 	"github.com/rancher/rancher/pkg/features"
 	"github.com/rancher/types/apis/management.cattle.io/v3"
 	"github.com/sirupsen/logrus"
@@ -43,7 +44,7 @@ func (n *SettingController) sync(key string, obj *v3.Setting) (runtime.Object, e
 	if split := strings.Split(obj.Name, "feat-"); len(split) > 1 {
 		featureSet := obj.Value
 		// TODO use feature packs sets
-		if err := featureflags.GlobalFeatures.Set(featureSet); err !=nil {
+		if err := managementstored.FeaturePacks[featureSet]; err !=nil {
 			return nil, err
 		}
 		logrus.Info("TEST SUCCESS")

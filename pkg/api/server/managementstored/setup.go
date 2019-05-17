@@ -291,18 +291,30 @@ func (f *featurePack) load() {
 
 }
 
-func (f *featurePack) Disable(name string) {
-	feat := feature.Feature(name)
-	if featureflags.GlobalFeatures.Enabled(feat) {
+func (f *featurePack) Disable() {
+	schema := f.schemas.Schema(&managementschema.Version, f.name)
+	schema.Validator = nil
+	schema.ActionHandler = nil
+	schema.Formatter = nil
+	// feat := feature.Feature(name)
+	//if featureflags.GlobalFeatures.Enabled(feat) {
 		// f.collection.DeleteCollection(&v1.DeleteOptions{}, v1.ListOptions{})
-		featureflags.GlobalFeatures.Set(name + "=false")
-	}
+		// featureflags.GlobalFeatures.Set(name + "=false")
+	//}
 
 }
 
 func (f *featurePack) Set(name string) error {
 	return featureflags.GlobalFeatures.Set(name + "=false")
 }
+
+func Set(name string) error {
+	if split := strings.Split(name, "="); len(split) > 1 {
+		FeaturePacks[split[0]].Disable()
+	}
+	return nil
+}
+
 func (f *featurePack) Enable(name string) {
 	featureflags.GlobalFeatures.Set(name + "=true")
 }
