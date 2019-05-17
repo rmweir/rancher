@@ -2,9 +2,8 @@ package feature
 
 import (
 	"context"
-	"fmt"
-	"github.com/rancher/rancher/pkg/api/server/managementstored"
 	"github.com/rancher/rancher/pkg/clustermanager"
+	"github.com/rancher/rancher/pkg/features"
 	"github.com/rancher/types/apis/management.cattle.io/v3"
 	"github.com/rancher/types/config"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -33,11 +32,11 @@ func newFeatSettingController(mgmt *config.ManagementContext) *SettingController
 
 //sync is called periodically and on real updates
 func (n *SettingController) sync(key string, obj *v3.Setting) (runtime.Object, error) {
-	feature := managementstored.FeaturePacks[key]
+	feature := featureflags.FeaturePacks[key]
 	featureSet := key + "="
 
 	if feature == nil {
-		return nil, fmt.Errorf("TEST FEATURE NIL %v", key)
+		return nil, nil
 	}
 
 	// If setting for feature is deleted, set feature to its default
@@ -51,7 +50,7 @@ func (n *SettingController) sync(key string, obj *v3.Setting) (runtime.Object, e
 		featureSet += obj.Value
 	}
 
-	managementstored.Set(featureSet)
+	featureflags.Set(featureSet)
 
 	return nil, nil
 }
