@@ -57,7 +57,6 @@ import (
 	"github.com/rancher/types/client/management/v3"
 	projectclient "github.com/rancher/types/client/project/v3"
 	"github.com/rancher/types/config"
-	"k8s.io/apiserver/pkg/util/feature"
 )
 
 
@@ -190,23 +189,10 @@ func Setup(ctx context.Context, apiContext *config.ScaledContext, clusterManager
 
 func setupFeaturePacks(ctx context.Context, apiContext *config.ScaledContext, clusterManager *clustermanager.Manager,
 	k8sProxy http.Handler, localClusterEnabled bool) error {
-	f := feature.Feature(strings.ToLower(client.KontainerDriverType))
-	kd := &featureflags.FeaturePack{
-		string(f),
-		featureflags.GlobalFeatures.Enabled(f),
-		false,
-		[]string{client.KontainerDriverType},
-		[]interface{}{
-			KontainerDriver,
-		},
-		[][]interface{}{
-			{apiContext.Schemas, apiContext},
-		},
-		apiContext.Management.KontainerDrivers(""),
-		apiContext.Schemas,
-
-	}
-	kd.Load()
+		name := strings.ToLower(client.KontainerDriverType)
+		kd := featureflags.NewFeaturePack(name, apiContext.Management.KontainerDrivers(""), ctx, apiContext, clusterManager)
+		kd.AddCrds(name)
+		kd.AddStartFunc(KontainerDriver, []interface{}{apiContext.Schemas, apiContext})
 	return nil
 }
 

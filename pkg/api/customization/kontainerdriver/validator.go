@@ -5,6 +5,7 @@ import (
 	"github.com/rancher/norman/httperror"
 	"github.com/rancher/norman/types"
 	"github.com/rancher/norman/types/convert"
+	"github.com/rancher/rancher/pkg/features"
 	"github.com/rancher/types/apis/management.cattle.io/v3"
 	"k8s.io/apimachinery/pkg/labels"
 )
@@ -24,6 +25,9 @@ func (v *Validator) Validator(request *types.APIContext, schema *types.Schema, d
 }
 
 func (v *Validator) validateKontainerDriverURL(request *types.APIContext, spec v3.KontainerDriverSpec) error {
+	if !featureflags.GlobalFeatures.Enabled("kontainerdriver") {
+		return httperror.NewAPIError(httperror.ActionNotAvailable, "TEST feature disabled")
+	}
 	kontainerDrivers, err := v.KontainerDriverLister.List("", labels.NewSelector())
 	if err != nil {
 		return httperror.WrapAPIError(err, httperror.ServerError, "Failed to list kontainer drivers")

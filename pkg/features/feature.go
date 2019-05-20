@@ -3,6 +3,10 @@ package featureflags
 import (
 	"context"
 	"fmt"
+	"github.com/rancher/norman/httperror"
+	"github.com/rancher/rancher/pkg/clustermanager"
+	"github.com/rancher/types/config"
+	"github.com/sirupsen/logrus"
 	"reflect"
 	"strings"
 
@@ -24,7 +28,7 @@ var (
 	GlobalFeatures = newFeatureGate()
 	FeaturePacks   = map[string]*FeaturePack{}
 
-	KontainerDrivers = NewFeature(strings.ToLower(client.KontainerDriverType), "beta", true)
+	KontainerDrivers = NewFeature(strings.ToLower(client.KontainerDriverType), "beta", false)
 )
 
 type FeatureGate interface {
@@ -133,11 +137,23 @@ func RunFeatureFns() {
 }
 
 func (f *FeaturePack) start() {
+
 	s := f.Schemas.Schema(&managementschema.Version, f.Name)
 	s.Store = &featStore{
 		s.Store,
 		f.Name,
 	}
+
+	origValidator := s.Validator
+	s.Validator = func(types *types.APIContext, schema *types.Schema, m map[string]interface{}) error {
+
+		feat := feature.Feature(f.Name)
+		if !GlobalFeatures.Enabled(feat) {
+			return httperror.NewAPIError(httperror.ActionNotAvailable, "TEST feature disabled")
+		}
+		return origValidator(types, schema, m)
+	}
+
 	f.IsStarted = true
 }
 
@@ -150,16 +166,17 @@ func runFunction(fn interface{}, args []interface{}) {
 	val.Call(callArgs)
 }
 
-func (f *FeaturePack) addStartFunc(fn interface{}) error {
+func (f *FeaturePack) AddStartFunc(fn interface{}, args []interface{}) error {
 	if reflect.TypeOf(fn).Kind() == reflect.Func {
 		f.StartFuncs = append(f.StartFuncs, fn)
+		f.StartArgs = append(f.StartArgs, args)
 		return nil
 	} else {
 		return fmt.Errorf("Must add a function")
 	}
 }
 
-func (f *FeaturePack) addCrds(crd string) {
+func (f *FeaturePack) AddCrds(crd string) {
 	f.Crds = append(f.Crds, crd)
 }
 
@@ -171,9 +188,15 @@ func (f *FeaturePack) Load() {
 // TODO probably delete
 func (f *FeaturePack) Disable() {
 	schema := f.Schemas.Schema(&managementschema.Version, f.Name)
-	schema.Validator = nil
-	schema.ActionHandler = nil
-	schema.Formatter = nil
+	origValidator := schema.Validator
+	schema.Validator = func(types *types.APIContext, schema *types.Schema, m map[string]interface{}) error {
+
+		feat := feature.Feature(f.Name)
+		if !GlobalFeatures.Enabled(feat) {
+			return httperror.NewAPIError(httperror.ActionNotAvailable, "TEST feature disabled")
+		}
+		return origValidator(types, schema, m)
+	}
 }
 
 func (f *FeaturePack) Set(b string) error {
@@ -184,6 +207,9 @@ func Set(name string) error {
 	if split := strings.Split(name, "="); len(split) > 1 {
 		// FeaturePacks[split[0]].Disable()
 		FeaturePacks[split[0]].Set(split[1])
+		if split[1] == "false" {
+			// FeaturePacks[split[0]].Disable()
+		}
 	}
 	return nil
 }
@@ -199,4 +225,26 @@ func (f *featStore) Create(apiContext *types.APIContext, schema *types.Schema, d
 		return f.Store.Create(apiContext, schema, data)
 	}
 	return nil, fmt.Errorf("TEST FEATURE disabled")
+}
+
+func NewFeaturePack(name string, c Collection, ctx context.Context, apiContext *config.ScaledContext, clusterManager *clustermanager.Manager) *FeaturePack{
+		f:= feature.Feature(name)
+		name = strings.ToLower(name)
+
+		kd := &FeaturePack{
+			name,
+			GlobalFeatures.Enabled(f),
+			false,
+			[]string{},
+			[]interface{}{},
+			[][]interface{}{},
+			c,
+			apiContext.Schemas,
+		}
+		if kd.Def == false {
+			logrus.Info("TEST DELETE COLLECTION")
+		}
+		kd.Load()
+
+		return kd
 }
