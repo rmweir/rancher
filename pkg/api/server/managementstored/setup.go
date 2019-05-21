@@ -193,7 +193,7 @@ func setupFeaturePacks(ctx context.Context, apiContext *config.ScaledContext, cl
 		kd := featureflags.NewFeaturePack(name, apiContext.Management.KontainerDrivers(""), ctx, apiContext, clusterManager)
 		kd.AddCrds(name)
 		kd.AddStartFunc(KontainerDriver, []interface{}{apiContext.Schemas, apiContext})
-	return nil
+		return nil
 }
 
 func setupPasswordTypes(ctx context.Context, schemas *types.Schemas, management *config.ScaledContext) {

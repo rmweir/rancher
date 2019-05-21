@@ -42,7 +42,7 @@ func Register(ctx context.Context, management *config.ManagementContext) {
 		kontainerDriverLister: management.Management.KontainerDrivers("").Controller().Lister(),
 		kontainerDrivers:      management.Management.KontainerDrivers(""),
 	}
-	if featureflags.GlobalFeatures.Enabled("kontainerDriver") {
+	if !featureflags.GlobalFeatures.Enabled("kontainerDriver") {
 		return
 	}
 	management.Management.KontainerDrivers("").AddLifecycle(ctx, "mgmt-kontainer-driver-lifecycle", lifecycle)

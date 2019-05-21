@@ -112,20 +112,22 @@ func RunFeatureCRDS(factory *crd.Factory, ctx context.Context, storageContext ty
 	g := GlobalFeatures.KnownFeatures()
 	for _, name := range g {
 		n := strings.Split(name, "=")[0]
-		feat := feature.Feature(n)
-		if GlobalFeatures.Enabled(feat) {
+		if FeaturePacks[n] != nil {
 			f := FeaturePacks[n]
 			enabledFeatureCRDS = append(enabledFeatureCRDS, f.Crds...)
 		}
 	}
-	factory.BatchCreateCRDs(ctx, storageContext, schemas, version, enabledFeatureCRDS...)
+
+	if len(enabledFeatureCRDS) > 0 {
+		factory.BatchCreateCRDs(ctx, storageContext, schemas, version, enabledFeatureCRDS...)
+	}
 }
 
 func RunFeatureFns() {
 	for _, name := range GlobalFeatures.KnownFeatures() {
 		n := strings.Split(name, "=")[0]
-		feat := feature.Feature(n)
-		if GlobalFeatures.Enabled(feat) {
+		// feat := feature.Feature(n)
+		if FeaturePacks[n] != nil {
 			fu := FeaturePacks
 			for index, f := range fu[n].StartFuncs {
 				args := FeaturePacks[n].StartArgs[index]
@@ -146,7 +148,6 @@ func (f *FeaturePack) start() {
 
 	origValidator := s.Validator
 	s.Validator = func(types *types.APIContext, schema *types.Schema, m map[string]interface{}) error {
-
 		feat := feature.Feature(f.Name)
 		if !GlobalFeatures.Enabled(feat) {
 			return httperror.NewAPIError(httperror.ActionNotAvailable, "TEST feature disabled")
@@ -185,18 +186,11 @@ func (f *FeaturePack) Load() {
 
 }
 
-// TODO probably delete
+// TODO add disable functions to this
 func (f *FeaturePack) Disable() {
 	schema := f.Schemas.Schema(&managementschema.Version, f.Name)
-	origValidator := schema.Validator
-	schema.Validator = func(types *types.APIContext, schema *types.Schema, m map[string]interface{}) error {
-
-		feat := feature.Feature(f.Name)
-		if !GlobalFeatures.Enabled(feat) {
-			return httperror.NewAPIError(httperror.ActionNotAvailable, "TEST feature disabled")
-		}
-		return origValidator(types, schema, m)
-	}
+	schema.Store = nil
+	schema.ActionHandler = nil
 }
 
 func (f *FeaturePack) Set(b string) error {
@@ -205,18 +199,22 @@ func (f *FeaturePack) Set(b string) error {
 
 func Set(name string) error {
 	if split := strings.Split(name, "="); len(split) > 1 {
-		// FeaturePacks[split[0]].Disable()
 		FeaturePacks[split[0]].Set(split[1])
 		if split[1] == "false" {
 			// FeaturePacks[split[0]].Disable()
+		} else {
+			// FeaturePacks[split[0]].Enable()
 		}
 	}
 	return nil
 }
 
-// TODO probably delete
-func (f *FeaturePack) Enable(name string) {
-	GlobalFeatures.Set(name + "=true")
+// TODO add start up functions to this
+func (f *FeaturePack) Enable() {
+	if f.IsStarted == false {
+		f.start()
+	}
+	GlobalFeatures.Set(f.Name + "=true")
 }
 
 func (f *featStore) Create(apiContext *types.APIContext, schema *types.Schema, data map[string]interface{}) (map[string]interface{}, error) {
@@ -224,7 +222,15 @@ func (f *featStore) Create(apiContext *types.APIContext, schema *types.Schema, d
 	if GlobalFeatures.Enabled(feat) {
 		return f.Store.Create(apiContext, schema, data)
 	}
-	return nil, fmt.Errorf("TEST FEATURE disabled")
+	return nil, nil
+}
+
+func (f *featStore) Watch(apiContext *types.APIContext, schema *types.Schema, opts *types.QueryOptions) (chan map[string]interface{}, error) {
+	feat := feature.Feature(f.name)
+	if GlobalFeatures.Enabled(feat) {
+		return f.Store.Watch(apiContext, schema, opts)
+	}
+	return nil, nil
 }
 
 func NewFeaturePack(name string, c Collection, ctx context.Context, apiContext *config.ScaledContext, clusterManager *clustermanager.Manager) *FeaturePack{

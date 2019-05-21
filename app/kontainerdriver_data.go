@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"github.com/rancher/rancher/pkg/features"
 	"os"
 	"strings"
 
@@ -14,6 +15,9 @@ import (
 )
 
 func addKontainerDrivers(management *config.ManagementContext) error {
+	if !featureflags.GlobalFeatures.Enabled("kontainerDriver") {
+		return nil
+	}
 	// create binary drop location if not exists
 	err := os.MkdirAll(kontainerdriver.DriverDir, 0777)
 	if err != nil {
