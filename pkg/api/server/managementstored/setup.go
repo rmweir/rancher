@@ -2,8 +2,12 @@ package managementstored
 
 import (
 	"context"
+	"github.com/rancher/rancher/pkg/settings"
+	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apiserver/pkg/util/feature"
 	"net/http"
 	"strings"
+	"encoding/json"
 
 	"github.com/rancher/norman/store/crd"
 	"github.com/rancher/norman/store/proxy"
@@ -125,7 +129,7 @@ func Setup(ctx context.Context, apiContext *config.ScaledContext, clusterManager
 		client.GlobalDNSProviderType)
 
 	featureflags.RunFeatureCRDS(factory, ctx, config.ManagementStorageContext, schemas, &managementschema.Version)
-
+	setFeaturesSetting(apiContext)
 	factory.BatchCreateCRDs(ctx, config.ManagementStorageContext, schemas, &projectschema.Version,
 		projectclient.AppType,
 		projectclient.AppRevisionType,
@@ -706,4 +710,41 @@ func GlobalDNSProviders(schemas *types.Schemas, management *config.ScaledContext
 		schema.CollectionMethods = []string{}
 		schema.ResourceMethods = []string{}
 	}
+}
+
+func setFeaturesSetting(managementContext *config.ScaledContext) {
+	featureMap := make(map[string]string)
+	l, _ := managementContext.Management.Settings("").List(v1.ListOptions{})
+	if l == nil {}
+	// settings.get
+	settings.Features.Get()
+	feat := settings.Features.Get()
+
+	if feat != "" {
+		err := json.Unmarshal([]byte(feat), &featureMap)
+		if err != nil {
+			return
+		}
+	} else {
+		err := json.Unmarshal([]byte(feat), &featureMap)
+		if err != nil {
+			return
+		}
+	}
+	for _, v := range featureflags.GlobalFeatures.KnownFeatures() {
+		f := feature.Feature(strings.Split(v, "=")[0])
+		b := featureflags.GlobalFeatures.Enabled(f)
+		if b {
+			featureMap[strings.Split(v, "=")[0]] = "true"
+		} else {
+			featureMap[strings.Split(v, "=")[0]] = "false"
+		}
+	}
+	b, err  := json.Marshal(featureMap)
+	if err != nil {
+		return
+	}
+	feat = string(b)
+	settings.Features.Set(string(b))
+
 }

@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"github.com/rancher/rancher/pkg/clustermanager"
 	"github.com/rancher/rancher/pkg/features"
+	"github.com/rancher/rancher/pkg/settings"
 	"github.com/rancher/types/apis/management.cattle.io/v3"
 	"github.com/rancher/types/config"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -42,17 +42,15 @@ func (n *SettingController) sync(key string, obj *v3.Setting) (runtime.Object, e
 		return nil, nil
 	}
 
-	features, err := n.settings.Get("features", v1.GetOptions{})
-	if err != nil {
-		return nil, err
-	}
-	if features.Value != "" {
-		err = json.Unmarshal([]byte(features.Value), featureMap)
+	features := settings.Features.Get()
+
+	if features != "" {
+		err := json.Unmarshal([]byte(features), &featureMap)
 		if err != nil {
 			return nil, err
 		}
 	} else {
-		err = json.Unmarshal([]byte(features.Default), &featureMap)
+		err := json.Unmarshal([]byte(features), &featureMap)
 		if err != nil {
 			return nil, err
 		}
@@ -73,8 +71,10 @@ func (n *SettingController) sync(key string, obj *v3.Setting) (runtime.Object, e
 	}
 
 	b, err  := json.Marshal(featureMap)
-	features.Value = string(b)
-	n.settings.Update(features)
+	if err != nil {
+		return nil, err
+	}
+	settings.Features.Set(string(b))
 	featureflags.Set(featureSet)
 
 	return nil, nil
