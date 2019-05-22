@@ -32,6 +32,7 @@ func Register(ctx context.Context, management *config.ManagementContext, cluster
 		nodeLister:           management.Management.Nodes("").Controller().Lister(),
 		clusterManager:       clusterManager,
 	}
+
 	management.Management.Clusters("").AddHandler(ctx, "cluster-deploy", c.sync)
 }
 
@@ -76,11 +77,6 @@ func (cd *clusterDeploy) sync(key string, cluster *v3.Cluster) (runtime.Object, 
 		return nil, err
 	}
 	return nil, updateErr
-}
-
-func (cd *clusterDeploy) sync2(key string, cluster *v3.Cluster) (runtime.Object, error) {
-	logrus.Infof("TEST DID REPLACE?")
-	return nil, nil
 }
 
 func (cd *clusterDeploy) doSync(cluster *v3.Cluster) error {

@@ -3,6 +3,7 @@ package feature
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/rancher/rancher/pkg/clustermanager"
 	"github.com/rancher/rancher/pkg/features"
 	"github.com/rancher/rancher/pkg/settings"
@@ -14,12 +15,12 @@ import (
 const (
 	featSettingController = "feat-kontainer-driver"
 )
+
 func RegisterEarly(ctx context.Context, management *config.ManagementContext, clusterManager *clustermanager.Manager) {
 	s := newFeatSettingController(management)
 
 	management.Management.Settings("").AddHandler(ctx, featSettingController, s.sync)
 }
-
 
 type SettingController struct {
 	settings v3.SettingInterface
@@ -32,7 +33,7 @@ func newFeatSettingController(mgmt *config.ManagementContext) *SettingController
 	return n
 }
 
-//sync is called periodically and on real updates
+// maintains aggregate features setting and sets feature pack(gate) accordingly
 func (n *SettingController) sync(key string, obj *v3.Setting) (runtime.Object, error) {
 	feature := featureflags.FeaturePacks[key]
 	featureSet := key + "="
@@ -47,15 +48,10 @@ func (n *SettingController) sync(key string, obj *v3.Setting) (runtime.Object, e
 	if features != "" {
 		err := json.Unmarshal([]byte(features), &featureMap)
 		if err != nil {
-			return nil, err
-		}
-	} else {
-		err := json.Unmarshal([]byte(features), &featureMap)
-		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("unable to read features setting")
 		}
 	}
-
+ 
 	// If setting for feature is deleted, set feature to its default
 	if obj == nil || obj.DeletionTimestamp != nil {
 		if feature.Def {
@@ -70,7 +66,7 @@ func (n *SettingController) sync(key string, obj *v3.Setting) (runtime.Object, e
 		featureMap[key] = obj.Value
 	}
 
-	b, err  := json.Marshal(featureMap)
+	b, err := json.Marshal(featureMap)
 	if err != nil {
 		return nil, err
 	}

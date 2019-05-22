@@ -2,12 +2,10 @@ package managementstored
 
 import (
 	"context"
-	"github.com/rancher/rancher/pkg/settings"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apiserver/pkg/util/feature"
+	"encoding/json"
+	"github.com/sirupsen/logrus"
 	"net/http"
 	"strings"
-	"encoding/json"
 
 	"github.com/rancher/norman/store/crd"
 	"github.com/rancher/norman/store/proxy"
@@ -56,21 +54,21 @@ import (
 	"github.com/rancher/rancher/pkg/namespace"
 	"github.com/rancher/rancher/pkg/nodeconfig"
 	sourcecodeproviders "github.com/rancher/rancher/pkg/pipeline/providers"
+	"github.com/rancher/rancher/pkg/settings"
 	managementschema "github.com/rancher/types/apis/management.cattle.io/v3/schema"
 	projectschema "github.com/rancher/types/apis/project.cattle.io/v3/schema"
 	"github.com/rancher/types/client/management/v3"
 	projectclient "github.com/rancher/types/client/project/v3"
 	"github.com/rancher/types/config"
+	"k8s.io/apiserver/pkg/util/feature"
 )
-
-
 
 func Setup(ctx context.Context, apiContext *config.ScaledContext, clusterManager *clustermanager.Manager,
 	k8sProxy http.Handler, localClusterEnabled bool) error {
 	// Here we setup all types that will be stored in the Management cluster
 	schemas := apiContext.Schemas
 
-	setupFeaturePacks(ctx, apiContext, clusterManager, k8sProxy, localClusterEnabled)
+	setupFeaturePacks(ctx, apiContext, clusterManager)
 
 	factory := &crd.Factory{ClientGetter: apiContext.ClientGetter}
 
@@ -129,7 +127,8 @@ func Setup(ctx context.Context, apiContext *config.ScaledContext, clusterManager
 		client.GlobalDNSProviderType)
 
 	featureflags.RunFeatureCRDS(factory, ctx, config.ManagementStorageContext, schemas, &managementschema.Version)
-	setFeaturesSetting(apiContext)
+	setFeaturesSetting()
+
 	factory.BatchCreateCRDs(ctx, config.ManagementStorageContext, schemas, &projectschema.Version,
 		projectclient.AppType,
 		projectclient.AppRevisionType,
@@ -191,13 +190,13 @@ func Setup(ctx context.Context, apiContext *config.ScaledContext, clusterManager
 	return nil
 }
 
-func setupFeaturePacks(ctx context.Context, apiContext *config.ScaledContext, clusterManager *clustermanager.Manager,
-	k8sProxy http.Handler, localClusterEnabled bool) error {
-		name := strings.ToLower(client.KontainerDriverType)
-		kd := featureflags.NewFeaturePack(name, apiContext.Management.KontainerDrivers(""), ctx, apiContext, clusterManager)
-		kd.AddCrds(name)
-		kd.AddStartFunc(KontainerDriver, []interface{}{apiContext.Schemas, apiContext})
-		return nil
+func setupFeaturePacks(ctx context.Context, apiContext *config.ScaledContext, clusterManager *clustermanager.Manager) error {
+	name := strings.ToLower(client.KontainerDriverType)
+	kd := featureflags.NewFeaturePack(name, apiContext.Management.KontainerDrivers(""), ctx, apiContext, clusterManager)
+	// make this a param later
+	kd.AddCrds(name)
+	kd.AddStartFunc(KontainerDriver, []interface{}{apiContext.Schemas, apiContext})
+	return nil
 }
 
 func setupPasswordTypes(ctx context.Context, schemas *types.Schemas, management *config.ScaledContext) {
@@ -634,7 +633,7 @@ func KontainerDriver(schemas *types.Schemas, management *config.ScaledContext) {
 	}
 	schema.ActionHandler = handler.ActionHandler
 	schema.Formatter = kontainerdriver.NewFormatter(management)
-
+	schema.Store = kontainerdriver.NewStore(management, schema.Store)
 	kontainerDriverValidator := kontainerdriver.Validator{
 		KontainerDriverLister: management.Management.KontainerDrivers("").Controller().Lister(),
 	}
@@ -712,25 +711,18 @@ func GlobalDNSProviders(schemas *types.Schemas, management *config.ScaledContext
 	}
 }
 
-func setFeaturesSetting(managementContext *config.ScaledContext) {
+func setFeaturesSetting() {
 	featureMap := make(map[string]string)
-	l, _ := managementContext.Management.Settings("").List(v1.ListOptions{})
-	if l == nil {}
-	// settings.get
-	settings.Features.Get()
 	feat := settings.Features.Get()
 
 	if feat != "" {
-		err := json.Unmarshal([]byte(feat), &featureMap)
-		if err != nil {
-			return
-		}
-	} else {
-		err := json.Unmarshal([]byte(feat), &featureMap)
-		if err != nil {
+		if err := json.Unmarshal([]byte(feat), &featureMap); err != nil {
+			logrus.Errorf("Unabled to to read features setting on setup")
 			return
 		}
 	}
+
+	// load all features into features setting, knownfeatures should be replaced later
 	for _, v := range featureflags.GlobalFeatures.KnownFeatures() {
 		f := feature.Feature(strings.Split(v, "=")[0])
 		b := featureflags.GlobalFeatures.Enabled(f)
@@ -740,11 +732,11 @@ func setFeaturesSetting(managementContext *config.ScaledContext) {
 			featureMap[strings.Split(v, "=")[0]] = "false"
 		}
 	}
-	b, err  := json.Marshal(featureMap)
+	bytes, err := json.Marshal(featureMap)
 	if err != nil {
 		return
 	}
-	feat = string(b)
-	settings.Features.Set(string(b))
+
+	settings.Features.Set(string(bytes))
 
 }

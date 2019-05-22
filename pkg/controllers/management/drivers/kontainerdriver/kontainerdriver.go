@@ -3,7 +3,6 @@ package kontainerdriver
 import (
 	"context"
 	"fmt"
-	"github.com/rancher/rancher/pkg/features"
 	"reflect"
 	"regexp"
 	"strings"
@@ -14,9 +13,10 @@ import (
 	"github.com/rancher/rancher/pkg/controllers/management/clusterprovisioner"
 	"github.com/rancher/rancher/pkg/controllers/management/drivers"
 	"github.com/rancher/rancher/pkg/controllers/management/drivers/nodedriver"
-	"github.com/rancher/types/apis/core/v1"
+	featureflags "github.com/rancher/rancher/pkg/features"
 	corev1 "github.com/rancher/types/apis/core/v1"
-	"github.com/rancher/types/apis/management.cattle.io/v3"
+	v1 "github.com/rancher/types/apis/core/v1"
+	v3 "github.com/rancher/types/apis/management.cattle.io/v3"
 	"github.com/rancher/types/config"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -32,8 +32,6 @@ const (
 var kontainerDriverName = regexp.MustCompile("kontainer-engine-driver-(.+)$")
 
 func Register(ctx context.Context, management *config.ManagementContext) {
-	logrus.Info("TEST kd disabled")
-
 	lifecycle := &Lifecycle{
 		dynamicSchemas:        management.Management.DynamicSchemas(""),
 		dynamicSchemasLister:  management.Management.DynamicSchemas("").Controller().Lister(),
@@ -42,14 +40,11 @@ func Register(ctx context.Context, management *config.ManagementContext) {
 		kontainerDriverLister: management.Management.KontainerDrivers("").Controller().Lister(),
 		kontainerDrivers:      management.Management.KontainerDrivers(""),
 	}
+
 	if !featureflags.GlobalFeatures.Enabled("kontainerDriver") {
 		return
 	}
 	management.Management.KontainerDrivers("").AddLifecycle(ctx, "mgmt-kontainer-driver-lifecycle", lifecycle)
-}
-
-type test interface {
-
 }
 
 type Lifecycle struct {
@@ -60,8 +55,6 @@ type Lifecycle struct {
 	kontainerDriverLister v3.KontainerDriverLister
 	kontainerDrivers      v3.KontainerDriverInterface
 }
-
-
 
 func (l *Lifecycle) Create(obj *v3.KontainerDriver) (runtime.Object, error) {
 	if !featureflags.GlobalFeatures.Enabled("kontainerDriver") {

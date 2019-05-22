@@ -3,18 +3,18 @@ package featureflags
 import (
 	"context"
 	"fmt"
-	"github.com/rancher/norman/httperror"
-	"github.com/rancher/rancher/pkg/clustermanager"
-	"github.com/rancher/types/config"
-	"github.com/sirupsen/logrus"
 	"reflect"
 	"strings"
 
+	"github.com/rancher/norman/httperror"
 	"github.com/rancher/norman/store/crd"
 	"github.com/rancher/norman/types"
+	"github.com/rancher/rancher/pkg/clustermanager"
 	managementschema "github.com/rancher/types/apis/management.cattle.io/v3/schema"
-	"github.com/rancher/types/client/management/v3"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	client "github.com/rancher/types/client/management/v3"
+	"github.com/rancher/types/config"
+	"github.com/sirupsen/logrus"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/util/feature"
 )
 
@@ -55,6 +55,7 @@ func newFeatureGate() FeatureGate {
 func init() {
 
 }
+
 // TODO: setup enable to run staartup functions if it has not been started yet
 func NewFeature(name string, release string, def bool) *feature.FeatureSpec {
 	var f *feature.FeatureSpec
@@ -93,7 +94,6 @@ type FeaturePack struct {
 	Crds       []string
 	StartFuncs []interface{}
 	StartArgs  [][]interface{}
-	Collection Collection
 	Schemas    *types.Schemas
 }
 
@@ -233,24 +233,23 @@ func (f *featStore) Watch(apiContext *types.APIContext, schema *types.Schema, op
 	return nil, nil
 }
 
-func NewFeaturePack(name string, c Collection, ctx context.Context, apiContext *config.ScaledContext, clusterManager *clustermanager.Manager) *FeaturePack{
-		f:= feature.Feature(name)
-		name = strings.ToLower(name)
+func NewFeaturePack(name string, c Collection, ctx context.Context, apiContext *config.ScaledContext, clusterManager *clustermanager.Manager) *FeaturePack {
+	f := feature.Feature(name)
+	name = strings.ToLower(name)
 
-		kd := &FeaturePack{
-			name,
-			GlobalFeatures.Enabled(f),
-			false,
-			[]string{},
-			[]interface{}{},
-			[][]interface{}{},
-			c,
-			apiContext.Schemas,
-		}
-		if kd.Def == false {
-			logrus.Info("TEST DELETE COLLECTION")
-		}
-		kd.Load()
+	kd := &FeaturePack{
+		name,
+		GlobalFeatures.Enabled(f),
+		false,
+		[]string{},
+		[]interface{}{},
+		[][]interface{}{},
+		apiContext.Schemas,
+	}
+	if kd.Def == false {
+		logrus.Info("TEST DELETE COLLECTION")
+	}
+	kd.Load()
 
-		return kd
+	return kd
 }
