@@ -141,6 +141,7 @@ func (mock *DynamicSchemaListerMock) ListCalls() []struct {
 
 var (
 	lockDynamicSchemaControllerMockAddClusterScopedHandler sync.RWMutex
+	lockDynamicSchemaControllerMockAddFeatureHandler       sync.RWMutex
 	lockDynamicSchemaControllerMockAddHandler              sync.RWMutex
 	lockDynamicSchemaControllerMockEnqueue                 sync.RWMutex
 	lockDynamicSchemaControllerMockGeneric                 sync.RWMutex
@@ -162,6 +163,9 @@ var _ v3.DynamicSchemaController = &DynamicSchemaControllerMock{}
 //         mockedDynamicSchemaController := &DynamicSchemaControllerMock{
 //             AddClusterScopedHandlerFunc: func(ctx context.Context, name string, clusterName string, handler v3.DynamicSchemaHandlerFunc)  {
 // 	               panic("mock out the AddClusterScopedHandler method")
+//             },
+//             AddFeatureHandlerFunc: func(enabled func(string) bool, feat string, ctx context.Context, name string, sync v3.DynamicSchemaHandlerFunc)  {
+// 	               panic("mock out the AddFeatureHandler method")
 //             },
 //             AddHandlerFunc: func(ctx context.Context, name string, handler v3.DynamicSchemaHandlerFunc)  {
 // 	               panic("mock out the AddHandler method")
@@ -193,6 +197,9 @@ var _ v3.DynamicSchemaController = &DynamicSchemaControllerMock{}
 type DynamicSchemaControllerMock struct {
 	// AddClusterScopedHandlerFunc mocks the AddClusterScopedHandler method.
 	AddClusterScopedHandlerFunc func(ctx context.Context, name string, clusterName string, handler v3.DynamicSchemaHandlerFunc)
+
+	// AddFeatureHandlerFunc mocks the AddFeatureHandler method.
+	AddFeatureHandlerFunc func(enabled func(string) bool, feat string, ctx context.Context, name string, sync v3.DynamicSchemaHandlerFunc)
 
 	// AddHandlerFunc mocks the AddHandler method.
 	AddHandlerFunc func(ctx context.Context, name string, handler v3.DynamicSchemaHandlerFunc)
@@ -227,6 +234,19 @@ type DynamicSchemaControllerMock struct {
 			ClusterName string
 			// Handler is the handler argument value.
 			Handler v3.DynamicSchemaHandlerFunc
+		}
+		// AddFeatureHandler holds details about calls to the AddFeatureHandler method.
+		AddFeatureHandler []struct {
+			// Enabled is the enabled argument value.
+			Enabled func(string) bool
+			// Feat is the feat argument value.
+			Feat string
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Name is the name argument value.
+			Name string
+			// Sync is the sync argument value.
+			Sync v3.DynamicSchemaHandlerFunc
 		}
 		// AddHandler holds details about calls to the AddHandler method.
 		AddHandler []struct {
@@ -308,6 +328,53 @@ func (mock *DynamicSchemaControllerMock) AddClusterScopedHandlerCalls() []struct
 	lockDynamicSchemaControllerMockAddClusterScopedHandler.RLock()
 	calls = mock.calls.AddClusterScopedHandler
 	lockDynamicSchemaControllerMockAddClusterScopedHandler.RUnlock()
+	return calls
+}
+
+// AddFeatureHandler calls AddFeatureHandlerFunc.
+func (mock *DynamicSchemaControllerMock) AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync v3.DynamicSchemaHandlerFunc) {
+	if mock.AddFeatureHandlerFunc == nil {
+		panic("DynamicSchemaControllerMock.AddFeatureHandlerFunc: method is nil but DynamicSchemaController.AddFeatureHandler was just called")
+	}
+	callInfo := struct {
+		Enabled func(string) bool
+		Feat    string
+		Ctx     context.Context
+		Name    string
+		Sync    v3.DynamicSchemaHandlerFunc
+	}{
+		Enabled: enabled,
+		Feat:    feat,
+		Ctx:     ctx,
+		Name:    name,
+		Sync:    sync,
+	}
+	lockDynamicSchemaControllerMockAddFeatureHandler.Lock()
+	mock.calls.AddFeatureHandler = append(mock.calls.AddFeatureHandler, callInfo)
+	lockDynamicSchemaControllerMockAddFeatureHandler.Unlock()
+	mock.AddFeatureHandlerFunc(enabled, feat, ctx, name, sync)
+}
+
+// AddFeatureHandlerCalls gets all the calls that were made to AddFeatureHandler.
+// Check the length with:
+//     len(mockedDynamicSchemaController.AddFeatureHandlerCalls())
+func (mock *DynamicSchemaControllerMock) AddFeatureHandlerCalls() []struct {
+	Enabled func(string) bool
+	Feat    string
+	Ctx     context.Context
+	Name    string
+	Sync    v3.DynamicSchemaHandlerFunc
+} {
+	var calls []struct {
+		Enabled func(string) bool
+		Feat    string
+		Ctx     context.Context
+		Name    string
+		Sync    v3.DynamicSchemaHandlerFunc
+	}
+	lockDynamicSchemaControllerMockAddFeatureHandler.RLock()
+	calls = mock.calls.AddFeatureHandler
+	lockDynamicSchemaControllerMockAddFeatureHandler.RUnlock()
 	return calls
 }
 
@@ -532,6 +599,7 @@ func (mock *DynamicSchemaControllerMock) SyncCalls() []struct {
 var (
 	lockDynamicSchemaInterfaceMockAddClusterScopedHandler   sync.RWMutex
 	lockDynamicSchemaInterfaceMockAddClusterScopedLifecycle sync.RWMutex
+	lockDynamicSchemaInterfaceMockAddFeatureHandler         sync.RWMutex
 	lockDynamicSchemaInterfaceMockAddHandler                sync.RWMutex
 	lockDynamicSchemaInterfaceMockAddLifecycle              sync.RWMutex
 	lockDynamicSchemaInterfaceMockController                sync.RWMutex
@@ -562,6 +630,9 @@ var _ v3.DynamicSchemaInterface = &DynamicSchemaInterfaceMock{}
 //             },
 //             AddClusterScopedLifecycleFunc: func(ctx context.Context, name string, clusterName string, lifecycle v3.DynamicSchemaLifecycle)  {
 // 	               panic("mock out the AddClusterScopedLifecycle method")
+//             },
+//             AddFeatureHandlerFunc: func(enabled func(string) bool, feat string, ctx context.Context, name string, sync v3.DynamicSchemaHandlerFunc)  {
+// 	               panic("mock out the AddFeatureHandler method")
 //             },
 //             AddHandlerFunc: func(ctx context.Context, name string, sync v3.DynamicSchemaHandlerFunc)  {
 // 	               panic("mock out the AddHandler method")
@@ -614,6 +685,9 @@ type DynamicSchemaInterfaceMock struct {
 
 	// AddClusterScopedLifecycleFunc mocks the AddClusterScopedLifecycle method.
 	AddClusterScopedLifecycleFunc func(ctx context.Context, name string, clusterName string, lifecycle v3.DynamicSchemaLifecycle)
+
+	// AddFeatureHandlerFunc mocks the AddFeatureHandler method.
+	AddFeatureHandlerFunc func(enabled func(string) bool, feat string, ctx context.Context, name string, sync v3.DynamicSchemaHandlerFunc)
 
 	// AddHandlerFunc mocks the AddHandler method.
 	AddHandlerFunc func(ctx context.Context, name string, sync v3.DynamicSchemaHandlerFunc)
@@ -677,6 +751,19 @@ type DynamicSchemaInterfaceMock struct {
 			ClusterName string
 			// Lifecycle is the lifecycle argument value.
 			Lifecycle v3.DynamicSchemaLifecycle
+		}
+		// AddFeatureHandler holds details about calls to the AddFeatureHandler method.
+		AddFeatureHandler []struct {
+			// Enabled is the enabled argument value.
+			Enabled func(string) bool
+			// Feat is the feat argument value.
+			Feat string
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Name is the name argument value.
+			Name string
+			// Sync is the sync argument value.
+			Sync v3.DynamicSchemaHandlerFunc
 		}
 		// AddHandler holds details about calls to the AddHandler method.
 		AddHandler []struct {
@@ -847,6 +934,53 @@ func (mock *DynamicSchemaInterfaceMock) AddClusterScopedLifecycleCalls() []struc
 	lockDynamicSchemaInterfaceMockAddClusterScopedLifecycle.RLock()
 	calls = mock.calls.AddClusterScopedLifecycle
 	lockDynamicSchemaInterfaceMockAddClusterScopedLifecycle.RUnlock()
+	return calls
+}
+
+// AddFeatureHandler calls AddFeatureHandlerFunc.
+func (mock *DynamicSchemaInterfaceMock) AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync v3.DynamicSchemaHandlerFunc) {
+	if mock.AddFeatureHandlerFunc == nil {
+		panic("DynamicSchemaInterfaceMock.AddFeatureHandlerFunc: method is nil but DynamicSchemaInterface.AddFeatureHandler was just called")
+	}
+	callInfo := struct {
+		Enabled func(string) bool
+		Feat    string
+		Ctx     context.Context
+		Name    string
+		Sync    v3.DynamicSchemaHandlerFunc
+	}{
+		Enabled: enabled,
+		Feat:    feat,
+		Ctx:     ctx,
+		Name:    name,
+		Sync:    sync,
+	}
+	lockDynamicSchemaInterfaceMockAddFeatureHandler.Lock()
+	mock.calls.AddFeatureHandler = append(mock.calls.AddFeatureHandler, callInfo)
+	lockDynamicSchemaInterfaceMockAddFeatureHandler.Unlock()
+	mock.AddFeatureHandlerFunc(enabled, feat, ctx, name, sync)
+}
+
+// AddFeatureHandlerCalls gets all the calls that were made to AddFeatureHandler.
+// Check the length with:
+//     len(mockedDynamicSchemaInterface.AddFeatureHandlerCalls())
+func (mock *DynamicSchemaInterfaceMock) AddFeatureHandlerCalls() []struct {
+	Enabled func(string) bool
+	Feat    string
+	Ctx     context.Context
+	Name    string
+	Sync    v3.DynamicSchemaHandlerFunc
+} {
+	var calls []struct {
+		Enabled func(string) bool
+		Feat    string
+		Ctx     context.Context
+		Name    string
+		Sync    v3.DynamicSchemaHandlerFunc
+	}
+	lockDynamicSchemaInterfaceMockAddFeatureHandler.RLock()
+	calls = mock.calls.AddFeatureHandler
+	lockDynamicSchemaInterfaceMockAddFeatureHandler.RUnlock()
 	return calls
 }
 

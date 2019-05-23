@@ -69,6 +69,7 @@ type NetworkPolicyController interface {
 	Informer() cache.SharedIndexInformer
 	Lister() NetworkPolicyLister
 	AddHandler(ctx context.Context, name string, handler NetworkPolicyHandlerFunc)
+	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync NetworkPolicyHandlerFunc)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, handler NetworkPolicyHandlerFunc)
 	Enqueue(namespace, name string)
 	Sync(ctx context.Context) error
@@ -88,6 +89,7 @@ type NetworkPolicyInterface interface {
 	DeleteCollection(deleteOpts *metav1.DeleteOptions, listOpts metav1.ListOptions) error
 	Controller() NetworkPolicyController
 	AddHandler(ctx context.Context, name string, sync NetworkPolicyHandlerFunc)
+	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync NetworkPolicyHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle NetworkPolicyLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync NetworkPolicyHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle NetworkPolicyLifecycle)
@@ -141,6 +143,20 @@ func (c *networkPolicyController) Lister() NetworkPolicyLister {
 func (c *networkPolicyController) AddHandler(ctx context.Context, name string, handler NetworkPolicyHandlerFunc) {
 	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
 		if obj == nil {
+			return handler(key, nil)
+		} else if v, ok := obj.(*v1.NetworkPolicy); ok {
+			return handler(key, v)
+		} else {
+			return nil, nil
+		}
+	})
+}
+
+func (c *networkPolicyController) AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, handler NetworkPolicyHandlerFunc) {
+	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
+		if !enabled(feat) {
+			return nil, nil
+		} else if obj == nil {
 			return handler(key, nil)
 		} else if v, ok := obj.(*v1.NetworkPolicy); ok {
 			return handler(key, v)
@@ -255,6 +271,10 @@ func (s *networkPolicyClient) DeleteCollection(deleteOpts *metav1.DeleteOptions,
 
 func (s *networkPolicyClient) AddHandler(ctx context.Context, name string, sync NetworkPolicyHandlerFunc) {
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *networkPolicyClient) AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync NetworkPolicyHandlerFunc) {
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *networkPolicyClient) AddLifecycle(ctx context.Context, name string, lifecycle NetworkPolicyLifecycle) {

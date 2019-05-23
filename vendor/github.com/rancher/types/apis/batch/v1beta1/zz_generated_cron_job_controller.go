@@ -69,6 +69,7 @@ type CronJobController interface {
 	Informer() cache.SharedIndexInformer
 	Lister() CronJobLister
 	AddHandler(ctx context.Context, name string, handler CronJobHandlerFunc)
+	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync CronJobHandlerFunc)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, handler CronJobHandlerFunc)
 	Enqueue(namespace, name string)
 	Sync(ctx context.Context) error
@@ -88,6 +89,7 @@ type CronJobInterface interface {
 	DeleteCollection(deleteOpts *metav1.DeleteOptions, listOpts metav1.ListOptions) error
 	Controller() CronJobController
 	AddHandler(ctx context.Context, name string, sync CronJobHandlerFunc)
+	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync CronJobHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle CronJobLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync CronJobHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle CronJobLifecycle)
@@ -141,6 +143,20 @@ func (c *cronJobController) Lister() CronJobLister {
 func (c *cronJobController) AddHandler(ctx context.Context, name string, handler CronJobHandlerFunc) {
 	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
 		if obj == nil {
+			return handler(key, nil)
+		} else if v, ok := obj.(*v1beta1.CronJob); ok {
+			return handler(key, v)
+		} else {
+			return nil, nil
+		}
+	})
+}
+
+func (c *cronJobController) AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, handler CronJobHandlerFunc) {
+	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
+		if !enabled(feat) {
+			return nil, nil
+		} else if obj == nil {
 			return handler(key, nil)
 		} else if v, ok := obj.(*v1beta1.CronJob); ok {
 			return handler(key, v)
@@ -255,6 +271,10 @@ func (s *cronJobClient) DeleteCollection(deleteOpts *metav1.DeleteOptions, listO
 
 func (s *cronJobClient) AddHandler(ctx context.Context, name string, sync CronJobHandlerFunc) {
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *cronJobClient) AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync CronJobHandlerFunc) {
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *cronJobClient) AddLifecycle(ctx context.Context, name string, lifecycle CronJobLifecycle) {

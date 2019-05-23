@@ -69,6 +69,7 @@ type PersistentVolumeClaimController interface {
 	Informer() cache.SharedIndexInformer
 	Lister() PersistentVolumeClaimLister
 	AddHandler(ctx context.Context, name string, handler PersistentVolumeClaimHandlerFunc)
+	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync PersistentVolumeClaimHandlerFunc)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, handler PersistentVolumeClaimHandlerFunc)
 	Enqueue(namespace, name string)
 	Sync(ctx context.Context) error
@@ -88,6 +89,7 @@ type PersistentVolumeClaimInterface interface {
 	DeleteCollection(deleteOpts *metav1.DeleteOptions, listOpts metav1.ListOptions) error
 	Controller() PersistentVolumeClaimController
 	AddHandler(ctx context.Context, name string, sync PersistentVolumeClaimHandlerFunc)
+	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync PersistentVolumeClaimHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle PersistentVolumeClaimLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync PersistentVolumeClaimHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle PersistentVolumeClaimLifecycle)
@@ -141,6 +143,20 @@ func (c *persistentVolumeClaimController) Lister() PersistentVolumeClaimLister {
 func (c *persistentVolumeClaimController) AddHandler(ctx context.Context, name string, handler PersistentVolumeClaimHandlerFunc) {
 	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
 		if obj == nil {
+			return handler(key, nil)
+		} else if v, ok := obj.(*v1.PersistentVolumeClaim); ok {
+			return handler(key, v)
+		} else {
+			return nil, nil
+		}
+	})
+}
+
+func (c *persistentVolumeClaimController) AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, handler PersistentVolumeClaimHandlerFunc) {
+	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
+		if !enabled(feat) {
+			return nil, nil
+		} else if obj == nil {
 			return handler(key, nil)
 		} else if v, ok := obj.(*v1.PersistentVolumeClaim); ok {
 			return handler(key, v)
@@ -255,6 +271,10 @@ func (s *persistentVolumeClaimClient) DeleteCollection(deleteOpts *metav1.Delete
 
 func (s *persistentVolumeClaimClient) AddHandler(ctx context.Context, name string, sync PersistentVolumeClaimHandlerFunc) {
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *persistentVolumeClaimClient) AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync PersistentVolumeClaimHandlerFunc) {
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *persistentVolumeClaimClient) AddLifecycle(ctx context.Context, name string, lifecycle PersistentVolumeClaimLifecycle) {

@@ -68,6 +68,7 @@ type AppRevisionController interface {
 	Informer() cache.SharedIndexInformer
 	Lister() AppRevisionLister
 	AddHandler(ctx context.Context, name string, handler AppRevisionHandlerFunc)
+	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync AppRevisionHandlerFunc)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, handler AppRevisionHandlerFunc)
 	Enqueue(namespace, name string)
 	Sync(ctx context.Context) error
@@ -87,6 +88,7 @@ type AppRevisionInterface interface {
 	DeleteCollection(deleteOpts *metav1.DeleteOptions, listOpts metav1.ListOptions) error
 	Controller() AppRevisionController
 	AddHandler(ctx context.Context, name string, sync AppRevisionHandlerFunc)
+	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync AppRevisionHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle AppRevisionLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync AppRevisionHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle AppRevisionLifecycle)
@@ -140,6 +142,20 @@ func (c *appRevisionController) Lister() AppRevisionLister {
 func (c *appRevisionController) AddHandler(ctx context.Context, name string, handler AppRevisionHandlerFunc) {
 	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
 		if obj == nil {
+			return handler(key, nil)
+		} else if v, ok := obj.(*AppRevision); ok {
+			return handler(key, v)
+		} else {
+			return nil, nil
+		}
+	})
+}
+
+func (c *appRevisionController) AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, handler AppRevisionHandlerFunc) {
+	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
+		if !enabled(feat) {
+			return nil, nil
+		} else if obj == nil {
 			return handler(key, nil)
 		} else if v, ok := obj.(*AppRevision); ok {
 			return handler(key, v)
@@ -254,6 +270,10 @@ func (s *appRevisionClient) DeleteCollection(deleteOpts *metav1.DeleteOptions, l
 
 func (s *appRevisionClient) AddHandler(ctx context.Context, name string, sync AppRevisionHandlerFunc) {
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *appRevisionClient) AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync AppRevisionHandlerFunc) {
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *appRevisionClient) AddLifecycle(ctx context.Context, name string, lifecycle AppRevisionLifecycle) {

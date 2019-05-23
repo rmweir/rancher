@@ -68,6 +68,7 @@ type ProjectController interface {
 	Informer() cache.SharedIndexInformer
 	Lister() ProjectLister
 	AddHandler(ctx context.Context, name string, handler ProjectHandlerFunc)
+	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync ProjectHandlerFunc)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, handler ProjectHandlerFunc)
 	Enqueue(namespace, name string)
 	Sync(ctx context.Context) error
@@ -87,6 +88,7 @@ type ProjectInterface interface {
 	DeleteCollection(deleteOpts *metav1.DeleteOptions, listOpts metav1.ListOptions) error
 	Controller() ProjectController
 	AddHandler(ctx context.Context, name string, sync ProjectHandlerFunc)
+	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync ProjectHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle ProjectLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync ProjectHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle ProjectLifecycle)
@@ -140,6 +142,20 @@ func (c *projectController) Lister() ProjectLister {
 func (c *projectController) AddHandler(ctx context.Context, name string, handler ProjectHandlerFunc) {
 	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
 		if obj == nil {
+			return handler(key, nil)
+		} else if v, ok := obj.(*Project); ok {
+			return handler(key, v)
+		} else {
+			return nil, nil
+		}
+	})
+}
+
+func (c *projectController) AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, handler ProjectHandlerFunc) {
+	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
+		if !enabled(feat) {
+			return nil, nil
+		} else if obj == nil {
 			return handler(key, nil)
 		} else if v, ok := obj.(*Project); ok {
 			return handler(key, v)
@@ -254,6 +270,10 @@ func (s *projectClient) DeleteCollection(deleteOpts *metav1.DeleteOptions, listO
 
 func (s *projectClient) AddHandler(ctx context.Context, name string, sync ProjectHandlerFunc) {
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *projectClient) AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync ProjectHandlerFunc) {
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *projectClient) AddLifecycle(ctx context.Context, name string, lifecycle ProjectLifecycle) {

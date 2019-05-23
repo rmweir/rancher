@@ -68,6 +68,7 @@ type ProjectCatalogController interface {
 	Informer() cache.SharedIndexInformer
 	Lister() ProjectCatalogLister
 	AddHandler(ctx context.Context, name string, handler ProjectCatalogHandlerFunc)
+	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync ProjectCatalogHandlerFunc)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, handler ProjectCatalogHandlerFunc)
 	Enqueue(namespace, name string)
 	Sync(ctx context.Context) error
@@ -87,6 +88,7 @@ type ProjectCatalogInterface interface {
 	DeleteCollection(deleteOpts *metav1.DeleteOptions, listOpts metav1.ListOptions) error
 	Controller() ProjectCatalogController
 	AddHandler(ctx context.Context, name string, sync ProjectCatalogHandlerFunc)
+	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync ProjectCatalogHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle ProjectCatalogLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync ProjectCatalogHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle ProjectCatalogLifecycle)
@@ -140,6 +142,20 @@ func (c *projectCatalogController) Lister() ProjectCatalogLister {
 func (c *projectCatalogController) AddHandler(ctx context.Context, name string, handler ProjectCatalogHandlerFunc) {
 	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
 		if obj == nil {
+			return handler(key, nil)
+		} else if v, ok := obj.(*ProjectCatalog); ok {
+			return handler(key, v)
+		} else {
+			return nil, nil
+		}
+	})
+}
+
+func (c *projectCatalogController) AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, handler ProjectCatalogHandlerFunc) {
+	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
+		if !enabled(feat) {
+			return nil, nil
+		} else if obj == nil {
 			return handler(key, nil)
 		} else if v, ok := obj.(*ProjectCatalog); ok {
 			return handler(key, v)
@@ -254,6 +270,10 @@ func (s *projectCatalogClient) DeleteCollection(deleteOpts *metav1.DeleteOptions
 
 func (s *projectCatalogClient) AddHandler(ctx context.Context, name string, sync ProjectCatalogHandlerFunc) {
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *projectCatalogClient) AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync ProjectCatalogHandlerFunc) {
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *projectCatalogClient) AddLifecycle(ctx context.Context, name string, lifecycle ProjectCatalogLifecycle) {

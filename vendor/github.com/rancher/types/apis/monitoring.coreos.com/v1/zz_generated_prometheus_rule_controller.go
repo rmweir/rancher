@@ -69,6 +69,7 @@ type PrometheusRuleController interface {
 	Informer() cache.SharedIndexInformer
 	Lister() PrometheusRuleLister
 	AddHandler(ctx context.Context, name string, handler PrometheusRuleHandlerFunc)
+	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync PrometheusRuleHandlerFunc)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, handler PrometheusRuleHandlerFunc)
 	Enqueue(namespace, name string)
 	Sync(ctx context.Context) error
@@ -88,6 +89,7 @@ type PrometheusRuleInterface interface {
 	DeleteCollection(deleteOpts *metav1.DeleteOptions, listOpts metav1.ListOptions) error
 	Controller() PrometheusRuleController
 	AddHandler(ctx context.Context, name string, sync PrometheusRuleHandlerFunc)
+	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync PrometheusRuleHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle PrometheusRuleLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync PrometheusRuleHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle PrometheusRuleLifecycle)
@@ -141,6 +143,20 @@ func (c *prometheusRuleController) Lister() PrometheusRuleLister {
 func (c *prometheusRuleController) AddHandler(ctx context.Context, name string, handler PrometheusRuleHandlerFunc) {
 	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
 		if obj == nil {
+			return handler(key, nil)
+		} else if v, ok := obj.(*v1.PrometheusRule); ok {
+			return handler(key, v)
+		} else {
+			return nil, nil
+		}
+	})
+}
+
+func (c *prometheusRuleController) AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, handler PrometheusRuleHandlerFunc) {
+	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
+		if !enabled(feat) {
+			return nil, nil
+		} else if obj == nil {
 			return handler(key, nil)
 		} else if v, ok := obj.(*v1.PrometheusRule); ok {
 			return handler(key, v)
@@ -255,6 +271,10 @@ func (s *prometheusRuleClient) DeleteCollection(deleteOpts *metav1.DeleteOptions
 
 func (s *prometheusRuleClient) AddHandler(ctx context.Context, name string, sync PrometheusRuleHandlerFunc) {
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *prometheusRuleClient) AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync PrometheusRuleHandlerFunc) {
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *prometheusRuleClient) AddLifecycle(ctx context.Context, name string, lifecycle PrometheusRuleLifecycle) {

@@ -68,6 +68,7 @@ type PipelineSettingController interface {
 	Informer() cache.SharedIndexInformer
 	Lister() PipelineSettingLister
 	AddHandler(ctx context.Context, name string, handler PipelineSettingHandlerFunc)
+	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync PipelineSettingHandlerFunc)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, handler PipelineSettingHandlerFunc)
 	Enqueue(namespace, name string)
 	Sync(ctx context.Context) error
@@ -87,6 +88,7 @@ type PipelineSettingInterface interface {
 	DeleteCollection(deleteOpts *metav1.DeleteOptions, listOpts metav1.ListOptions) error
 	Controller() PipelineSettingController
 	AddHandler(ctx context.Context, name string, sync PipelineSettingHandlerFunc)
+	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync PipelineSettingHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle PipelineSettingLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync PipelineSettingHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle PipelineSettingLifecycle)
@@ -140,6 +142,20 @@ func (c *pipelineSettingController) Lister() PipelineSettingLister {
 func (c *pipelineSettingController) AddHandler(ctx context.Context, name string, handler PipelineSettingHandlerFunc) {
 	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
 		if obj == nil {
+			return handler(key, nil)
+		} else if v, ok := obj.(*PipelineSetting); ok {
+			return handler(key, v)
+		} else {
+			return nil, nil
+		}
+	})
+}
+
+func (c *pipelineSettingController) AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, handler PipelineSettingHandlerFunc) {
+	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
+		if !enabled(feat) {
+			return nil, nil
+		} else if obj == nil {
 			return handler(key, nil)
 		} else if v, ok := obj.(*PipelineSetting); ok {
 			return handler(key, v)
@@ -254,6 +270,10 @@ func (s *pipelineSettingClient) DeleteCollection(deleteOpts *metav1.DeleteOption
 
 func (s *pipelineSettingClient) AddHandler(ctx context.Context, name string, sync PipelineSettingHandlerFunc) {
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *pipelineSettingClient) AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync PipelineSettingHandlerFunc) {
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *pipelineSettingClient) AddLifecycle(ctx context.Context, name string, lifecycle PipelineSettingLifecycle) {

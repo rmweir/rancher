@@ -126,8 +126,7 @@ func RunFeatureCRDS(factory *crd.Factory, ctx context.Context, storageContext ty
 func RunFeatureFns() {
 	for _, name := range GlobalFeatures.KnownFeatures() {
 		n := strings.Split(name, "=")[0]
-		// feat := feature.Feature(n)
-		if FeaturePacks[n] != nil {// && GlobalFeatures.Enabled(feature.Feature(n)) {
+		if FeaturePacks[n] != nil {
 			fu := FeaturePacks
 			for index, f := range fu[n].StartFuncs {
 				args := FeaturePacks[n].StartArgs[index]
@@ -252,4 +251,8 @@ func NewFeaturePack(name string, c Collection, ctx context.Context, apiContext *
 	kd.Load()
 
 	return kd
+}
+
+func IsFeatEnabled(feat string) bool {
+	return GlobalFeatures.Enabled(feature.Feature(feat))
 }

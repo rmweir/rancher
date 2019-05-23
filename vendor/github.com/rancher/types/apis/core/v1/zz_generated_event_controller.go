@@ -68,6 +68,7 @@ type EventController interface {
 	Informer() cache.SharedIndexInformer
 	Lister() EventLister
 	AddHandler(ctx context.Context, name string, handler EventHandlerFunc)
+	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync EventHandlerFunc)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, handler EventHandlerFunc)
 	Enqueue(namespace, name string)
 	Sync(ctx context.Context) error
@@ -87,6 +88,7 @@ type EventInterface interface {
 	DeleteCollection(deleteOpts *metav1.DeleteOptions, listOpts metav1.ListOptions) error
 	Controller() EventController
 	AddHandler(ctx context.Context, name string, sync EventHandlerFunc)
+	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync EventHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle EventLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync EventHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle EventLifecycle)
@@ -140,6 +142,20 @@ func (c *eventController) Lister() EventLister {
 func (c *eventController) AddHandler(ctx context.Context, name string, handler EventHandlerFunc) {
 	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
 		if obj == nil {
+			return handler(key, nil)
+		} else if v, ok := obj.(*v1.Event); ok {
+			return handler(key, v)
+		} else {
+			return nil, nil
+		}
+	})
+}
+
+func (c *eventController) AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, handler EventHandlerFunc) {
+	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
+		if !enabled(feat) {
+			return nil, nil
+		} else if obj == nil {
 			return handler(key, nil)
 		} else if v, ok := obj.(*v1.Event); ok {
 			return handler(key, v)
@@ -254,6 +270,10 @@ func (s *eventClient) DeleteCollection(deleteOpts *metav1.DeleteOptions, listOpt
 
 func (s *eventClient) AddHandler(ctx context.Context, name string, sync EventHandlerFunc) {
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *eventClient) AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync EventHandlerFunc) {
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *eventClient) AddLifecycle(ctx context.Context, name string, lifecycle EventLifecycle) {

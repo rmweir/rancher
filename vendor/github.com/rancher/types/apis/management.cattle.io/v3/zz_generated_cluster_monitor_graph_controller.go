@@ -68,6 +68,7 @@ type ClusterMonitorGraphController interface {
 	Informer() cache.SharedIndexInformer
 	Lister() ClusterMonitorGraphLister
 	AddHandler(ctx context.Context, name string, handler ClusterMonitorGraphHandlerFunc)
+	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync ClusterMonitorGraphHandlerFunc)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, handler ClusterMonitorGraphHandlerFunc)
 	Enqueue(namespace, name string)
 	Sync(ctx context.Context) error
@@ -87,6 +88,7 @@ type ClusterMonitorGraphInterface interface {
 	DeleteCollection(deleteOpts *metav1.DeleteOptions, listOpts metav1.ListOptions) error
 	Controller() ClusterMonitorGraphController
 	AddHandler(ctx context.Context, name string, sync ClusterMonitorGraphHandlerFunc)
+	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync ClusterMonitorGraphHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle ClusterMonitorGraphLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync ClusterMonitorGraphHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle ClusterMonitorGraphLifecycle)
@@ -140,6 +142,20 @@ func (c *clusterMonitorGraphController) Lister() ClusterMonitorGraphLister {
 func (c *clusterMonitorGraphController) AddHandler(ctx context.Context, name string, handler ClusterMonitorGraphHandlerFunc) {
 	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
 		if obj == nil {
+			return handler(key, nil)
+		} else if v, ok := obj.(*ClusterMonitorGraph); ok {
+			return handler(key, v)
+		} else {
+			return nil, nil
+		}
+	})
+}
+
+func (c *clusterMonitorGraphController) AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, handler ClusterMonitorGraphHandlerFunc) {
+	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
+		if !enabled(feat) {
+			return nil, nil
+		} else if obj == nil {
 			return handler(key, nil)
 		} else if v, ok := obj.(*ClusterMonitorGraph); ok {
 			return handler(key, v)
@@ -254,6 +270,10 @@ func (s *clusterMonitorGraphClient) DeleteCollection(deleteOpts *metav1.DeleteOp
 
 func (s *clusterMonitorGraphClient) AddHandler(ctx context.Context, name string, sync ClusterMonitorGraphHandlerFunc) {
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *clusterMonitorGraphClient) AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync ClusterMonitorGraphHandlerFunc) {
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *clusterMonitorGraphClient) AddLifecycle(ctx context.Context, name string, lifecycle ClusterMonitorGraphLifecycle) {

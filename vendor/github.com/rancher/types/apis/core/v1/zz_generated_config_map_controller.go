@@ -69,6 +69,7 @@ type ConfigMapController interface {
 	Informer() cache.SharedIndexInformer
 	Lister() ConfigMapLister
 	AddHandler(ctx context.Context, name string, handler ConfigMapHandlerFunc)
+	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync ConfigMapHandlerFunc)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, handler ConfigMapHandlerFunc)
 	Enqueue(namespace, name string)
 	Sync(ctx context.Context) error
@@ -88,6 +89,7 @@ type ConfigMapInterface interface {
 	DeleteCollection(deleteOpts *metav1.DeleteOptions, listOpts metav1.ListOptions) error
 	Controller() ConfigMapController
 	AddHandler(ctx context.Context, name string, sync ConfigMapHandlerFunc)
+	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync ConfigMapHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle ConfigMapLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync ConfigMapHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle ConfigMapLifecycle)
@@ -141,6 +143,20 @@ func (c *configMapController) Lister() ConfigMapLister {
 func (c *configMapController) AddHandler(ctx context.Context, name string, handler ConfigMapHandlerFunc) {
 	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
 		if obj == nil {
+			return handler(key, nil)
+		} else if v, ok := obj.(*v1.ConfigMap); ok {
+			return handler(key, v)
+		} else {
+			return nil, nil
+		}
+	})
+}
+
+func (c *configMapController) AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, handler ConfigMapHandlerFunc) {
+	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
+		if !enabled(feat) {
+			return nil, nil
+		} else if obj == nil {
 			return handler(key, nil)
 		} else if v, ok := obj.(*v1.ConfigMap); ok {
 			return handler(key, v)
@@ -255,6 +271,10 @@ func (s *configMapClient) DeleteCollection(deleteOpts *metav1.DeleteOptions, lis
 
 func (s *configMapClient) AddHandler(ctx context.Context, name string, sync ConfigMapHandlerFunc) {
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *configMapClient) AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync ConfigMapHandlerFunc) {
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *configMapClient) AddLifecycle(ctx context.Context, name string, lifecycle ConfigMapLifecycle) {

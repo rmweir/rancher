@@ -69,6 +69,7 @@ type SecretController interface {
 	Informer() cache.SharedIndexInformer
 	Lister() SecretLister
 	AddHandler(ctx context.Context, name string, handler SecretHandlerFunc)
+	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync SecretHandlerFunc)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, handler SecretHandlerFunc)
 	Enqueue(namespace, name string)
 	Sync(ctx context.Context) error
@@ -88,6 +89,7 @@ type SecretInterface interface {
 	DeleteCollection(deleteOpts *metav1.DeleteOptions, listOpts metav1.ListOptions) error
 	Controller() SecretController
 	AddHandler(ctx context.Context, name string, sync SecretHandlerFunc)
+	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync SecretHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle SecretLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync SecretHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle SecretLifecycle)
@@ -141,6 +143,20 @@ func (c *secretController) Lister() SecretLister {
 func (c *secretController) AddHandler(ctx context.Context, name string, handler SecretHandlerFunc) {
 	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
 		if obj == nil {
+			return handler(key, nil)
+		} else if v, ok := obj.(*v1.Secret); ok {
+			return handler(key, v)
+		} else {
+			return nil, nil
+		}
+	})
+}
+
+func (c *secretController) AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, handler SecretHandlerFunc) {
+	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
+		if !enabled(feat) {
+			return nil, nil
+		} else if obj == nil {
 			return handler(key, nil)
 		} else if v, ok := obj.(*v1.Secret); ok {
 			return handler(key, v)
@@ -255,6 +271,10 @@ func (s *secretClient) DeleteCollection(deleteOpts *metav1.DeleteOptions, listOp
 
 func (s *secretClient) AddHandler(ctx context.Context, name string, sync SecretHandlerFunc) {
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *secretClient) AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync SecretHandlerFunc) {
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *secretClient) AddLifecycle(ctx context.Context, name string, lifecycle SecretLifecycle) {

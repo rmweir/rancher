@@ -67,6 +67,7 @@ type TemplateContentController interface {
 	Informer() cache.SharedIndexInformer
 	Lister() TemplateContentLister
 	AddHandler(ctx context.Context, name string, handler TemplateContentHandlerFunc)
+	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync TemplateContentHandlerFunc)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, handler TemplateContentHandlerFunc)
 	Enqueue(namespace, name string)
 	Sync(ctx context.Context) error
@@ -86,6 +87,7 @@ type TemplateContentInterface interface {
 	DeleteCollection(deleteOpts *metav1.DeleteOptions, listOpts metav1.ListOptions) error
 	Controller() TemplateContentController
 	AddHandler(ctx context.Context, name string, sync TemplateContentHandlerFunc)
+	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync TemplateContentHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle TemplateContentLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync TemplateContentHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle TemplateContentLifecycle)
@@ -139,6 +141,20 @@ func (c *templateContentController) Lister() TemplateContentLister {
 func (c *templateContentController) AddHandler(ctx context.Context, name string, handler TemplateContentHandlerFunc) {
 	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
 		if obj == nil {
+			return handler(key, nil)
+		} else if v, ok := obj.(*TemplateContent); ok {
+			return handler(key, v)
+		} else {
+			return nil, nil
+		}
+	})
+}
+
+func (c *templateContentController) AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, handler TemplateContentHandlerFunc) {
+	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
+		if !enabled(feat) {
+			return nil, nil
+		} else if obj == nil {
 			return handler(key, nil)
 		} else if v, ok := obj.(*TemplateContent); ok {
 			return handler(key, v)
@@ -253,6 +269,10 @@ func (s *templateContentClient) DeleteCollection(deleteOpts *metav1.DeleteOption
 
 func (s *templateContentClient) AddHandler(ctx context.Context, name string, sync TemplateContentHandlerFunc) {
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *templateContentClient) AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync TemplateContentHandlerFunc) {
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *templateContentClient) AddLifecycle(ctx context.Context, name string, lifecycle TemplateContentLifecycle) {

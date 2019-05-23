@@ -69,6 +69,7 @@ type AlertmanagerController interface {
 	Informer() cache.SharedIndexInformer
 	Lister() AlertmanagerLister
 	AddHandler(ctx context.Context, name string, handler AlertmanagerHandlerFunc)
+	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync AlertmanagerHandlerFunc)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, handler AlertmanagerHandlerFunc)
 	Enqueue(namespace, name string)
 	Sync(ctx context.Context) error
@@ -88,6 +89,7 @@ type AlertmanagerInterface interface {
 	DeleteCollection(deleteOpts *metav1.DeleteOptions, listOpts metav1.ListOptions) error
 	Controller() AlertmanagerController
 	AddHandler(ctx context.Context, name string, sync AlertmanagerHandlerFunc)
+	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync AlertmanagerHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle AlertmanagerLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync AlertmanagerHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle AlertmanagerLifecycle)
@@ -141,6 +143,20 @@ func (c *alertmanagerController) Lister() AlertmanagerLister {
 func (c *alertmanagerController) AddHandler(ctx context.Context, name string, handler AlertmanagerHandlerFunc) {
 	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
 		if obj == nil {
+			return handler(key, nil)
+		} else if v, ok := obj.(*v1.Alertmanager); ok {
+			return handler(key, v)
+		} else {
+			return nil, nil
+		}
+	})
+}
+
+func (c *alertmanagerController) AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, handler AlertmanagerHandlerFunc) {
+	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
+		if !enabled(feat) {
+			return nil, nil
+		} else if obj == nil {
 			return handler(key, nil)
 		} else if v, ok := obj.(*v1.Alertmanager); ok {
 			return handler(key, v)
@@ -255,6 +271,10 @@ func (s *alertmanagerClient) DeleteCollection(deleteOpts *metav1.DeleteOptions, 
 
 func (s *alertmanagerClient) AddHandler(ctx context.Context, name string, sync AlertmanagerHandlerFunc) {
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *alertmanagerClient) AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync AlertmanagerHandlerFunc) {
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *alertmanagerClient) AddLifecycle(ctx context.Context, name string, lifecycle AlertmanagerLifecycle) {

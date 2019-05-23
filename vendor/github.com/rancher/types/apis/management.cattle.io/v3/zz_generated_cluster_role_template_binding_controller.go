@@ -68,6 +68,7 @@ type ClusterRoleTemplateBindingController interface {
 	Informer() cache.SharedIndexInformer
 	Lister() ClusterRoleTemplateBindingLister
 	AddHandler(ctx context.Context, name string, handler ClusterRoleTemplateBindingHandlerFunc)
+	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync ClusterRoleTemplateBindingHandlerFunc)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, handler ClusterRoleTemplateBindingHandlerFunc)
 	Enqueue(namespace, name string)
 	Sync(ctx context.Context) error
@@ -87,6 +88,7 @@ type ClusterRoleTemplateBindingInterface interface {
 	DeleteCollection(deleteOpts *metav1.DeleteOptions, listOpts metav1.ListOptions) error
 	Controller() ClusterRoleTemplateBindingController
 	AddHandler(ctx context.Context, name string, sync ClusterRoleTemplateBindingHandlerFunc)
+	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync ClusterRoleTemplateBindingHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle ClusterRoleTemplateBindingLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync ClusterRoleTemplateBindingHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle ClusterRoleTemplateBindingLifecycle)
@@ -140,6 +142,20 @@ func (c *clusterRoleTemplateBindingController) Lister() ClusterRoleTemplateBindi
 func (c *clusterRoleTemplateBindingController) AddHandler(ctx context.Context, name string, handler ClusterRoleTemplateBindingHandlerFunc) {
 	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
 		if obj == nil {
+			return handler(key, nil)
+		} else if v, ok := obj.(*ClusterRoleTemplateBinding); ok {
+			return handler(key, v)
+		} else {
+			return nil, nil
+		}
+	})
+}
+
+func (c *clusterRoleTemplateBindingController) AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, handler ClusterRoleTemplateBindingHandlerFunc) {
+	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
+		if !enabled(feat) {
+			return nil, nil
+		} else if obj == nil {
 			return handler(key, nil)
 		} else if v, ok := obj.(*ClusterRoleTemplateBinding); ok {
 			return handler(key, v)
@@ -254,6 +270,10 @@ func (s *clusterRoleTemplateBindingClient) DeleteCollection(deleteOpts *metav1.D
 
 func (s *clusterRoleTemplateBindingClient) AddHandler(ctx context.Context, name string, sync ClusterRoleTemplateBindingHandlerFunc) {
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *clusterRoleTemplateBindingClient) AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync ClusterRoleTemplateBindingHandlerFunc) {
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *clusterRoleTemplateBindingClient) AddLifecycle(ctx context.Context, name string, lifecycle ClusterRoleTemplateBindingLifecycle) {

@@ -68,6 +68,7 @@ type ClusterAlertGroupController interface {
 	Informer() cache.SharedIndexInformer
 	Lister() ClusterAlertGroupLister
 	AddHandler(ctx context.Context, name string, handler ClusterAlertGroupHandlerFunc)
+	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync ClusterAlertGroupHandlerFunc)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, handler ClusterAlertGroupHandlerFunc)
 	Enqueue(namespace, name string)
 	Sync(ctx context.Context) error
@@ -87,6 +88,7 @@ type ClusterAlertGroupInterface interface {
 	DeleteCollection(deleteOpts *metav1.DeleteOptions, listOpts metav1.ListOptions) error
 	Controller() ClusterAlertGroupController
 	AddHandler(ctx context.Context, name string, sync ClusterAlertGroupHandlerFunc)
+	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync ClusterAlertGroupHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle ClusterAlertGroupLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync ClusterAlertGroupHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle ClusterAlertGroupLifecycle)
@@ -140,6 +142,20 @@ func (c *clusterAlertGroupController) Lister() ClusterAlertGroupLister {
 func (c *clusterAlertGroupController) AddHandler(ctx context.Context, name string, handler ClusterAlertGroupHandlerFunc) {
 	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
 		if obj == nil {
+			return handler(key, nil)
+		} else if v, ok := obj.(*ClusterAlertGroup); ok {
+			return handler(key, v)
+		} else {
+			return nil, nil
+		}
+	})
+}
+
+func (c *clusterAlertGroupController) AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, handler ClusterAlertGroupHandlerFunc) {
+	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
+		if !enabled(feat) {
+			return nil, nil
+		} else if obj == nil {
 			return handler(key, nil)
 		} else if v, ok := obj.(*ClusterAlertGroup); ok {
 			return handler(key, v)
@@ -254,6 +270,10 @@ func (s *clusterAlertGroupClient) DeleteCollection(deleteOpts *metav1.DeleteOpti
 
 func (s *clusterAlertGroupClient) AddHandler(ctx context.Context, name string, sync ClusterAlertGroupHandlerFunc) {
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *clusterAlertGroupClient) AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync ClusterAlertGroupHandlerFunc) {
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *clusterAlertGroupClient) AddLifecycle(ctx context.Context, name string, lifecycle ClusterAlertGroupLifecycle) {

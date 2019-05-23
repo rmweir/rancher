@@ -68,6 +68,7 @@ type ProjectLoggingController interface {
 	Informer() cache.SharedIndexInformer
 	Lister() ProjectLoggingLister
 	AddHandler(ctx context.Context, name string, handler ProjectLoggingHandlerFunc)
+	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync ProjectLoggingHandlerFunc)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, handler ProjectLoggingHandlerFunc)
 	Enqueue(namespace, name string)
 	Sync(ctx context.Context) error
@@ -87,6 +88,7 @@ type ProjectLoggingInterface interface {
 	DeleteCollection(deleteOpts *metav1.DeleteOptions, listOpts metav1.ListOptions) error
 	Controller() ProjectLoggingController
 	AddHandler(ctx context.Context, name string, sync ProjectLoggingHandlerFunc)
+	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync ProjectLoggingHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle ProjectLoggingLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync ProjectLoggingHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle ProjectLoggingLifecycle)
@@ -140,6 +142,20 @@ func (c *projectLoggingController) Lister() ProjectLoggingLister {
 func (c *projectLoggingController) AddHandler(ctx context.Context, name string, handler ProjectLoggingHandlerFunc) {
 	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
 		if obj == nil {
+			return handler(key, nil)
+		} else if v, ok := obj.(*ProjectLogging); ok {
+			return handler(key, v)
+		} else {
+			return nil, nil
+		}
+	})
+}
+
+func (c *projectLoggingController) AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, handler ProjectLoggingHandlerFunc) {
+	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
+		if !enabled(feat) {
+			return nil, nil
+		} else if obj == nil {
 			return handler(key, nil)
 		} else if v, ok := obj.(*ProjectLogging); ok {
 			return handler(key, v)
@@ -254,6 +270,10 @@ func (s *projectLoggingClient) DeleteCollection(deleteOpts *metav1.DeleteOptions
 
 func (s *projectLoggingClient) AddHandler(ctx context.Context, name string, sync ProjectLoggingHandlerFunc) {
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *projectLoggingClient) AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync ProjectLoggingHandlerFunc) {
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *projectLoggingClient) AddLifecycle(ctx context.Context, name string, lifecycle ProjectLoggingLifecycle) {

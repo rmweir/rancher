@@ -68,6 +68,7 @@ type ProjectNetworkPolicyController interface {
 	Informer() cache.SharedIndexInformer
 	Lister() ProjectNetworkPolicyLister
 	AddHandler(ctx context.Context, name string, handler ProjectNetworkPolicyHandlerFunc)
+	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync ProjectNetworkPolicyHandlerFunc)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, handler ProjectNetworkPolicyHandlerFunc)
 	Enqueue(namespace, name string)
 	Sync(ctx context.Context) error
@@ -87,6 +88,7 @@ type ProjectNetworkPolicyInterface interface {
 	DeleteCollection(deleteOpts *metav1.DeleteOptions, listOpts metav1.ListOptions) error
 	Controller() ProjectNetworkPolicyController
 	AddHandler(ctx context.Context, name string, sync ProjectNetworkPolicyHandlerFunc)
+	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync ProjectNetworkPolicyHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle ProjectNetworkPolicyLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync ProjectNetworkPolicyHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle ProjectNetworkPolicyLifecycle)
@@ -140,6 +142,20 @@ func (c *projectNetworkPolicyController) Lister() ProjectNetworkPolicyLister {
 func (c *projectNetworkPolicyController) AddHandler(ctx context.Context, name string, handler ProjectNetworkPolicyHandlerFunc) {
 	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
 		if obj == nil {
+			return handler(key, nil)
+		} else if v, ok := obj.(*ProjectNetworkPolicy); ok {
+			return handler(key, v)
+		} else {
+			return nil, nil
+		}
+	})
+}
+
+func (c *projectNetworkPolicyController) AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, handler ProjectNetworkPolicyHandlerFunc) {
+	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
+		if !enabled(feat) {
+			return nil, nil
+		} else if obj == nil {
 			return handler(key, nil)
 		} else if v, ok := obj.(*ProjectNetworkPolicy); ok {
 			return handler(key, v)
@@ -254,6 +270,10 @@ func (s *projectNetworkPolicyClient) DeleteCollection(deleteOpts *metav1.DeleteO
 
 func (s *projectNetworkPolicyClient) AddHandler(ctx context.Context, name string, sync ProjectNetworkPolicyHandlerFunc) {
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *projectNetworkPolicyClient) AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync ProjectNetworkPolicyHandlerFunc) {
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *projectNetworkPolicyClient) AddLifecycle(ctx context.Context, name string, lifecycle ProjectNetworkPolicyLifecycle) {

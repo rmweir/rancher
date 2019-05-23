@@ -68,6 +68,7 @@ type EtcdBackupController interface {
 	Informer() cache.SharedIndexInformer
 	Lister() EtcdBackupLister
 	AddHandler(ctx context.Context, name string, handler EtcdBackupHandlerFunc)
+	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync EtcdBackupHandlerFunc)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, handler EtcdBackupHandlerFunc)
 	Enqueue(namespace, name string)
 	Sync(ctx context.Context) error
@@ -87,6 +88,7 @@ type EtcdBackupInterface interface {
 	DeleteCollection(deleteOpts *metav1.DeleteOptions, listOpts metav1.ListOptions) error
 	Controller() EtcdBackupController
 	AddHandler(ctx context.Context, name string, sync EtcdBackupHandlerFunc)
+	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync EtcdBackupHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle EtcdBackupLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync EtcdBackupHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle EtcdBackupLifecycle)
@@ -140,6 +142,20 @@ func (c *etcdBackupController) Lister() EtcdBackupLister {
 func (c *etcdBackupController) AddHandler(ctx context.Context, name string, handler EtcdBackupHandlerFunc) {
 	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
 		if obj == nil {
+			return handler(key, nil)
+		} else if v, ok := obj.(*EtcdBackup); ok {
+			return handler(key, v)
+		} else {
+			return nil, nil
+		}
+	})
+}
+
+func (c *etcdBackupController) AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, handler EtcdBackupHandlerFunc) {
+	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
+		if !enabled(feat) {
+			return nil, nil
+		} else if obj == nil {
 			return handler(key, nil)
 		} else if v, ok := obj.(*EtcdBackup); ok {
 			return handler(key, v)
@@ -254,6 +270,10 @@ func (s *etcdBackupClient) DeleteCollection(deleteOpts *metav1.DeleteOptions, li
 
 func (s *etcdBackupClient) AddHandler(ctx context.Context, name string, sync EtcdBackupHandlerFunc) {
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *etcdBackupClient) AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync EtcdBackupHandlerFunc) {
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *etcdBackupClient) AddLifecycle(ctx context.Context, name string, lifecycle EtcdBackupLifecycle) {

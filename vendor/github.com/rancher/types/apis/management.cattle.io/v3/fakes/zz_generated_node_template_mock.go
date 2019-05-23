@@ -141,6 +141,7 @@ func (mock *NodeTemplateListerMock) ListCalls() []struct {
 
 var (
 	lockNodeTemplateControllerMockAddClusterScopedHandler sync.RWMutex
+	lockNodeTemplateControllerMockAddFeatureHandler       sync.RWMutex
 	lockNodeTemplateControllerMockAddHandler              sync.RWMutex
 	lockNodeTemplateControllerMockEnqueue                 sync.RWMutex
 	lockNodeTemplateControllerMockGeneric                 sync.RWMutex
@@ -162,6 +163,9 @@ var _ v3.NodeTemplateController = &NodeTemplateControllerMock{}
 //         mockedNodeTemplateController := &NodeTemplateControllerMock{
 //             AddClusterScopedHandlerFunc: func(ctx context.Context, name string, clusterName string, handler v3.NodeTemplateHandlerFunc)  {
 // 	               panic("mock out the AddClusterScopedHandler method")
+//             },
+//             AddFeatureHandlerFunc: func(enabled func(string) bool, feat string, ctx context.Context, name string, sync v3.NodeTemplateHandlerFunc)  {
+// 	               panic("mock out the AddFeatureHandler method")
 //             },
 //             AddHandlerFunc: func(ctx context.Context, name string, handler v3.NodeTemplateHandlerFunc)  {
 // 	               panic("mock out the AddHandler method")
@@ -193,6 +197,9 @@ var _ v3.NodeTemplateController = &NodeTemplateControllerMock{}
 type NodeTemplateControllerMock struct {
 	// AddClusterScopedHandlerFunc mocks the AddClusterScopedHandler method.
 	AddClusterScopedHandlerFunc func(ctx context.Context, name string, clusterName string, handler v3.NodeTemplateHandlerFunc)
+
+	// AddFeatureHandlerFunc mocks the AddFeatureHandler method.
+	AddFeatureHandlerFunc func(enabled func(string) bool, feat string, ctx context.Context, name string, sync v3.NodeTemplateHandlerFunc)
 
 	// AddHandlerFunc mocks the AddHandler method.
 	AddHandlerFunc func(ctx context.Context, name string, handler v3.NodeTemplateHandlerFunc)
@@ -227,6 +234,19 @@ type NodeTemplateControllerMock struct {
 			ClusterName string
 			// Handler is the handler argument value.
 			Handler v3.NodeTemplateHandlerFunc
+		}
+		// AddFeatureHandler holds details about calls to the AddFeatureHandler method.
+		AddFeatureHandler []struct {
+			// Enabled is the enabled argument value.
+			Enabled func(string) bool
+			// Feat is the feat argument value.
+			Feat string
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Name is the name argument value.
+			Name string
+			// Sync is the sync argument value.
+			Sync v3.NodeTemplateHandlerFunc
 		}
 		// AddHandler holds details about calls to the AddHandler method.
 		AddHandler []struct {
@@ -308,6 +328,53 @@ func (mock *NodeTemplateControllerMock) AddClusterScopedHandlerCalls() []struct 
 	lockNodeTemplateControllerMockAddClusterScopedHandler.RLock()
 	calls = mock.calls.AddClusterScopedHandler
 	lockNodeTemplateControllerMockAddClusterScopedHandler.RUnlock()
+	return calls
+}
+
+// AddFeatureHandler calls AddFeatureHandlerFunc.
+func (mock *NodeTemplateControllerMock) AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync v3.NodeTemplateHandlerFunc) {
+	if mock.AddFeatureHandlerFunc == nil {
+		panic("NodeTemplateControllerMock.AddFeatureHandlerFunc: method is nil but NodeTemplateController.AddFeatureHandler was just called")
+	}
+	callInfo := struct {
+		Enabled func(string) bool
+		Feat    string
+		Ctx     context.Context
+		Name    string
+		Sync    v3.NodeTemplateHandlerFunc
+	}{
+		Enabled: enabled,
+		Feat:    feat,
+		Ctx:     ctx,
+		Name:    name,
+		Sync:    sync,
+	}
+	lockNodeTemplateControllerMockAddFeatureHandler.Lock()
+	mock.calls.AddFeatureHandler = append(mock.calls.AddFeatureHandler, callInfo)
+	lockNodeTemplateControllerMockAddFeatureHandler.Unlock()
+	mock.AddFeatureHandlerFunc(enabled, feat, ctx, name, sync)
+}
+
+// AddFeatureHandlerCalls gets all the calls that were made to AddFeatureHandler.
+// Check the length with:
+//     len(mockedNodeTemplateController.AddFeatureHandlerCalls())
+func (mock *NodeTemplateControllerMock) AddFeatureHandlerCalls() []struct {
+	Enabled func(string) bool
+	Feat    string
+	Ctx     context.Context
+	Name    string
+	Sync    v3.NodeTemplateHandlerFunc
+} {
+	var calls []struct {
+		Enabled func(string) bool
+		Feat    string
+		Ctx     context.Context
+		Name    string
+		Sync    v3.NodeTemplateHandlerFunc
+	}
+	lockNodeTemplateControllerMockAddFeatureHandler.RLock()
+	calls = mock.calls.AddFeatureHandler
+	lockNodeTemplateControllerMockAddFeatureHandler.RUnlock()
 	return calls
 }
 
@@ -532,6 +599,7 @@ func (mock *NodeTemplateControllerMock) SyncCalls() []struct {
 var (
 	lockNodeTemplateInterfaceMockAddClusterScopedHandler   sync.RWMutex
 	lockNodeTemplateInterfaceMockAddClusterScopedLifecycle sync.RWMutex
+	lockNodeTemplateInterfaceMockAddFeatureHandler         sync.RWMutex
 	lockNodeTemplateInterfaceMockAddHandler                sync.RWMutex
 	lockNodeTemplateInterfaceMockAddLifecycle              sync.RWMutex
 	lockNodeTemplateInterfaceMockController                sync.RWMutex
@@ -562,6 +630,9 @@ var _ v3.NodeTemplateInterface = &NodeTemplateInterfaceMock{}
 //             },
 //             AddClusterScopedLifecycleFunc: func(ctx context.Context, name string, clusterName string, lifecycle v3.NodeTemplateLifecycle)  {
 // 	               panic("mock out the AddClusterScopedLifecycle method")
+//             },
+//             AddFeatureHandlerFunc: func(enabled func(string) bool, feat string, ctx context.Context, name string, sync v3.NodeTemplateHandlerFunc)  {
+// 	               panic("mock out the AddFeatureHandler method")
 //             },
 //             AddHandlerFunc: func(ctx context.Context, name string, sync v3.NodeTemplateHandlerFunc)  {
 // 	               panic("mock out the AddHandler method")
@@ -614,6 +685,9 @@ type NodeTemplateInterfaceMock struct {
 
 	// AddClusterScopedLifecycleFunc mocks the AddClusterScopedLifecycle method.
 	AddClusterScopedLifecycleFunc func(ctx context.Context, name string, clusterName string, lifecycle v3.NodeTemplateLifecycle)
+
+	// AddFeatureHandlerFunc mocks the AddFeatureHandler method.
+	AddFeatureHandlerFunc func(enabled func(string) bool, feat string, ctx context.Context, name string, sync v3.NodeTemplateHandlerFunc)
 
 	// AddHandlerFunc mocks the AddHandler method.
 	AddHandlerFunc func(ctx context.Context, name string, sync v3.NodeTemplateHandlerFunc)
@@ -677,6 +751,19 @@ type NodeTemplateInterfaceMock struct {
 			ClusterName string
 			// Lifecycle is the lifecycle argument value.
 			Lifecycle v3.NodeTemplateLifecycle
+		}
+		// AddFeatureHandler holds details about calls to the AddFeatureHandler method.
+		AddFeatureHandler []struct {
+			// Enabled is the enabled argument value.
+			Enabled func(string) bool
+			// Feat is the feat argument value.
+			Feat string
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Name is the name argument value.
+			Name string
+			// Sync is the sync argument value.
+			Sync v3.NodeTemplateHandlerFunc
 		}
 		// AddHandler holds details about calls to the AddHandler method.
 		AddHandler []struct {
@@ -847,6 +934,53 @@ func (mock *NodeTemplateInterfaceMock) AddClusterScopedLifecycleCalls() []struct
 	lockNodeTemplateInterfaceMockAddClusterScopedLifecycle.RLock()
 	calls = mock.calls.AddClusterScopedLifecycle
 	lockNodeTemplateInterfaceMockAddClusterScopedLifecycle.RUnlock()
+	return calls
+}
+
+// AddFeatureHandler calls AddFeatureHandlerFunc.
+func (mock *NodeTemplateInterfaceMock) AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync v3.NodeTemplateHandlerFunc) {
+	if mock.AddFeatureHandlerFunc == nil {
+		panic("NodeTemplateInterfaceMock.AddFeatureHandlerFunc: method is nil but NodeTemplateInterface.AddFeatureHandler was just called")
+	}
+	callInfo := struct {
+		Enabled func(string) bool
+		Feat    string
+		Ctx     context.Context
+		Name    string
+		Sync    v3.NodeTemplateHandlerFunc
+	}{
+		Enabled: enabled,
+		Feat:    feat,
+		Ctx:     ctx,
+		Name:    name,
+		Sync:    sync,
+	}
+	lockNodeTemplateInterfaceMockAddFeatureHandler.Lock()
+	mock.calls.AddFeatureHandler = append(mock.calls.AddFeatureHandler, callInfo)
+	lockNodeTemplateInterfaceMockAddFeatureHandler.Unlock()
+	mock.AddFeatureHandlerFunc(enabled, feat, ctx, name, sync)
+}
+
+// AddFeatureHandlerCalls gets all the calls that were made to AddFeatureHandler.
+// Check the length with:
+//     len(mockedNodeTemplateInterface.AddFeatureHandlerCalls())
+func (mock *NodeTemplateInterfaceMock) AddFeatureHandlerCalls() []struct {
+	Enabled func(string) bool
+	Feat    string
+	Ctx     context.Context
+	Name    string
+	Sync    v3.NodeTemplateHandlerFunc
+} {
+	var calls []struct {
+		Enabled func(string) bool
+		Feat    string
+		Ctx     context.Context
+		Name    string
+		Sync    v3.NodeTemplateHandlerFunc
+	}
+	lockNodeTemplateInterfaceMockAddFeatureHandler.RLock()
+	calls = mock.calls.AddFeatureHandler
+	lockNodeTemplateInterfaceMockAddFeatureHandler.RUnlock()
 	return calls
 }
 

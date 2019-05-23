@@ -68,6 +68,7 @@ type ClusterAuthTokenController interface {
 	Informer() cache.SharedIndexInformer
 	Lister() ClusterAuthTokenLister
 	AddHandler(ctx context.Context, name string, handler ClusterAuthTokenHandlerFunc)
+	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync ClusterAuthTokenHandlerFunc)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, handler ClusterAuthTokenHandlerFunc)
 	Enqueue(namespace, name string)
 	Sync(ctx context.Context) error
@@ -87,6 +88,7 @@ type ClusterAuthTokenInterface interface {
 	DeleteCollection(deleteOpts *metav1.DeleteOptions, listOpts metav1.ListOptions) error
 	Controller() ClusterAuthTokenController
 	AddHandler(ctx context.Context, name string, sync ClusterAuthTokenHandlerFunc)
+	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync ClusterAuthTokenHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle ClusterAuthTokenLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync ClusterAuthTokenHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle ClusterAuthTokenLifecycle)
@@ -140,6 +142,20 @@ func (c *clusterAuthTokenController) Lister() ClusterAuthTokenLister {
 func (c *clusterAuthTokenController) AddHandler(ctx context.Context, name string, handler ClusterAuthTokenHandlerFunc) {
 	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
 		if obj == nil {
+			return handler(key, nil)
+		} else if v, ok := obj.(*ClusterAuthToken); ok {
+			return handler(key, v)
+		} else {
+			return nil, nil
+		}
+	})
+}
+
+func (c *clusterAuthTokenController) AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, handler ClusterAuthTokenHandlerFunc) {
+	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
+		if !enabled(feat) {
+			return nil, nil
+		} else if obj == nil {
 			return handler(key, nil)
 		} else if v, ok := obj.(*ClusterAuthToken); ok {
 			return handler(key, v)
@@ -254,6 +270,10 @@ func (s *clusterAuthTokenClient) DeleteCollection(deleteOpts *metav1.DeleteOptio
 
 func (s *clusterAuthTokenClient) AddHandler(ctx context.Context, name string, sync ClusterAuthTokenHandlerFunc) {
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *clusterAuthTokenClient) AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync ClusterAuthTokenHandlerFunc) {
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *clusterAuthTokenClient) AddLifecycle(ctx context.Context, name string, lifecycle ClusterAuthTokenLifecycle) {

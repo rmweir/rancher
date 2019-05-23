@@ -69,6 +69,7 @@ type PodController interface {
 	Informer() cache.SharedIndexInformer
 	Lister() PodLister
 	AddHandler(ctx context.Context, name string, handler PodHandlerFunc)
+	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync PodHandlerFunc)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, handler PodHandlerFunc)
 	Enqueue(namespace, name string)
 	Sync(ctx context.Context) error
@@ -88,6 +89,7 @@ type PodInterface interface {
 	DeleteCollection(deleteOpts *metav1.DeleteOptions, listOpts metav1.ListOptions) error
 	Controller() PodController
 	AddHandler(ctx context.Context, name string, sync PodHandlerFunc)
+	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync PodHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle PodLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync PodHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle PodLifecycle)
@@ -141,6 +143,20 @@ func (c *podController) Lister() PodLister {
 func (c *podController) AddHandler(ctx context.Context, name string, handler PodHandlerFunc) {
 	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
 		if obj == nil {
+			return handler(key, nil)
+		} else if v, ok := obj.(*v1.Pod); ok {
+			return handler(key, v)
+		} else {
+			return nil, nil
+		}
+	})
+}
+
+func (c *podController) AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, handler PodHandlerFunc) {
+	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
+		if !enabled(feat) {
+			return nil, nil
+		} else if obj == nil {
 			return handler(key, nil)
 		} else if v, ok := obj.(*v1.Pod); ok {
 			return handler(key, v)
@@ -255,6 +271,10 @@ func (s *podClient) DeleteCollection(deleteOpts *metav1.DeleteOptions, listOpts 
 
 func (s *podClient) AddHandler(ctx context.Context, name string, sync PodHandlerFunc) {
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *podClient) AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync PodHandlerFunc) {
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *podClient) AddLifecycle(ctx context.Context, name string, lifecycle PodLifecycle) {

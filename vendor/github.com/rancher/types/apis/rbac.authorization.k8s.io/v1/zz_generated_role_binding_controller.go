@@ -69,6 +69,7 @@ type RoleBindingController interface {
 	Informer() cache.SharedIndexInformer
 	Lister() RoleBindingLister
 	AddHandler(ctx context.Context, name string, handler RoleBindingHandlerFunc)
+	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync RoleBindingHandlerFunc)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, handler RoleBindingHandlerFunc)
 	Enqueue(namespace, name string)
 	Sync(ctx context.Context) error
@@ -88,6 +89,7 @@ type RoleBindingInterface interface {
 	DeleteCollection(deleteOpts *metav1.DeleteOptions, listOpts metav1.ListOptions) error
 	Controller() RoleBindingController
 	AddHandler(ctx context.Context, name string, sync RoleBindingHandlerFunc)
+	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync RoleBindingHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle RoleBindingLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync RoleBindingHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle RoleBindingLifecycle)
@@ -141,6 +143,20 @@ func (c *roleBindingController) Lister() RoleBindingLister {
 func (c *roleBindingController) AddHandler(ctx context.Context, name string, handler RoleBindingHandlerFunc) {
 	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
 		if obj == nil {
+			return handler(key, nil)
+		} else if v, ok := obj.(*v1.RoleBinding); ok {
+			return handler(key, v)
+		} else {
+			return nil, nil
+		}
+	})
+}
+
+func (c *roleBindingController) AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, handler RoleBindingHandlerFunc) {
+	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
+		if !enabled(feat) {
+			return nil, nil
+		} else if obj == nil {
 			return handler(key, nil)
 		} else if v, ok := obj.(*v1.RoleBinding); ok {
 			return handler(key, v)
@@ -255,6 +271,10 @@ func (s *roleBindingClient) DeleteCollection(deleteOpts *metav1.DeleteOptions, l
 
 func (s *roleBindingClient) AddHandler(ctx context.Context, name string, sync RoleBindingHandlerFunc) {
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *roleBindingClient) AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync RoleBindingHandlerFunc) {
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *roleBindingClient) AddLifecycle(ctx context.Context, name string, lifecycle RoleBindingLifecycle) {

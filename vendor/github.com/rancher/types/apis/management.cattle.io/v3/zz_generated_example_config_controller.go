@@ -67,6 +67,7 @@ type ExampleConfigController interface {
 	Informer() cache.SharedIndexInformer
 	Lister() ExampleConfigLister
 	AddHandler(ctx context.Context, name string, handler ExampleConfigHandlerFunc)
+	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync ExampleConfigHandlerFunc)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, handler ExampleConfigHandlerFunc)
 	Enqueue(namespace, name string)
 	Sync(ctx context.Context) error
@@ -86,6 +87,7 @@ type ExampleConfigInterface interface {
 	DeleteCollection(deleteOpts *metav1.DeleteOptions, listOpts metav1.ListOptions) error
 	Controller() ExampleConfigController
 	AddHandler(ctx context.Context, name string, sync ExampleConfigHandlerFunc)
+	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync ExampleConfigHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle ExampleConfigLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync ExampleConfigHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle ExampleConfigLifecycle)
@@ -139,6 +141,20 @@ func (c *exampleConfigController) Lister() ExampleConfigLister {
 func (c *exampleConfigController) AddHandler(ctx context.Context, name string, handler ExampleConfigHandlerFunc) {
 	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
 		if obj == nil {
+			return handler(key, nil)
+		} else if v, ok := obj.(*ExampleConfig); ok {
+			return handler(key, v)
+		} else {
+			return nil, nil
+		}
+	})
+}
+
+func (c *exampleConfigController) AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, handler ExampleConfigHandlerFunc) {
+	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
+		if !enabled(feat) {
+			return nil, nil
+		} else if obj == nil {
 			return handler(key, nil)
 		} else if v, ok := obj.(*ExampleConfig); ok {
 			return handler(key, v)
@@ -253,6 +269,10 @@ func (s *exampleConfigClient) DeleteCollection(deleteOpts *metav1.DeleteOptions,
 
 func (s *exampleConfigClient) AddHandler(ctx context.Context, name string, sync ExampleConfigHandlerFunc) {
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *exampleConfigClient) AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync ExampleConfigHandlerFunc) {
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *exampleConfigClient) AddLifecycle(ctx context.Context, name string, lifecycle ExampleConfigLifecycle) {

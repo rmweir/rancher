@@ -67,6 +67,7 @@ type UserController interface {
 	Informer() cache.SharedIndexInformer
 	Lister() UserLister
 	AddHandler(ctx context.Context, name string, handler UserHandlerFunc)
+	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync UserHandlerFunc)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, handler UserHandlerFunc)
 	Enqueue(namespace, name string)
 	Sync(ctx context.Context) error
@@ -86,6 +87,7 @@ type UserInterface interface {
 	DeleteCollection(deleteOpts *metav1.DeleteOptions, listOpts metav1.ListOptions) error
 	Controller() UserController
 	AddHandler(ctx context.Context, name string, sync UserHandlerFunc)
+	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync UserHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle UserLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync UserHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle UserLifecycle)
@@ -139,6 +141,20 @@ func (c *userController) Lister() UserLister {
 func (c *userController) AddHandler(ctx context.Context, name string, handler UserHandlerFunc) {
 	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
 		if obj == nil {
+			return handler(key, nil)
+		} else if v, ok := obj.(*User); ok {
+			return handler(key, v)
+		} else {
+			return nil, nil
+		}
+	})
+}
+
+func (c *userController) AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, handler UserHandlerFunc) {
+	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
+		if !enabled(feat) {
+			return nil, nil
+		} else if obj == nil {
 			return handler(key, nil)
 		} else if v, ok := obj.(*User); ok {
 			return handler(key, v)
@@ -253,6 +269,10 @@ func (s *userClient) DeleteCollection(deleteOpts *metav1.DeleteOptions, listOpts
 
 func (s *userClient) AddHandler(ctx context.Context, name string, sync UserHandlerFunc) {
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *userClient) AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync UserHandlerFunc) {
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *userClient) AddLifecycle(ctx context.Context, name string, lifecycle UserLifecycle) {

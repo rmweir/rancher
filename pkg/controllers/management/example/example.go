@@ -3,20 +3,20 @@ package example
 import (
 	"context"
 	"fmt"
-	"github.com/rancher/rancher/pkg/features"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/runtime"
 	"math/rand"
 	"time"
 
-	"github.com/rancher/types/apis/management.cattle.io/v3"
+	featureflags "github.com/rancher/rancher/pkg/features"
+	v3 "github.com/rancher/types/apis/management.cattle.io/v3"
 	"github.com/rancher/types/config"
+	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 type Controller struct {
-	ctx                   context.Context
-	clusterClient         v3.ClusterInterface
-	clusterLister         v3.ClusterLister
+	ctx           context.Context
+	clusterClient v3.ClusterInterface
+	clusterLister v3.ClusterLister
 }
 
 func Register(ctx context.Context, management *config.ManagementContext) {
@@ -26,11 +26,8 @@ func Register(ctx context.Context, management *config.ManagementContext) {
 		clusterLister: management.Management.Clusters("").Controller().Lister(),
 	}
 	m := management.Management.ExampleConfigs("")
-	s := &syn{
-		c,
-		"kontainerdrivers",
-	}
-	m.AddHandler(ctx, "example-controller", s.featureSync)
+
+	m.AddFeatureHandler(featureflags.IsFeatEnabled, "kontainerdriver", ctx, "example-controller", c.sync)
 }
 
 func (c *Controller) sync(key string, exampleConfig *v3.ExampleConfig) (runtime.Object, error) {
@@ -47,21 +44,3 @@ func (c *Controller) sync(key string, exampleConfig *v3.ExampleConfig) (runtime.
 
 	return nil, nil
 }
-
-func (s *syn) featureSync(key string, exampleConfig *v3.ExampleConfig) (runtime.Object, error) {
-	if featureflags.GlobalFeatures.Enabled("kontainerdriver") {
-		return s.sync(key, exampleConfig)
-	}
-	return nil, nil
-}
-
-type syncer interface {
-	sync(string, *v3.ExampleConfig) (runtime.Object, error)
-}
-
-type syn struct {
-	syncer
-	feat string
-}
-
-

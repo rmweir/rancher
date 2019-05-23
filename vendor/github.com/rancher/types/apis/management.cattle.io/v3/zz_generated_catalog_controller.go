@@ -67,6 +67,7 @@ type CatalogController interface {
 	Informer() cache.SharedIndexInformer
 	Lister() CatalogLister
 	AddHandler(ctx context.Context, name string, handler CatalogHandlerFunc)
+	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync CatalogHandlerFunc)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, handler CatalogHandlerFunc)
 	Enqueue(namespace, name string)
 	Sync(ctx context.Context) error
@@ -86,6 +87,7 @@ type CatalogInterface interface {
 	DeleteCollection(deleteOpts *metav1.DeleteOptions, listOpts metav1.ListOptions) error
 	Controller() CatalogController
 	AddHandler(ctx context.Context, name string, sync CatalogHandlerFunc)
+	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync CatalogHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle CatalogLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync CatalogHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle CatalogLifecycle)
@@ -139,6 +141,20 @@ func (c *catalogController) Lister() CatalogLister {
 func (c *catalogController) AddHandler(ctx context.Context, name string, handler CatalogHandlerFunc) {
 	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
 		if obj == nil {
+			return handler(key, nil)
+		} else if v, ok := obj.(*Catalog); ok {
+			return handler(key, v)
+		} else {
+			return nil, nil
+		}
+	})
+}
+
+func (c *catalogController) AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, handler CatalogHandlerFunc) {
+	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
+		if !enabled(feat) {
+			return nil, nil
+		} else if obj == nil {
 			return handler(key, nil)
 		} else if v, ok := obj.(*Catalog); ok {
 			return handler(key, v)
@@ -253,6 +269,10 @@ func (s *catalogClient) DeleteCollection(deleteOpts *metav1.DeleteOptions, listO
 
 func (s *catalogClient) AddHandler(ctx context.Context, name string, sync CatalogHandlerFunc) {
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *catalogClient) AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync CatalogHandlerFunc) {
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *catalogClient) AddLifecycle(ctx context.Context, name string, lifecycle CatalogLifecycle) {

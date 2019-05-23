@@ -68,6 +68,7 @@ type SourceCodeRepositoryController interface {
 	Informer() cache.SharedIndexInformer
 	Lister() SourceCodeRepositoryLister
 	AddHandler(ctx context.Context, name string, handler SourceCodeRepositoryHandlerFunc)
+	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync SourceCodeRepositoryHandlerFunc)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, handler SourceCodeRepositoryHandlerFunc)
 	Enqueue(namespace, name string)
 	Sync(ctx context.Context) error
@@ -87,6 +88,7 @@ type SourceCodeRepositoryInterface interface {
 	DeleteCollection(deleteOpts *metav1.DeleteOptions, listOpts metav1.ListOptions) error
 	Controller() SourceCodeRepositoryController
 	AddHandler(ctx context.Context, name string, sync SourceCodeRepositoryHandlerFunc)
+	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync SourceCodeRepositoryHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle SourceCodeRepositoryLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync SourceCodeRepositoryHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle SourceCodeRepositoryLifecycle)
@@ -140,6 +142,20 @@ func (c *sourceCodeRepositoryController) Lister() SourceCodeRepositoryLister {
 func (c *sourceCodeRepositoryController) AddHandler(ctx context.Context, name string, handler SourceCodeRepositoryHandlerFunc) {
 	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
 		if obj == nil {
+			return handler(key, nil)
+		} else if v, ok := obj.(*SourceCodeRepository); ok {
+			return handler(key, v)
+		} else {
+			return nil, nil
+		}
+	})
+}
+
+func (c *sourceCodeRepositoryController) AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, handler SourceCodeRepositoryHandlerFunc) {
+	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
+		if !enabled(feat) {
+			return nil, nil
+		} else if obj == nil {
 			return handler(key, nil)
 		} else if v, ok := obj.(*SourceCodeRepository); ok {
 			return handler(key, v)
@@ -254,6 +270,10 @@ func (s *sourceCodeRepositoryClient) DeleteCollection(deleteOpts *metav1.DeleteO
 
 func (s *sourceCodeRepositoryClient) AddHandler(ctx context.Context, name string, sync SourceCodeRepositoryHandlerFunc) {
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *sourceCodeRepositoryClient) AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync SourceCodeRepositoryHandlerFunc) {
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *sourceCodeRepositoryClient) AddLifecycle(ctx context.Context, name string, lifecycle SourceCodeRepositoryLifecycle) {

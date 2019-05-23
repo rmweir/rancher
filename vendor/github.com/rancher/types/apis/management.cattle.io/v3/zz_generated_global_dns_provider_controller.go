@@ -68,6 +68,7 @@ type GlobalDNSProviderController interface {
 	Informer() cache.SharedIndexInformer
 	Lister() GlobalDNSProviderLister
 	AddHandler(ctx context.Context, name string, handler GlobalDNSProviderHandlerFunc)
+	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync GlobalDNSProviderHandlerFunc)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, handler GlobalDNSProviderHandlerFunc)
 	Enqueue(namespace, name string)
 	Sync(ctx context.Context) error
@@ -87,6 +88,7 @@ type GlobalDNSProviderInterface interface {
 	DeleteCollection(deleteOpts *metav1.DeleteOptions, listOpts metav1.ListOptions) error
 	Controller() GlobalDNSProviderController
 	AddHandler(ctx context.Context, name string, sync GlobalDNSProviderHandlerFunc)
+	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync GlobalDNSProviderHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle GlobalDNSProviderLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync GlobalDNSProviderHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle GlobalDNSProviderLifecycle)
@@ -140,6 +142,20 @@ func (c *globalDnsProviderController) Lister() GlobalDNSProviderLister {
 func (c *globalDnsProviderController) AddHandler(ctx context.Context, name string, handler GlobalDNSProviderHandlerFunc) {
 	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
 		if obj == nil {
+			return handler(key, nil)
+		} else if v, ok := obj.(*GlobalDNSProvider); ok {
+			return handler(key, v)
+		} else {
+			return nil, nil
+		}
+	})
+}
+
+func (c *globalDnsProviderController) AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, handler GlobalDNSProviderHandlerFunc) {
+	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
+		if !enabled(feat) {
+			return nil, nil
+		} else if obj == nil {
 			return handler(key, nil)
 		} else if v, ok := obj.(*GlobalDNSProvider); ok {
 			return handler(key, v)
@@ -254,6 +270,10 @@ func (s *globalDnsProviderClient) DeleteCollection(deleteOpts *metav1.DeleteOpti
 
 func (s *globalDnsProviderClient) AddHandler(ctx context.Context, name string, sync GlobalDNSProviderHandlerFunc) {
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *globalDnsProviderClient) AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync GlobalDNSProviderHandlerFunc) {
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *globalDnsProviderClient) AddLifecycle(ctx context.Context, name string, lifecycle GlobalDNSProviderLifecycle) {
