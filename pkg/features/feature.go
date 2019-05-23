@@ -112,7 +112,7 @@ func RunFeatureCRDS(factory *crd.Factory, ctx context.Context, storageContext ty
 	g := GlobalFeatures.KnownFeatures()
 	for _, name := range g {
 		n := strings.Split(name, "=")[0]
-		if FeaturePacks[n] != nil {
+		if FeaturePacks[n] != nil { // && GlobalFeatures.Enabled(feature.Feature(n)) {
 			f := FeaturePacks[n]
 			enabledFeatureCRDS = append(enabledFeatureCRDS, f.Crds...)
 		}
@@ -127,7 +127,7 @@ func RunFeatureFns() {
 	for _, name := range GlobalFeatures.KnownFeatures() {
 		n := strings.Split(name, "=")[0]
 		// feat := feature.Feature(n)
-		if FeaturePacks[n] != nil {
+		if FeaturePacks[n] != nil {// && GlobalFeatures.Enabled(feature.Feature(n)) {
 			fu := FeaturePacks
 			for index, f := range fu[n].StartFuncs {
 				args := FeaturePacks[n].StartArgs[index]

@@ -2,6 +2,7 @@ package management
 
 import (
 	"context"
+	"github.com/rancher/rancher/pkg/controllers/management/example"
 
 	"github.com/rancher/rancher/pkg/clustermanager"
 	"github.com/rancher/rancher/pkg/controllers/management/auth"
@@ -53,6 +54,7 @@ func Register(ctx context.Context, management *config.ManagementContext, manager
 	etcdbackup.Register(ctx, management)
 	globaldns.Register(ctx, management)
 	multiclusterapp.Register(ctx, management, manager)
+	example.Register(ctx, management)
 
 	// Register last
 	auth.RegisterLate(ctx, management)

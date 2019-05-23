@@ -6,30 +6,30 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type ComposeConfig struct {
+type ExampleConfig struct {
 	metav1.TypeMeta `json:",inline"`
 	// Standard object’s metadata. More info:
 	// https://github.com/kubernetes/community/blob/master/contributors/devel/api-conventions.md#metadata
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 	// Specification of the desired behavior of the the cluster. More info:
 	// https://github.com/kubernetes/community/blob/master/contributors/devel/api-conventions.md#spec-and-status
-	Spec   ComposeSpec   `json:"spec,omitempty"`
-	Status ComposeStatus `json:"status,omitempty"`
+	Spec   ExampleSpec   `json:"spec,omitempty"`
+	Status ExampleStatus `json:"status,omitempty"`
 }
 
-type ComposeSpec struct {
-	RancherCompose string `json:"rancherCompose,omitempty"`
+type ExampleSpec struct {
+	ExampleString string `json:"rancherCompose,omitempty"`
 }
 
-type ComposeStatus struct {
+type ExampleStatus struct {
 	Conditions []ComposeCondition `json:"conditions,omitempty"`
 }
 
 var (
-	ComposeConditionExecuted condition.Cond = "Executed"
+	ExampleConditionExecuted condition.Cond = "Executed"
 )
 
-type ComposeCondition struct {
+type ExampleCondition struct {
 	// Type of cluster condition.
 	Type string `json:"type"`
 	// Status of the condition, one of True, False, Unknown.

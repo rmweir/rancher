@@ -3,7 +3,13 @@ package managementstored
 import (
 	"context"
 	"encoding/json"
+	"github.com/rancher/rancher/pkg/api/customization/example"
+	"github.com/rancher/types/apis/management.cattle.io/v3"
+	"github.com/rancher/types/apis/management.cattle.io/v3/fakes"
 	"github.com/sirupsen/logrus"
+	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/watch"
 	"net/http"
 	"strings"
 
@@ -63,13 +69,80 @@ import (
 	"k8s.io/apiserver/pkg/util/feature"
 )
 
+type Mgmt struct {
+	v3.Interface
+}
+
+func (m *Mgmt) KontainerDrivers(namespace string) v3.KontainerDriverInterface{
+	if featureflags.GlobalFeatures.Enabled("kontainerdrivers") {
+		return m.KontainerDrivers("")
+	}
+	return &fakes.KontainerDriverInterfaceMock{
+		ControllerFunc: func() v3.KontainerDriverController {
+			return &fakes.KontainerDriverControllerMock{
+				ListerFunc: func() v3.KontainerDriverLister {
+					return &fakes.KontainerDriverListerMock{
+						ListFunc: func(ns string, s labels.Selector) ([]*v3.KontainerDriver, error) {
+							return nil, nil
+						},
+					}
+				},
+			}
+		},
+		AddHandlerFunc: func(ctx context.Context, name string, sync v3.KontainerDriverHandlerFunc) {
+			return
+		},
+		ListFunc: func(opts v1.ListOptions) (*v3.KontainerDriverList, error) {
+			return nil, nil
+		},
+		GetFunc: func(name string, opts v1.GetOptions) (*v3.KontainerDriver, error) {
+			return nil, nil
+		},
+		WatchFunc: func(opts v1.ListOptions) (watch.Interface, error) {
+			return nil, nil
+		},
+	}
+}
+
+func (m *Mgmt) ExampleConfigs(namespace string) v3.ExampleConfigInterface {
+	if featureflags.GlobalFeatures.Enabled("kontainerdrivers") {
+		return m.Interface.ExampleConfigs("")
+	}
+	return &fakes.ExampleConfigInterfaceMock{
+		ControllerFunc: func() v3.ExampleConfigController {
+			return &fakes.ExampleConfigControllerMock{
+				ListerFunc: func() v3.ExampleConfigLister {
+					return &fakes.ExampleConfigListerMock{
+						ListFunc: func(ns string, s labels.Selector) ([]*v3.ExampleConfig, error) {
+							return nil, nil
+						},
+					}
+				},
+			}
+		},
+		AddHandlerFunc: func(ctx context.Context, name string, sync v3.ExampleConfigHandlerFunc) {
+			return
+		},
+		ListFunc: func(opts v1.ListOptions) (*v3.ExampleConfigList, error) {
+			return nil, nil
+		},
+		GetFunc: func(name string, opts v1.GetOptions) (*v3.ExampleConfig, error) {
+			return nil, nil
+		},
+		WatchFunc: func(opts v1.ListOptions) (watch.Interface, error) {
+			return nil, nil
+		},
+	}
+}
+
 func Setup(ctx context.Context, apiContext *config.ScaledContext, clusterManager *clustermanager.Manager,
 	k8sProxy http.Handler, localClusterEnabled bool) error {
+
+
 	// Here we setup all types that will be stored in the Management cluster
 	schemas := apiContext.Schemas
 
 	setupFeaturePacks(ctx, apiContext, clusterManager)
-
 	factory := &crd.Factory{ClientGetter: apiContext.ClientGetter}
 
 	factory.BatchCreateCRDs(ctx, config.ManagementStorageContext, schemas, &managementschema.Version,
@@ -124,10 +197,12 @@ func Setup(ctx context.Context, apiContext *config.ScaledContext, clusterManager
 		client.UserAttributeType,
 		client.UserType,
 		client.GlobalDNSType,
-		client.GlobalDNSProviderType)
+		client.GlobalDNSProviderType,
+		client.ExampleConfigType)
 
 	featureflags.RunFeatureCRDS(factory, ctx, config.ManagementStorageContext, schemas, &managementschema.Version)
 	setFeaturesSetting()
+
 
 	factory.BatchCreateCRDs(ctx, config.ManagementStorageContext, schemas, &projectschema.Version,
 		projectclient.AppType,
@@ -153,6 +228,7 @@ func Setup(ctx context.Context, apiContext *config.ScaledContext, clusterManager
 	SecretTypes(ctx, schemas, apiContext)
 	App(schemas, apiContext, clusterManager)
 	Setting(schemas)
+	ExampleConfig(schemas)
 	Preference(schemas, apiContext)
 	ClusterRegistrationTokens(schemas)
 	NodeTemplates(schemas, apiContext)
@@ -469,6 +545,13 @@ func Setting(schemas *types.Schemas) {
 	schema.Formatter = setting.Formatter
 	schema.Validator = setting.Validator
 	schema.Store = settingstore.New(schema.Store)
+}
+
+func ExampleConfig(schemas *types.Schemas) {
+	schema := schemas.Schema(&managementschema.Version, client.ExampleConfigType)
+	schema.Formatter = example.Formatter
+	schema.Validator = example.Validator
+	// schema.Store =
 }
 
 func LoggingTypes(schemas *types.Schemas, management *config.ScaledContext, clusterManager *clustermanager.Manager, k8sProxy http.Handler) {
