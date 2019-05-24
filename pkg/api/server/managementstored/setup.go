@@ -198,7 +198,7 @@ func Setup(ctx context.Context, apiContext *config.ScaledContext, clusterManager
 		client.UserType,
 		client.GlobalDNSType,
 		client.GlobalDNSProviderType,
-		client.ExampleConfigType)
+	)//client.ExampleConfigType)
 
 	featureflags.RunFeatureCRDS(factory, ctx, config.ManagementStorageContext, schemas, &managementschema.Version)
 	setFeaturesSetting()
@@ -228,7 +228,7 @@ func Setup(ctx context.Context, apiContext *config.ScaledContext, clusterManager
 	SecretTypes(ctx, schemas, apiContext)
 	App(schemas, apiContext, clusterManager)
 	Setting(schemas)
-	ExampleConfig(schemas)
+	// ExampleConfig(schemas)
 	Preference(schemas, apiContext)
 	ClusterRegistrationTokens(schemas)
 	NodeTemplates(schemas, apiContext)
@@ -272,6 +272,11 @@ func setupFeaturePacks(ctx context.Context, apiContext *config.ScaledContext, cl
 	// make this a param later
 	kd.AddCrds(name)
 	kd.AddStartFunc(KontainerDriver, []interface{}{apiContext.Schemas, apiContext})
+
+	name = strings.ToLower(client.ExampleConfigType)
+	ec := featureflags.NewFeaturePack(name, apiContext.Management.ExampleConfigs(""), ctx, apiContext, clusterManager)
+	ec.AddCrds(name)
+	ec.AddStartFunc(KontainerDriver, []interface{}{apiContext.Schemas, apiContext})
 	return nil
 }
 
@@ -551,7 +556,7 @@ func ExampleConfig(schemas *types.Schemas) {
 	schema := schemas.Schema(&managementschema.Version, client.ExampleConfigType)
 	schema.Formatter = example.Formatter
 	schema.Validator = example.Validator
-	// schema.Store =
+	schema.Store = settingstore.New(schema.Store)
 }
 
 func LoggingTypes(schemas *types.Schemas, management *config.ScaledContext, clusterManager *clustermanager.Manager, k8sProxy http.Handler) {

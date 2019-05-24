@@ -3,18 +3,20 @@ package featureflags
 import (
 	"context"
 	"fmt"
+	"github.com/rancher/norman/httperror"
+
+	//"github.com/rancher/norman/httperror"
 	"reflect"
 	"strings"
 
-	"github.com/rancher/norman/httperror"
 	"github.com/rancher/norman/store/crd"
 	"github.com/rancher/norman/types"
 	"github.com/rancher/rancher/pkg/clustermanager"
 	managementschema "github.com/rancher/types/apis/management.cattle.io/v3/schema"
-	client "github.com/rancher/types/client/management/v3"
+	"github.com/rancher/types/client/management/v3"
 	"github.com/rancher/types/config"
 	"github.com/sirupsen/logrus"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/util/feature"
 )
 
@@ -29,6 +31,7 @@ var (
 	FeaturePacks   = map[string]*FeaturePack{}
 
 	KontainerDrivers = NewFeature(strings.ToLower(client.KontainerDriverType), "beta", false)
+	ExampleConfig = NewFeature(strings.ToLower(client.ExampleConfigType), "beta", false)
 )
 
 type FeatureGate interface {
@@ -140,10 +143,10 @@ func RunFeatureFns() {
 func (f *FeaturePack) start() {
 
 	s := f.Schemas.Schema(&managementschema.Version, f.Name)
-	s.Store = &featStore{
+	/*s.Store = &featStore{
 		s.Store,
 		f.Name,
-	}
+	}*/
 
 	origValidator := s.Validator
 	s.Validator = func(types *types.APIContext, schema *types.Schema, m map[string]interface{}) error {
@@ -254,5 +257,6 @@ func NewFeaturePack(name string, c Collection, ctx context.Context, apiContext *
 }
 
 func IsFeatEnabled(feat string) bool {
-	return GlobalFeatures.Enabled(feature.Feature(feat))
+	a := GlobalFeatures.Enabled(feature.Feature(feat))
+	return a
 }

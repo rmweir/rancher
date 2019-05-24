@@ -27,7 +27,7 @@ func Register(ctx context.Context, management *config.ManagementContext) {
 	}
 	m := management.Management.ExampleConfigs("")
 
-	m.AddFeatureHandler(featureflags.IsFeatEnabled, "kontainerdriver", ctx, "example-controller", c.sync)
+	m.AddFeatureHandler(featureflags.IsFeatEnabled, "exampleconfig", ctx, "example-controller", c.sync)
 }
 
 func (c *Controller) sync(key string, exampleConfig *v3.ExampleConfig) (runtime.Object, error) {

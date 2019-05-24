@@ -14,6 +14,7 @@ import (
 
 var ReadOnlySettings = []string{
 	"cacerts",
+	"features",
 }
 
 func PipelineFormatter(apiContext *types.APIContext, resource *types.RawResource) {
