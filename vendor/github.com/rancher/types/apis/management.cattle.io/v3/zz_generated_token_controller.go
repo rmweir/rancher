@@ -89,6 +89,7 @@ type TokenInterface interface {
 	AddHandler(ctx context.Context, name string, sync TokenHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync TokenHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle TokenLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle TokenLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync TokenHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle TokenLifecycle)
 }
@@ -278,6 +279,11 @@ func (s *tokenClient) AddFeatureHandler(enabled func(string) bool, feat string, 
 func (s *tokenClient) AddLifecycle(ctx context.Context, name string, lifecycle TokenLifecycle) {
 	sync := NewTokenLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *tokenClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle TokenLifecycle) {
+	sync := NewTokenLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *tokenClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync TokenHandlerFunc) {

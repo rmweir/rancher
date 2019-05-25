@@ -600,6 +600,7 @@ var (
 	lockProjectAlertGroupInterfaceMockAddClusterScopedHandler   sync.RWMutex
 	lockProjectAlertGroupInterfaceMockAddClusterScopedLifecycle sync.RWMutex
 	lockProjectAlertGroupInterfaceMockAddFeatureHandler         sync.RWMutex
+	lockProjectAlertGroupInterfaceMockAddFeatureLifecycle       sync.RWMutex
 	lockProjectAlertGroupInterfaceMockAddHandler                sync.RWMutex
 	lockProjectAlertGroupInterfaceMockAddLifecycle              sync.RWMutex
 	lockProjectAlertGroupInterfaceMockController                sync.RWMutex
@@ -633,6 +634,9 @@ var _ v3.ProjectAlertGroupInterface = &ProjectAlertGroupInterfaceMock{}
 //             },
 //             AddFeatureHandlerFunc: func(enabled func(string) bool, feat string, ctx context.Context, name string, sync v3.ProjectAlertGroupHandlerFunc)  {
 // 	               panic("mock out the AddFeatureHandler method")
+//             },
+//             AddFeatureLifecycleFunc: func(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v3.ProjectAlertGroupLifecycle)  {
+// 	               panic("mock out the AddFeatureLifecycle method")
 //             },
 //             AddHandlerFunc: func(ctx context.Context, name string, sync v3.ProjectAlertGroupHandlerFunc)  {
 // 	               panic("mock out the AddHandler method")
@@ -688,6 +692,9 @@ type ProjectAlertGroupInterfaceMock struct {
 
 	// AddFeatureHandlerFunc mocks the AddFeatureHandler method.
 	AddFeatureHandlerFunc func(enabled func(string) bool, feat string, ctx context.Context, name string, sync v3.ProjectAlertGroupHandlerFunc)
+
+	// AddFeatureLifecycleFunc mocks the AddFeatureLifecycle method.
+	AddFeatureLifecycleFunc func(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v3.ProjectAlertGroupLifecycle)
 
 	// AddHandlerFunc mocks the AddHandler method.
 	AddHandlerFunc func(ctx context.Context, name string, sync v3.ProjectAlertGroupHandlerFunc)
@@ -764,6 +771,19 @@ type ProjectAlertGroupInterfaceMock struct {
 			Name string
 			// Sync is the sync argument value.
 			Sync v3.ProjectAlertGroupHandlerFunc
+		}
+		// AddFeatureLifecycle holds details about calls to the AddFeatureLifecycle method.
+		AddFeatureLifecycle []struct {
+			// Enabled is the enabled argument value.
+			Enabled func(string) bool
+			// Feat is the feat argument value.
+			Feat string
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Name is the name argument value.
+			Name string
+			// Lifecycle is the lifecycle argument value.
+			Lifecycle v3.ProjectAlertGroupLifecycle
 		}
 		// AddHandler holds details about calls to the AddHandler method.
 		AddHandler []struct {
@@ -981,6 +1001,53 @@ func (mock *ProjectAlertGroupInterfaceMock) AddFeatureHandlerCalls() []struct {
 	lockProjectAlertGroupInterfaceMockAddFeatureHandler.RLock()
 	calls = mock.calls.AddFeatureHandler
 	lockProjectAlertGroupInterfaceMockAddFeatureHandler.RUnlock()
+	return calls
+}
+
+// AddFeatureLifecycle calls AddFeatureLifecycleFunc.
+func (mock *ProjectAlertGroupInterfaceMock) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v3.ProjectAlertGroupLifecycle) {
+	if mock.AddFeatureLifecycleFunc == nil {
+		panic("ProjectAlertGroupInterfaceMock.AddFeatureLifecycleFunc: method is nil but ProjectAlertGroupInterface.AddFeatureLifecycle was just called")
+	}
+	callInfo := struct {
+		Enabled   func(string) bool
+		Feat      string
+		Ctx       context.Context
+		Name      string
+		Lifecycle v3.ProjectAlertGroupLifecycle
+	}{
+		Enabled:   enabled,
+		Feat:      feat,
+		Ctx:       ctx,
+		Name:      name,
+		Lifecycle: lifecycle,
+	}
+	lockProjectAlertGroupInterfaceMockAddFeatureLifecycle.Lock()
+	mock.calls.AddFeatureLifecycle = append(mock.calls.AddFeatureLifecycle, callInfo)
+	lockProjectAlertGroupInterfaceMockAddFeatureLifecycle.Unlock()
+	mock.AddFeatureLifecycleFunc(enabled, feat, ctx, name, lifecycle)
+}
+
+// AddFeatureLifecycleCalls gets all the calls that were made to AddFeatureLifecycle.
+// Check the length with:
+//     len(mockedProjectAlertGroupInterface.AddFeatureLifecycleCalls())
+func (mock *ProjectAlertGroupInterfaceMock) AddFeatureLifecycleCalls() []struct {
+	Enabled   func(string) bool
+	Feat      string
+	Ctx       context.Context
+	Name      string
+	Lifecycle v3.ProjectAlertGroupLifecycle
+} {
+	var calls []struct {
+		Enabled   func(string) bool
+		Feat      string
+		Ctx       context.Context
+		Name      string
+		Lifecycle v3.ProjectAlertGroupLifecycle
+	}
+	lockProjectAlertGroupInterfaceMockAddFeatureLifecycle.RLock()
+	calls = mock.calls.AddFeatureLifecycle
+	lockProjectAlertGroupInterfaceMockAddFeatureLifecycle.RUnlock()
 	return calls
 }
 

@@ -90,6 +90,7 @@ type ComponentStatusInterface interface {
 	AddHandler(ctx context.Context, name string, sync ComponentStatusHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync ComponentStatusHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle ComponentStatusLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle ComponentStatusLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync ComponentStatusHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle ComponentStatusLifecycle)
 }
@@ -279,6 +280,11 @@ func (s *componentStatusClient) AddFeatureHandler(enabled func(string) bool, fea
 func (s *componentStatusClient) AddLifecycle(ctx context.Context, name string, lifecycle ComponentStatusLifecycle) {
 	sync := NewComponentStatusLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *componentStatusClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle ComponentStatusLifecycle) {
+	sync := NewComponentStatusLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *componentStatusClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync ComponentStatusHandlerFunc) {

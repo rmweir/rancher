@@ -91,6 +91,7 @@ type RoleInterface interface {
 	AddHandler(ctx context.Context, name string, sync RoleHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync RoleHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle RoleLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle RoleLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync RoleHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle RoleLifecycle)
 }
@@ -280,6 +281,11 @@ func (s *roleClient) AddFeatureHandler(enabled func(string) bool, feat string, c
 func (s *roleClient) AddLifecycle(ctx context.Context, name string, lifecycle RoleLifecycle) {
 	sync := NewRoleLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *roleClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle RoleLifecycle) {
+	sync := NewRoleLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *roleClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync RoleHandlerFunc) {

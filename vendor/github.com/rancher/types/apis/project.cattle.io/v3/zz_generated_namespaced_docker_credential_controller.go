@@ -90,6 +90,7 @@ type NamespacedDockerCredentialInterface interface {
 	AddHandler(ctx context.Context, name string, sync NamespacedDockerCredentialHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync NamespacedDockerCredentialHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle NamespacedDockerCredentialLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle NamespacedDockerCredentialLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync NamespacedDockerCredentialHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle NamespacedDockerCredentialLifecycle)
 }
@@ -279,6 +280,11 @@ func (s *namespacedDockerCredentialClient) AddFeatureHandler(enabled func(string
 func (s *namespacedDockerCredentialClient) AddLifecycle(ctx context.Context, name string, lifecycle NamespacedDockerCredentialLifecycle) {
 	sync := NewNamespacedDockerCredentialLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *namespacedDockerCredentialClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle NamespacedDockerCredentialLifecycle) {
+	sync := NewNamespacedDockerCredentialLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *namespacedDockerCredentialClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync NamespacedDockerCredentialHandlerFunc) {

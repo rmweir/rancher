@@ -89,6 +89,7 @@ type KontainerDriverInterface interface {
 	AddHandler(ctx context.Context, name string, sync KontainerDriverHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync KontainerDriverHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle KontainerDriverLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle KontainerDriverLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync KontainerDriverHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle KontainerDriverLifecycle)
 }
@@ -278,6 +279,11 @@ func (s *kontainerDriverClient) AddFeatureHandler(enabled func(string) bool, fea
 func (s *kontainerDriverClient) AddLifecycle(ctx context.Context, name string, lifecycle KontainerDriverLifecycle) {
 	sync := NewKontainerDriverLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *kontainerDriverClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle KontainerDriverLifecycle) {
+	sync := NewKontainerDriverLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *kontainerDriverClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync KontainerDriverHandlerFunc) {

@@ -89,6 +89,7 @@ type ClusterInterface interface {
 	AddHandler(ctx context.Context, name string, sync ClusterHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync ClusterHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle ClusterLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle ClusterLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync ClusterHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle ClusterLifecycle)
 }
@@ -278,6 +279,11 @@ func (s *clusterClient) AddFeatureHandler(enabled func(string) bool, feat string
 func (s *clusterClient) AddLifecycle(ctx context.Context, name string, lifecycle ClusterLifecycle) {
 	sync := NewClusterLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *clusterClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle ClusterLifecycle) {
+	sync := NewClusterLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *clusterClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync ClusterHandlerFunc) {

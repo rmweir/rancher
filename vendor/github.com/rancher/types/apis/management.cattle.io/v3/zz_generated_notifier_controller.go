@@ -90,6 +90,7 @@ type NotifierInterface interface {
 	AddHandler(ctx context.Context, name string, sync NotifierHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync NotifierHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle NotifierLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle NotifierLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync NotifierHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle NotifierLifecycle)
 }
@@ -279,6 +280,11 @@ func (s *notifierClient) AddFeatureHandler(enabled func(string) bool, feat strin
 func (s *notifierClient) AddLifecycle(ctx context.Context, name string, lifecycle NotifierLifecycle) {
 	sync := NewNotifierLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *notifierClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle NotifierLifecycle) {
+	sync := NewNotifierLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *notifierClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync NotifierHandlerFunc) {

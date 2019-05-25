@@ -91,6 +91,7 @@ type NetworkPolicyInterface interface {
 	AddHandler(ctx context.Context, name string, sync NetworkPolicyHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync NetworkPolicyHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle NetworkPolicyLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle NetworkPolicyLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync NetworkPolicyHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle NetworkPolicyLifecycle)
 }
@@ -280,6 +281,11 @@ func (s *networkPolicyClient) AddFeatureHandler(enabled func(string) bool, feat 
 func (s *networkPolicyClient) AddLifecycle(ctx context.Context, name string, lifecycle NetworkPolicyLifecycle) {
 	sync := NewNetworkPolicyLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *networkPolicyClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle NetworkPolicyLifecycle) {
+	sync := NewNetworkPolicyLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *networkPolicyClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync NetworkPolicyHandlerFunc) {

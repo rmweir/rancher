@@ -600,6 +600,7 @@ var (
 	lockCloudCredentialInterfaceMockAddClusterScopedHandler   sync.RWMutex
 	lockCloudCredentialInterfaceMockAddClusterScopedLifecycle sync.RWMutex
 	lockCloudCredentialInterfaceMockAddFeatureHandler         sync.RWMutex
+	lockCloudCredentialInterfaceMockAddFeatureLifecycle       sync.RWMutex
 	lockCloudCredentialInterfaceMockAddHandler                sync.RWMutex
 	lockCloudCredentialInterfaceMockAddLifecycle              sync.RWMutex
 	lockCloudCredentialInterfaceMockController                sync.RWMutex
@@ -633,6 +634,9 @@ var _ v3.CloudCredentialInterface = &CloudCredentialInterfaceMock{}
 //             },
 //             AddFeatureHandlerFunc: func(enabled func(string) bool, feat string, ctx context.Context, name string, sync v3.CloudCredentialHandlerFunc)  {
 // 	               panic("mock out the AddFeatureHandler method")
+//             },
+//             AddFeatureLifecycleFunc: func(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v3.CloudCredentialLifecycle)  {
+// 	               panic("mock out the AddFeatureLifecycle method")
 //             },
 //             AddHandlerFunc: func(ctx context.Context, name string, sync v3.CloudCredentialHandlerFunc)  {
 // 	               panic("mock out the AddHandler method")
@@ -688,6 +692,9 @@ type CloudCredentialInterfaceMock struct {
 
 	// AddFeatureHandlerFunc mocks the AddFeatureHandler method.
 	AddFeatureHandlerFunc func(enabled func(string) bool, feat string, ctx context.Context, name string, sync v3.CloudCredentialHandlerFunc)
+
+	// AddFeatureLifecycleFunc mocks the AddFeatureLifecycle method.
+	AddFeatureLifecycleFunc func(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v3.CloudCredentialLifecycle)
 
 	// AddHandlerFunc mocks the AddHandler method.
 	AddHandlerFunc func(ctx context.Context, name string, sync v3.CloudCredentialHandlerFunc)
@@ -764,6 +771,19 @@ type CloudCredentialInterfaceMock struct {
 			Name string
 			// Sync is the sync argument value.
 			Sync v3.CloudCredentialHandlerFunc
+		}
+		// AddFeatureLifecycle holds details about calls to the AddFeatureLifecycle method.
+		AddFeatureLifecycle []struct {
+			// Enabled is the enabled argument value.
+			Enabled func(string) bool
+			// Feat is the feat argument value.
+			Feat string
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Name is the name argument value.
+			Name string
+			// Lifecycle is the lifecycle argument value.
+			Lifecycle v3.CloudCredentialLifecycle
 		}
 		// AddHandler holds details about calls to the AddHandler method.
 		AddHandler []struct {
@@ -981,6 +1001,53 @@ func (mock *CloudCredentialInterfaceMock) AddFeatureHandlerCalls() []struct {
 	lockCloudCredentialInterfaceMockAddFeatureHandler.RLock()
 	calls = mock.calls.AddFeatureHandler
 	lockCloudCredentialInterfaceMockAddFeatureHandler.RUnlock()
+	return calls
+}
+
+// AddFeatureLifecycle calls AddFeatureLifecycleFunc.
+func (mock *CloudCredentialInterfaceMock) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v3.CloudCredentialLifecycle) {
+	if mock.AddFeatureLifecycleFunc == nil {
+		panic("CloudCredentialInterfaceMock.AddFeatureLifecycleFunc: method is nil but CloudCredentialInterface.AddFeatureLifecycle was just called")
+	}
+	callInfo := struct {
+		Enabled   func(string) bool
+		Feat      string
+		Ctx       context.Context
+		Name      string
+		Lifecycle v3.CloudCredentialLifecycle
+	}{
+		Enabled:   enabled,
+		Feat:      feat,
+		Ctx:       ctx,
+		Name:      name,
+		Lifecycle: lifecycle,
+	}
+	lockCloudCredentialInterfaceMockAddFeatureLifecycle.Lock()
+	mock.calls.AddFeatureLifecycle = append(mock.calls.AddFeatureLifecycle, callInfo)
+	lockCloudCredentialInterfaceMockAddFeatureLifecycle.Unlock()
+	mock.AddFeatureLifecycleFunc(enabled, feat, ctx, name, lifecycle)
+}
+
+// AddFeatureLifecycleCalls gets all the calls that were made to AddFeatureLifecycle.
+// Check the length with:
+//     len(mockedCloudCredentialInterface.AddFeatureLifecycleCalls())
+func (mock *CloudCredentialInterfaceMock) AddFeatureLifecycleCalls() []struct {
+	Enabled   func(string) bool
+	Feat      string
+	Ctx       context.Context
+	Name      string
+	Lifecycle v3.CloudCredentialLifecycle
+} {
+	var calls []struct {
+		Enabled   func(string) bool
+		Feat      string
+		Ctx       context.Context
+		Name      string
+		Lifecycle v3.CloudCredentialLifecycle
+	}
+	lockCloudCredentialInterfaceMockAddFeatureLifecycle.RLock()
+	calls = mock.calls.AddFeatureLifecycle
+	lockCloudCredentialInterfaceMockAddFeatureLifecycle.RUnlock()
 	return calls
 }
 

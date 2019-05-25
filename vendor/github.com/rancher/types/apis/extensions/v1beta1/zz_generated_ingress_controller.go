@@ -91,6 +91,7 @@ type IngressInterface interface {
 	AddHandler(ctx context.Context, name string, sync IngressHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync IngressHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle IngressLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle IngressLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync IngressHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle IngressLifecycle)
 }
@@ -280,6 +281,11 @@ func (s *ingressClient) AddFeatureHandler(enabled func(string) bool, feat string
 func (s *ingressClient) AddLifecycle(ctx context.Context, name string, lifecycle IngressLifecycle) {
 	sync := NewIngressLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *ingressClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle IngressLifecycle) {
+	sync := NewIngressLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *ingressClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync IngressHandlerFunc) {

@@ -91,6 +91,7 @@ type JobInterface interface {
 	AddHandler(ctx context.Context, name string, sync JobHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync JobHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle JobLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle JobLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync JobHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle JobLifecycle)
 }
@@ -280,6 +281,11 @@ func (s *jobClient) AddFeatureHandler(enabled func(string) bool, feat string, ct
 func (s *jobClient) AddLifecycle(ctx context.Context, name string, lifecycle JobLifecycle) {
 	sync := NewJobLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *jobClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle JobLifecycle) {
+	sync := NewJobLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *jobClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync JobHandlerFunc) {

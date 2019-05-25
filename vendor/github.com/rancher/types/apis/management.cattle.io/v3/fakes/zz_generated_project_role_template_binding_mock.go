@@ -600,6 +600,7 @@ var (
 	lockProjectRoleTemplateBindingInterfaceMockAddClusterScopedHandler   sync.RWMutex
 	lockProjectRoleTemplateBindingInterfaceMockAddClusterScopedLifecycle sync.RWMutex
 	lockProjectRoleTemplateBindingInterfaceMockAddFeatureHandler         sync.RWMutex
+	lockProjectRoleTemplateBindingInterfaceMockAddFeatureLifecycle       sync.RWMutex
 	lockProjectRoleTemplateBindingInterfaceMockAddHandler                sync.RWMutex
 	lockProjectRoleTemplateBindingInterfaceMockAddLifecycle              sync.RWMutex
 	lockProjectRoleTemplateBindingInterfaceMockController                sync.RWMutex
@@ -633,6 +634,9 @@ var _ v3.ProjectRoleTemplateBindingInterface = &ProjectRoleTemplateBindingInterf
 //             },
 //             AddFeatureHandlerFunc: func(enabled func(string) bool, feat string, ctx context.Context, name string, sync v3.ProjectRoleTemplateBindingHandlerFunc)  {
 // 	               panic("mock out the AddFeatureHandler method")
+//             },
+//             AddFeatureLifecycleFunc: func(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v3.ProjectRoleTemplateBindingLifecycle)  {
+// 	               panic("mock out the AddFeatureLifecycle method")
 //             },
 //             AddHandlerFunc: func(ctx context.Context, name string, sync v3.ProjectRoleTemplateBindingHandlerFunc)  {
 // 	               panic("mock out the AddHandler method")
@@ -688,6 +692,9 @@ type ProjectRoleTemplateBindingInterfaceMock struct {
 
 	// AddFeatureHandlerFunc mocks the AddFeatureHandler method.
 	AddFeatureHandlerFunc func(enabled func(string) bool, feat string, ctx context.Context, name string, sync v3.ProjectRoleTemplateBindingHandlerFunc)
+
+	// AddFeatureLifecycleFunc mocks the AddFeatureLifecycle method.
+	AddFeatureLifecycleFunc func(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v3.ProjectRoleTemplateBindingLifecycle)
 
 	// AddHandlerFunc mocks the AddHandler method.
 	AddHandlerFunc func(ctx context.Context, name string, sync v3.ProjectRoleTemplateBindingHandlerFunc)
@@ -764,6 +771,19 @@ type ProjectRoleTemplateBindingInterfaceMock struct {
 			Name string
 			// Sync is the sync argument value.
 			Sync v3.ProjectRoleTemplateBindingHandlerFunc
+		}
+		// AddFeatureLifecycle holds details about calls to the AddFeatureLifecycle method.
+		AddFeatureLifecycle []struct {
+			// Enabled is the enabled argument value.
+			Enabled func(string) bool
+			// Feat is the feat argument value.
+			Feat string
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Name is the name argument value.
+			Name string
+			// Lifecycle is the lifecycle argument value.
+			Lifecycle v3.ProjectRoleTemplateBindingLifecycle
 		}
 		// AddHandler holds details about calls to the AddHandler method.
 		AddHandler []struct {
@@ -981,6 +1001,53 @@ func (mock *ProjectRoleTemplateBindingInterfaceMock) AddFeatureHandlerCalls() []
 	lockProjectRoleTemplateBindingInterfaceMockAddFeatureHandler.RLock()
 	calls = mock.calls.AddFeatureHandler
 	lockProjectRoleTemplateBindingInterfaceMockAddFeatureHandler.RUnlock()
+	return calls
+}
+
+// AddFeatureLifecycle calls AddFeatureLifecycleFunc.
+func (mock *ProjectRoleTemplateBindingInterfaceMock) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v3.ProjectRoleTemplateBindingLifecycle) {
+	if mock.AddFeatureLifecycleFunc == nil {
+		panic("ProjectRoleTemplateBindingInterfaceMock.AddFeatureLifecycleFunc: method is nil but ProjectRoleTemplateBindingInterface.AddFeatureLifecycle was just called")
+	}
+	callInfo := struct {
+		Enabled   func(string) bool
+		Feat      string
+		Ctx       context.Context
+		Name      string
+		Lifecycle v3.ProjectRoleTemplateBindingLifecycle
+	}{
+		Enabled:   enabled,
+		Feat:      feat,
+		Ctx:       ctx,
+		Name:      name,
+		Lifecycle: lifecycle,
+	}
+	lockProjectRoleTemplateBindingInterfaceMockAddFeatureLifecycle.Lock()
+	mock.calls.AddFeatureLifecycle = append(mock.calls.AddFeatureLifecycle, callInfo)
+	lockProjectRoleTemplateBindingInterfaceMockAddFeatureLifecycle.Unlock()
+	mock.AddFeatureLifecycleFunc(enabled, feat, ctx, name, lifecycle)
+}
+
+// AddFeatureLifecycleCalls gets all the calls that were made to AddFeatureLifecycle.
+// Check the length with:
+//     len(mockedProjectRoleTemplateBindingInterface.AddFeatureLifecycleCalls())
+func (mock *ProjectRoleTemplateBindingInterfaceMock) AddFeatureLifecycleCalls() []struct {
+	Enabled   func(string) bool
+	Feat      string
+	Ctx       context.Context
+	Name      string
+	Lifecycle v3.ProjectRoleTemplateBindingLifecycle
+} {
+	var calls []struct {
+		Enabled   func(string) bool
+		Feat      string
+		Ctx       context.Context
+		Name      string
+		Lifecycle v3.ProjectRoleTemplateBindingLifecycle
+	}
+	lockProjectRoleTemplateBindingInterfaceMockAddFeatureLifecycle.RLock()
+	calls = mock.calls.AddFeatureLifecycle
+	lockProjectRoleTemplateBindingInterfaceMockAddFeatureLifecycle.RUnlock()
 	return calls
 }
 

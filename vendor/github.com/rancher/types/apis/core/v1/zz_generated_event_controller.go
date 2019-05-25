@@ -90,6 +90,7 @@ type EventInterface interface {
 	AddHandler(ctx context.Context, name string, sync EventHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync EventHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle EventLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle EventLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync EventHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle EventLifecycle)
 }
@@ -279,6 +280,11 @@ func (s *eventClient) AddFeatureHandler(enabled func(string) bool, feat string, 
 func (s *eventClient) AddLifecycle(ctx context.Context, name string, lifecycle EventLifecycle) {
 	sync := NewEventLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *eventClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle EventLifecycle) {
+	sync := NewEventLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *eventClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync EventHandlerFunc) {

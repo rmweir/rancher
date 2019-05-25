@@ -89,6 +89,7 @@ type TemplateContentInterface interface {
 	AddHandler(ctx context.Context, name string, sync TemplateContentHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync TemplateContentHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle TemplateContentLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle TemplateContentLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync TemplateContentHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle TemplateContentLifecycle)
 }
@@ -278,6 +279,11 @@ func (s *templateContentClient) AddFeatureHandler(enabled func(string) bool, fea
 func (s *templateContentClient) AddLifecycle(ctx context.Context, name string, lifecycle TemplateContentLifecycle) {
 	sync := NewTemplateContentLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *templateContentClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle TemplateContentLifecycle) {
+	sync := NewTemplateContentLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *templateContentClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync TemplateContentHandlerFunc) {

@@ -90,6 +90,7 @@ type PreferenceInterface interface {
 	AddHandler(ctx context.Context, name string, sync PreferenceHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync PreferenceHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle PreferenceLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle PreferenceLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync PreferenceHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle PreferenceLifecycle)
 }
@@ -279,6 +280,11 @@ func (s *preferenceClient) AddFeatureHandler(enabled func(string) bool, feat str
 func (s *preferenceClient) AddLifecycle(ctx context.Context, name string, lifecycle PreferenceLifecycle) {
 	sync := NewPreferenceLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *preferenceClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle PreferenceLifecycle) {
+	sync := NewPreferenceLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *preferenceClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync PreferenceHandlerFunc) {

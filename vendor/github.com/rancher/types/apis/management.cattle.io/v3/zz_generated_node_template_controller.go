@@ -90,6 +90,7 @@ type NodeTemplateInterface interface {
 	AddHandler(ctx context.Context, name string, sync NodeTemplateHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync NodeTemplateHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle NodeTemplateLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle NodeTemplateLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync NodeTemplateHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle NodeTemplateLifecycle)
 }
@@ -279,6 +280,11 @@ func (s *nodeTemplateClient) AddFeatureHandler(enabled func(string) bool, feat s
 func (s *nodeTemplateClient) AddLifecycle(ctx context.Context, name string, lifecycle NodeTemplateLifecycle) {
 	sync := NewNodeTemplateLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *nodeTemplateClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle NodeTemplateLifecycle) {
+	sync := NewNodeTemplateLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *nodeTemplateClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync NodeTemplateHandlerFunc) {

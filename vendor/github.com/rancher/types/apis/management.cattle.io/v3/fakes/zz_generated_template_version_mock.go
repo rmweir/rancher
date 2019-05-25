@@ -600,6 +600,7 @@ var (
 	lockTemplateVersionInterfaceMockAddClusterScopedHandler   sync.RWMutex
 	lockTemplateVersionInterfaceMockAddClusterScopedLifecycle sync.RWMutex
 	lockTemplateVersionInterfaceMockAddFeatureHandler         sync.RWMutex
+	lockTemplateVersionInterfaceMockAddFeatureLifecycle       sync.RWMutex
 	lockTemplateVersionInterfaceMockAddHandler                sync.RWMutex
 	lockTemplateVersionInterfaceMockAddLifecycle              sync.RWMutex
 	lockTemplateVersionInterfaceMockController                sync.RWMutex
@@ -633,6 +634,9 @@ var _ v3.TemplateVersionInterface = &TemplateVersionInterfaceMock{}
 //             },
 //             AddFeatureHandlerFunc: func(enabled func(string) bool, feat string, ctx context.Context, name string, sync v3.TemplateVersionHandlerFunc)  {
 // 	               panic("mock out the AddFeatureHandler method")
+//             },
+//             AddFeatureLifecycleFunc: func(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v3.TemplateVersionLifecycle)  {
+// 	               panic("mock out the AddFeatureLifecycle method")
 //             },
 //             AddHandlerFunc: func(ctx context.Context, name string, sync v3.TemplateVersionHandlerFunc)  {
 // 	               panic("mock out the AddHandler method")
@@ -688,6 +692,9 @@ type TemplateVersionInterfaceMock struct {
 
 	// AddFeatureHandlerFunc mocks the AddFeatureHandler method.
 	AddFeatureHandlerFunc func(enabled func(string) bool, feat string, ctx context.Context, name string, sync v3.TemplateVersionHandlerFunc)
+
+	// AddFeatureLifecycleFunc mocks the AddFeatureLifecycle method.
+	AddFeatureLifecycleFunc func(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v3.TemplateVersionLifecycle)
 
 	// AddHandlerFunc mocks the AddHandler method.
 	AddHandlerFunc func(ctx context.Context, name string, sync v3.TemplateVersionHandlerFunc)
@@ -764,6 +771,19 @@ type TemplateVersionInterfaceMock struct {
 			Name string
 			// Sync is the sync argument value.
 			Sync v3.TemplateVersionHandlerFunc
+		}
+		// AddFeatureLifecycle holds details about calls to the AddFeatureLifecycle method.
+		AddFeatureLifecycle []struct {
+			// Enabled is the enabled argument value.
+			Enabled func(string) bool
+			// Feat is the feat argument value.
+			Feat string
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Name is the name argument value.
+			Name string
+			// Lifecycle is the lifecycle argument value.
+			Lifecycle v3.TemplateVersionLifecycle
 		}
 		// AddHandler holds details about calls to the AddHandler method.
 		AddHandler []struct {
@@ -981,6 +1001,53 @@ func (mock *TemplateVersionInterfaceMock) AddFeatureHandlerCalls() []struct {
 	lockTemplateVersionInterfaceMockAddFeatureHandler.RLock()
 	calls = mock.calls.AddFeatureHandler
 	lockTemplateVersionInterfaceMockAddFeatureHandler.RUnlock()
+	return calls
+}
+
+// AddFeatureLifecycle calls AddFeatureLifecycleFunc.
+func (mock *TemplateVersionInterfaceMock) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v3.TemplateVersionLifecycle) {
+	if mock.AddFeatureLifecycleFunc == nil {
+		panic("TemplateVersionInterfaceMock.AddFeatureLifecycleFunc: method is nil but TemplateVersionInterface.AddFeatureLifecycle was just called")
+	}
+	callInfo := struct {
+		Enabled   func(string) bool
+		Feat      string
+		Ctx       context.Context
+		Name      string
+		Lifecycle v3.TemplateVersionLifecycle
+	}{
+		Enabled:   enabled,
+		Feat:      feat,
+		Ctx:       ctx,
+		Name:      name,
+		Lifecycle: lifecycle,
+	}
+	lockTemplateVersionInterfaceMockAddFeatureLifecycle.Lock()
+	mock.calls.AddFeatureLifecycle = append(mock.calls.AddFeatureLifecycle, callInfo)
+	lockTemplateVersionInterfaceMockAddFeatureLifecycle.Unlock()
+	mock.AddFeatureLifecycleFunc(enabled, feat, ctx, name, lifecycle)
+}
+
+// AddFeatureLifecycleCalls gets all the calls that were made to AddFeatureLifecycle.
+// Check the length with:
+//     len(mockedTemplateVersionInterface.AddFeatureLifecycleCalls())
+func (mock *TemplateVersionInterfaceMock) AddFeatureLifecycleCalls() []struct {
+	Enabled   func(string) bool
+	Feat      string
+	Ctx       context.Context
+	Name      string
+	Lifecycle v3.TemplateVersionLifecycle
+} {
+	var calls []struct {
+		Enabled   func(string) bool
+		Feat      string
+		Ctx       context.Context
+		Name      string
+		Lifecycle v3.TemplateVersionLifecycle
+	}
+	lockTemplateVersionInterfaceMockAddFeatureLifecycle.RLock()
+	calls = mock.calls.AddFeatureLifecycle
+	lockTemplateVersionInterfaceMockAddFeatureLifecycle.RUnlock()
 	return calls
 }
 

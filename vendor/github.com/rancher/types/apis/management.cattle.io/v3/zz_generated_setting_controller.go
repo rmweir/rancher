@@ -89,6 +89,7 @@ type SettingInterface interface {
 	AddHandler(ctx context.Context, name string, sync SettingHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync SettingHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle SettingLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle SettingLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync SettingHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle SettingLifecycle)
 }
@@ -278,6 +279,11 @@ func (s *settingClient) AddFeatureHandler(enabled func(string) bool, feat string
 func (s *settingClient) AddLifecycle(ctx context.Context, name string, lifecycle SettingLifecycle) {
 	sync := NewSettingLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *settingClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle SettingLifecycle) {
+	sync := NewSettingLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *settingClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync SettingHandlerFunc) {

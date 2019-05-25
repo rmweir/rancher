@@ -600,6 +600,7 @@ var (
 	lockRoleTemplateInterfaceMockAddClusterScopedHandler   sync.RWMutex
 	lockRoleTemplateInterfaceMockAddClusterScopedLifecycle sync.RWMutex
 	lockRoleTemplateInterfaceMockAddFeatureHandler         sync.RWMutex
+	lockRoleTemplateInterfaceMockAddFeatureLifecycle       sync.RWMutex
 	lockRoleTemplateInterfaceMockAddHandler                sync.RWMutex
 	lockRoleTemplateInterfaceMockAddLifecycle              sync.RWMutex
 	lockRoleTemplateInterfaceMockController                sync.RWMutex
@@ -633,6 +634,9 @@ var _ v3.RoleTemplateInterface = &RoleTemplateInterfaceMock{}
 //             },
 //             AddFeatureHandlerFunc: func(enabled func(string) bool, feat string, ctx context.Context, name string, sync v3.RoleTemplateHandlerFunc)  {
 // 	               panic("mock out the AddFeatureHandler method")
+//             },
+//             AddFeatureLifecycleFunc: func(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v3.RoleTemplateLifecycle)  {
+// 	               panic("mock out the AddFeatureLifecycle method")
 //             },
 //             AddHandlerFunc: func(ctx context.Context, name string, sync v3.RoleTemplateHandlerFunc)  {
 // 	               panic("mock out the AddHandler method")
@@ -688,6 +692,9 @@ type RoleTemplateInterfaceMock struct {
 
 	// AddFeatureHandlerFunc mocks the AddFeatureHandler method.
 	AddFeatureHandlerFunc func(enabled func(string) bool, feat string, ctx context.Context, name string, sync v3.RoleTemplateHandlerFunc)
+
+	// AddFeatureLifecycleFunc mocks the AddFeatureLifecycle method.
+	AddFeatureLifecycleFunc func(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v3.RoleTemplateLifecycle)
 
 	// AddHandlerFunc mocks the AddHandler method.
 	AddHandlerFunc func(ctx context.Context, name string, sync v3.RoleTemplateHandlerFunc)
@@ -764,6 +771,19 @@ type RoleTemplateInterfaceMock struct {
 			Name string
 			// Sync is the sync argument value.
 			Sync v3.RoleTemplateHandlerFunc
+		}
+		// AddFeatureLifecycle holds details about calls to the AddFeatureLifecycle method.
+		AddFeatureLifecycle []struct {
+			// Enabled is the enabled argument value.
+			Enabled func(string) bool
+			// Feat is the feat argument value.
+			Feat string
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Name is the name argument value.
+			Name string
+			// Lifecycle is the lifecycle argument value.
+			Lifecycle v3.RoleTemplateLifecycle
 		}
 		// AddHandler holds details about calls to the AddHandler method.
 		AddHandler []struct {
@@ -981,6 +1001,53 @@ func (mock *RoleTemplateInterfaceMock) AddFeatureHandlerCalls() []struct {
 	lockRoleTemplateInterfaceMockAddFeatureHandler.RLock()
 	calls = mock.calls.AddFeatureHandler
 	lockRoleTemplateInterfaceMockAddFeatureHandler.RUnlock()
+	return calls
+}
+
+// AddFeatureLifecycle calls AddFeatureLifecycleFunc.
+func (mock *RoleTemplateInterfaceMock) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v3.RoleTemplateLifecycle) {
+	if mock.AddFeatureLifecycleFunc == nil {
+		panic("RoleTemplateInterfaceMock.AddFeatureLifecycleFunc: method is nil but RoleTemplateInterface.AddFeatureLifecycle was just called")
+	}
+	callInfo := struct {
+		Enabled   func(string) bool
+		Feat      string
+		Ctx       context.Context
+		Name      string
+		Lifecycle v3.RoleTemplateLifecycle
+	}{
+		Enabled:   enabled,
+		Feat:      feat,
+		Ctx:       ctx,
+		Name:      name,
+		Lifecycle: lifecycle,
+	}
+	lockRoleTemplateInterfaceMockAddFeatureLifecycle.Lock()
+	mock.calls.AddFeatureLifecycle = append(mock.calls.AddFeatureLifecycle, callInfo)
+	lockRoleTemplateInterfaceMockAddFeatureLifecycle.Unlock()
+	mock.AddFeatureLifecycleFunc(enabled, feat, ctx, name, lifecycle)
+}
+
+// AddFeatureLifecycleCalls gets all the calls that were made to AddFeatureLifecycle.
+// Check the length with:
+//     len(mockedRoleTemplateInterface.AddFeatureLifecycleCalls())
+func (mock *RoleTemplateInterfaceMock) AddFeatureLifecycleCalls() []struct {
+	Enabled   func(string) bool
+	Feat      string
+	Ctx       context.Context
+	Name      string
+	Lifecycle v3.RoleTemplateLifecycle
+} {
+	var calls []struct {
+		Enabled   func(string) bool
+		Feat      string
+		Ctx       context.Context
+		Name      string
+		Lifecycle v3.RoleTemplateLifecycle
+	}
+	lockRoleTemplateInterfaceMockAddFeatureLifecycle.RLock()
+	calls = mock.calls.AddFeatureLifecycle
+	lockRoleTemplateInterfaceMockAddFeatureLifecycle.RUnlock()
 	return calls
 }
 

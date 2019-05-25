@@ -90,6 +90,7 @@ type NamespacedBasicAuthInterface interface {
 	AddHandler(ctx context.Context, name string, sync NamespacedBasicAuthHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync NamespacedBasicAuthHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle NamespacedBasicAuthLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle NamespacedBasicAuthLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync NamespacedBasicAuthHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle NamespacedBasicAuthLifecycle)
 }
@@ -279,6 +280,11 @@ func (s *namespacedBasicAuthClient) AddFeatureHandler(enabled func(string) bool,
 func (s *namespacedBasicAuthClient) AddLifecycle(ctx context.Context, name string, lifecycle NamespacedBasicAuthLifecycle) {
 	sync := NewNamespacedBasicAuthLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *namespacedBasicAuthClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle NamespacedBasicAuthLifecycle) {
+	sync := NewNamespacedBasicAuthLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *namespacedBasicAuthClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync NamespacedBasicAuthHandlerFunc) {

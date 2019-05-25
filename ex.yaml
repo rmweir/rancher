@@ -1,6 +1,6 @@
 apiVersion: management.cattle.io/v3
-kind: ExampleConfig
+kind: KontainerDriver
 metadata:
-  name: example-1
+  name: example17
   labels:
     component: rancher

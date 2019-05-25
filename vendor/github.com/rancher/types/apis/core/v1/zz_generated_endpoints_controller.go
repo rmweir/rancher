@@ -91,6 +91,7 @@ type EndpointsInterface interface {
 	AddHandler(ctx context.Context, name string, sync EndpointsHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync EndpointsHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle EndpointsLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle EndpointsLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync EndpointsHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle EndpointsLifecycle)
 }
@@ -280,6 +281,11 @@ func (s *endpointsClient) AddFeatureHandler(enabled func(string) bool, feat stri
 func (s *endpointsClient) AddLifecycle(ctx context.Context, name string, lifecycle EndpointsLifecycle) {
 	sync := NewEndpointsLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *endpointsClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle EndpointsLifecycle) {
+	sync := NewEndpointsLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *endpointsClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync EndpointsHandlerFunc) {

@@ -600,6 +600,7 @@ var (
 	lockTemplateContentInterfaceMockAddClusterScopedHandler   sync.RWMutex
 	lockTemplateContentInterfaceMockAddClusterScopedLifecycle sync.RWMutex
 	lockTemplateContentInterfaceMockAddFeatureHandler         sync.RWMutex
+	lockTemplateContentInterfaceMockAddFeatureLifecycle       sync.RWMutex
 	lockTemplateContentInterfaceMockAddHandler                sync.RWMutex
 	lockTemplateContentInterfaceMockAddLifecycle              sync.RWMutex
 	lockTemplateContentInterfaceMockController                sync.RWMutex
@@ -633,6 +634,9 @@ var _ v3.TemplateContentInterface = &TemplateContentInterfaceMock{}
 //             },
 //             AddFeatureHandlerFunc: func(enabled func(string) bool, feat string, ctx context.Context, name string, sync v3.TemplateContentHandlerFunc)  {
 // 	               panic("mock out the AddFeatureHandler method")
+//             },
+//             AddFeatureLifecycleFunc: func(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v3.TemplateContentLifecycle)  {
+// 	               panic("mock out the AddFeatureLifecycle method")
 //             },
 //             AddHandlerFunc: func(ctx context.Context, name string, sync v3.TemplateContentHandlerFunc)  {
 // 	               panic("mock out the AddHandler method")
@@ -688,6 +692,9 @@ type TemplateContentInterfaceMock struct {
 
 	// AddFeatureHandlerFunc mocks the AddFeatureHandler method.
 	AddFeatureHandlerFunc func(enabled func(string) bool, feat string, ctx context.Context, name string, sync v3.TemplateContentHandlerFunc)
+
+	// AddFeatureLifecycleFunc mocks the AddFeatureLifecycle method.
+	AddFeatureLifecycleFunc func(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v3.TemplateContentLifecycle)
 
 	// AddHandlerFunc mocks the AddHandler method.
 	AddHandlerFunc func(ctx context.Context, name string, sync v3.TemplateContentHandlerFunc)
@@ -764,6 +771,19 @@ type TemplateContentInterfaceMock struct {
 			Name string
 			// Sync is the sync argument value.
 			Sync v3.TemplateContentHandlerFunc
+		}
+		// AddFeatureLifecycle holds details about calls to the AddFeatureLifecycle method.
+		AddFeatureLifecycle []struct {
+			// Enabled is the enabled argument value.
+			Enabled func(string) bool
+			// Feat is the feat argument value.
+			Feat string
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Name is the name argument value.
+			Name string
+			// Lifecycle is the lifecycle argument value.
+			Lifecycle v3.TemplateContentLifecycle
 		}
 		// AddHandler holds details about calls to the AddHandler method.
 		AddHandler []struct {
@@ -981,6 +1001,53 @@ func (mock *TemplateContentInterfaceMock) AddFeatureHandlerCalls() []struct {
 	lockTemplateContentInterfaceMockAddFeatureHandler.RLock()
 	calls = mock.calls.AddFeatureHandler
 	lockTemplateContentInterfaceMockAddFeatureHandler.RUnlock()
+	return calls
+}
+
+// AddFeatureLifecycle calls AddFeatureLifecycleFunc.
+func (mock *TemplateContentInterfaceMock) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v3.TemplateContentLifecycle) {
+	if mock.AddFeatureLifecycleFunc == nil {
+		panic("TemplateContentInterfaceMock.AddFeatureLifecycleFunc: method is nil but TemplateContentInterface.AddFeatureLifecycle was just called")
+	}
+	callInfo := struct {
+		Enabled   func(string) bool
+		Feat      string
+		Ctx       context.Context
+		Name      string
+		Lifecycle v3.TemplateContentLifecycle
+	}{
+		Enabled:   enabled,
+		Feat:      feat,
+		Ctx:       ctx,
+		Name:      name,
+		Lifecycle: lifecycle,
+	}
+	lockTemplateContentInterfaceMockAddFeatureLifecycle.Lock()
+	mock.calls.AddFeatureLifecycle = append(mock.calls.AddFeatureLifecycle, callInfo)
+	lockTemplateContentInterfaceMockAddFeatureLifecycle.Unlock()
+	mock.AddFeatureLifecycleFunc(enabled, feat, ctx, name, lifecycle)
+}
+
+// AddFeatureLifecycleCalls gets all the calls that were made to AddFeatureLifecycle.
+// Check the length with:
+//     len(mockedTemplateContentInterface.AddFeatureLifecycleCalls())
+func (mock *TemplateContentInterfaceMock) AddFeatureLifecycleCalls() []struct {
+	Enabled   func(string) bool
+	Feat      string
+	Ctx       context.Context
+	Name      string
+	Lifecycle v3.TemplateContentLifecycle
+} {
+	var calls []struct {
+		Enabled   func(string) bool
+		Feat      string
+		Ctx       context.Context
+		Name      string
+		Lifecycle v3.TemplateContentLifecycle
+	}
+	lockTemplateContentInterfaceMockAddFeatureLifecycle.RLock()
+	calls = mock.calls.AddFeatureLifecycle
+	lockTemplateContentInterfaceMockAddFeatureLifecycle.RUnlock()
 	return calls
 }
 

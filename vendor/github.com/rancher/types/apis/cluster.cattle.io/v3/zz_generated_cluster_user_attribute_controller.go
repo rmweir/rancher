@@ -90,6 +90,7 @@ type ClusterUserAttributeInterface interface {
 	AddHandler(ctx context.Context, name string, sync ClusterUserAttributeHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync ClusterUserAttributeHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle ClusterUserAttributeLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle ClusterUserAttributeLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync ClusterUserAttributeHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle ClusterUserAttributeLifecycle)
 }
@@ -279,6 +280,11 @@ func (s *clusterUserAttributeClient) AddFeatureHandler(enabled func(string) bool
 func (s *clusterUserAttributeClient) AddLifecycle(ctx context.Context, name string, lifecycle ClusterUserAttributeLifecycle) {
 	sync := NewClusterUserAttributeLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *clusterUserAttributeClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle ClusterUserAttributeLifecycle) {
+	sync := NewClusterUserAttributeLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *clusterUserAttributeClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync ClusterUserAttributeHandlerFunc) {

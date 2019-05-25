@@ -89,6 +89,7 @@ type ExampleConfigInterface interface {
 	AddHandler(ctx context.Context, name string, sync ExampleConfigHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync ExampleConfigHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle ExampleConfigLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle ExampleConfigLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync ExampleConfigHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle ExampleConfigLifecycle)
 }
@@ -278,6 +279,11 @@ func (s *exampleConfigClient) AddFeatureHandler(enabled func(string) bool, feat 
 func (s *exampleConfigClient) AddLifecycle(ctx context.Context, name string, lifecycle ExampleConfigLifecycle) {
 	sync := NewExampleConfigLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *exampleConfigClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle ExampleConfigLifecycle) {
+	sync := NewExampleConfigLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *exampleConfigClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync ExampleConfigHandlerFunc) {

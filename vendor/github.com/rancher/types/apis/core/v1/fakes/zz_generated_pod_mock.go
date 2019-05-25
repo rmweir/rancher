@@ -601,6 +601,7 @@ var (
 	lockPodInterfaceMockAddClusterScopedHandler   sync.RWMutex
 	lockPodInterfaceMockAddClusterScopedLifecycle sync.RWMutex
 	lockPodInterfaceMockAddFeatureHandler         sync.RWMutex
+	lockPodInterfaceMockAddFeatureLifecycle       sync.RWMutex
 	lockPodInterfaceMockAddHandler                sync.RWMutex
 	lockPodInterfaceMockAddLifecycle              sync.RWMutex
 	lockPodInterfaceMockController                sync.RWMutex
@@ -634,6 +635,9 @@ var _ v1a.PodInterface = &PodInterfaceMock{}
 //             },
 //             AddFeatureHandlerFunc: func(enabled func(string) bool, feat string, ctx context.Context, name string, sync v1a.PodHandlerFunc)  {
 // 	               panic("mock out the AddFeatureHandler method")
+//             },
+//             AddFeatureLifecycleFunc: func(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v1a.PodLifecycle)  {
+// 	               panic("mock out the AddFeatureLifecycle method")
 //             },
 //             AddHandlerFunc: func(ctx context.Context, name string, sync v1a.PodHandlerFunc)  {
 // 	               panic("mock out the AddHandler method")
@@ -689,6 +693,9 @@ type PodInterfaceMock struct {
 
 	// AddFeatureHandlerFunc mocks the AddFeatureHandler method.
 	AddFeatureHandlerFunc func(enabled func(string) bool, feat string, ctx context.Context, name string, sync v1a.PodHandlerFunc)
+
+	// AddFeatureLifecycleFunc mocks the AddFeatureLifecycle method.
+	AddFeatureLifecycleFunc func(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v1a.PodLifecycle)
 
 	// AddHandlerFunc mocks the AddHandler method.
 	AddHandlerFunc func(ctx context.Context, name string, sync v1a.PodHandlerFunc)
@@ -765,6 +772,19 @@ type PodInterfaceMock struct {
 			Name string
 			// Sync is the sync argument value.
 			Sync v1a.PodHandlerFunc
+		}
+		// AddFeatureLifecycle holds details about calls to the AddFeatureLifecycle method.
+		AddFeatureLifecycle []struct {
+			// Enabled is the enabled argument value.
+			Enabled func(string) bool
+			// Feat is the feat argument value.
+			Feat string
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Name is the name argument value.
+			Name string
+			// Lifecycle is the lifecycle argument value.
+			Lifecycle v1a.PodLifecycle
 		}
 		// AddHandler holds details about calls to the AddHandler method.
 		AddHandler []struct {
@@ -982,6 +1002,53 @@ func (mock *PodInterfaceMock) AddFeatureHandlerCalls() []struct {
 	lockPodInterfaceMockAddFeatureHandler.RLock()
 	calls = mock.calls.AddFeatureHandler
 	lockPodInterfaceMockAddFeatureHandler.RUnlock()
+	return calls
+}
+
+// AddFeatureLifecycle calls AddFeatureLifecycleFunc.
+func (mock *PodInterfaceMock) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v1a.PodLifecycle) {
+	if mock.AddFeatureLifecycleFunc == nil {
+		panic("PodInterfaceMock.AddFeatureLifecycleFunc: method is nil but PodInterface.AddFeatureLifecycle was just called")
+	}
+	callInfo := struct {
+		Enabled   func(string) bool
+		Feat      string
+		Ctx       context.Context
+		Name      string
+		Lifecycle v1a.PodLifecycle
+	}{
+		Enabled:   enabled,
+		Feat:      feat,
+		Ctx:       ctx,
+		Name:      name,
+		Lifecycle: lifecycle,
+	}
+	lockPodInterfaceMockAddFeatureLifecycle.Lock()
+	mock.calls.AddFeatureLifecycle = append(mock.calls.AddFeatureLifecycle, callInfo)
+	lockPodInterfaceMockAddFeatureLifecycle.Unlock()
+	mock.AddFeatureLifecycleFunc(enabled, feat, ctx, name, lifecycle)
+}
+
+// AddFeatureLifecycleCalls gets all the calls that were made to AddFeatureLifecycle.
+// Check the length with:
+//     len(mockedPodInterface.AddFeatureLifecycleCalls())
+func (mock *PodInterfaceMock) AddFeatureLifecycleCalls() []struct {
+	Enabled   func(string) bool
+	Feat      string
+	Ctx       context.Context
+	Name      string
+	Lifecycle v1a.PodLifecycle
+} {
+	var calls []struct {
+		Enabled   func(string) bool
+		Feat      string
+		Ctx       context.Context
+		Name      string
+		Lifecycle v1a.PodLifecycle
+	}
+	lockPodInterfaceMockAddFeatureLifecycle.RLock()
+	calls = mock.calls.AddFeatureLifecycle
+	lockPodInterfaceMockAddFeatureLifecycle.RUnlock()
 	return calls
 }
 

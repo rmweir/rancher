@@ -600,6 +600,7 @@ var (
 	lockClusterRegistrationTokenInterfaceMockAddClusterScopedHandler   sync.RWMutex
 	lockClusterRegistrationTokenInterfaceMockAddClusterScopedLifecycle sync.RWMutex
 	lockClusterRegistrationTokenInterfaceMockAddFeatureHandler         sync.RWMutex
+	lockClusterRegistrationTokenInterfaceMockAddFeatureLifecycle       sync.RWMutex
 	lockClusterRegistrationTokenInterfaceMockAddHandler                sync.RWMutex
 	lockClusterRegistrationTokenInterfaceMockAddLifecycle              sync.RWMutex
 	lockClusterRegistrationTokenInterfaceMockController                sync.RWMutex
@@ -633,6 +634,9 @@ var _ v3.ClusterRegistrationTokenInterface = &ClusterRegistrationTokenInterfaceM
 //             },
 //             AddFeatureHandlerFunc: func(enabled func(string) bool, feat string, ctx context.Context, name string, sync v3.ClusterRegistrationTokenHandlerFunc)  {
 // 	               panic("mock out the AddFeatureHandler method")
+//             },
+//             AddFeatureLifecycleFunc: func(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v3.ClusterRegistrationTokenLifecycle)  {
+// 	               panic("mock out the AddFeatureLifecycle method")
 //             },
 //             AddHandlerFunc: func(ctx context.Context, name string, sync v3.ClusterRegistrationTokenHandlerFunc)  {
 // 	               panic("mock out the AddHandler method")
@@ -688,6 +692,9 @@ type ClusterRegistrationTokenInterfaceMock struct {
 
 	// AddFeatureHandlerFunc mocks the AddFeatureHandler method.
 	AddFeatureHandlerFunc func(enabled func(string) bool, feat string, ctx context.Context, name string, sync v3.ClusterRegistrationTokenHandlerFunc)
+
+	// AddFeatureLifecycleFunc mocks the AddFeatureLifecycle method.
+	AddFeatureLifecycleFunc func(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v3.ClusterRegistrationTokenLifecycle)
 
 	// AddHandlerFunc mocks the AddHandler method.
 	AddHandlerFunc func(ctx context.Context, name string, sync v3.ClusterRegistrationTokenHandlerFunc)
@@ -764,6 +771,19 @@ type ClusterRegistrationTokenInterfaceMock struct {
 			Name string
 			// Sync is the sync argument value.
 			Sync v3.ClusterRegistrationTokenHandlerFunc
+		}
+		// AddFeatureLifecycle holds details about calls to the AddFeatureLifecycle method.
+		AddFeatureLifecycle []struct {
+			// Enabled is the enabled argument value.
+			Enabled func(string) bool
+			// Feat is the feat argument value.
+			Feat string
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Name is the name argument value.
+			Name string
+			// Lifecycle is the lifecycle argument value.
+			Lifecycle v3.ClusterRegistrationTokenLifecycle
 		}
 		// AddHandler holds details about calls to the AddHandler method.
 		AddHandler []struct {
@@ -981,6 +1001,53 @@ func (mock *ClusterRegistrationTokenInterfaceMock) AddFeatureHandlerCalls() []st
 	lockClusterRegistrationTokenInterfaceMockAddFeatureHandler.RLock()
 	calls = mock.calls.AddFeatureHandler
 	lockClusterRegistrationTokenInterfaceMockAddFeatureHandler.RUnlock()
+	return calls
+}
+
+// AddFeatureLifecycle calls AddFeatureLifecycleFunc.
+func (mock *ClusterRegistrationTokenInterfaceMock) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v3.ClusterRegistrationTokenLifecycle) {
+	if mock.AddFeatureLifecycleFunc == nil {
+		panic("ClusterRegistrationTokenInterfaceMock.AddFeatureLifecycleFunc: method is nil but ClusterRegistrationTokenInterface.AddFeatureLifecycle was just called")
+	}
+	callInfo := struct {
+		Enabled   func(string) bool
+		Feat      string
+		Ctx       context.Context
+		Name      string
+		Lifecycle v3.ClusterRegistrationTokenLifecycle
+	}{
+		Enabled:   enabled,
+		Feat:      feat,
+		Ctx:       ctx,
+		Name:      name,
+		Lifecycle: lifecycle,
+	}
+	lockClusterRegistrationTokenInterfaceMockAddFeatureLifecycle.Lock()
+	mock.calls.AddFeatureLifecycle = append(mock.calls.AddFeatureLifecycle, callInfo)
+	lockClusterRegistrationTokenInterfaceMockAddFeatureLifecycle.Unlock()
+	mock.AddFeatureLifecycleFunc(enabled, feat, ctx, name, lifecycle)
+}
+
+// AddFeatureLifecycleCalls gets all the calls that were made to AddFeatureLifecycle.
+// Check the length with:
+//     len(mockedClusterRegistrationTokenInterface.AddFeatureLifecycleCalls())
+func (mock *ClusterRegistrationTokenInterfaceMock) AddFeatureLifecycleCalls() []struct {
+	Enabled   func(string) bool
+	Feat      string
+	Ctx       context.Context
+	Name      string
+	Lifecycle v3.ClusterRegistrationTokenLifecycle
+} {
+	var calls []struct {
+		Enabled   func(string) bool
+		Feat      string
+		Ctx       context.Context
+		Name      string
+		Lifecycle v3.ClusterRegistrationTokenLifecycle
+	}
+	lockClusterRegistrationTokenInterfaceMockAddFeatureLifecycle.RLock()
+	calls = mock.calls.AddFeatureLifecycle
+	lockClusterRegistrationTokenInterfaceMockAddFeatureLifecycle.RUnlock()
 	return calls
 }
 

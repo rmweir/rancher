@@ -89,6 +89,7 @@ type RoleTemplateInterface interface {
 	AddHandler(ctx context.Context, name string, sync RoleTemplateHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync RoleTemplateHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle RoleTemplateLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle RoleTemplateLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync RoleTemplateHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle RoleTemplateLifecycle)
 }
@@ -278,6 +279,11 @@ func (s *roleTemplateClient) AddFeatureHandler(enabled func(string) bool, feat s
 func (s *roleTemplateClient) AddLifecycle(ctx context.Context, name string, lifecycle RoleTemplateLifecycle) {
 	sync := NewRoleTemplateLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *roleTemplateClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle RoleTemplateLifecycle) {
+	sync := NewRoleTemplateLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *roleTemplateClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync RoleTemplateHandlerFunc) {

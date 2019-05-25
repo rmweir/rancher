@@ -73,37 +73,6 @@ type Mgmt struct {
 	v3.Interface
 }
 
-func (m *Mgmt) KontainerDrivers(namespace string) v3.KontainerDriverInterface{
-	if featureflags.GlobalFeatures.Enabled("kontainerdrivers") {
-		return m.KontainerDrivers("")
-	}
-	return &fakes.KontainerDriverInterfaceMock{
-		ControllerFunc: func() v3.KontainerDriverController {
-			return &fakes.KontainerDriverControllerMock{
-				ListerFunc: func() v3.KontainerDriverLister {
-					return &fakes.KontainerDriverListerMock{
-						ListFunc: func(ns string, s labels.Selector) ([]*v3.KontainerDriver, error) {
-							return nil, nil
-						},
-					}
-				},
-			}
-		},
-		AddHandlerFunc: func(ctx context.Context, name string, sync v3.KontainerDriverHandlerFunc) {
-			return
-		},
-		ListFunc: func(opts v1.ListOptions) (*v3.KontainerDriverList, error) {
-			return nil, nil
-		},
-		GetFunc: func(name string, opts v1.GetOptions) (*v3.KontainerDriver, error) {
-			return nil, nil
-		},
-		WatchFunc: func(opts v1.ListOptions) (watch.Interface, error) {
-			return nil, nil
-		},
-	}
-}
-
 func (m *Mgmt) ExampleConfigs(namespace string) v3.ExampleConfigInterface {
 	if featureflags.GlobalFeatures.Enabled("kontainerdrivers") {
 		return m.Interface.ExampleConfigs("")
@@ -276,7 +245,7 @@ func setupFeaturePacks(ctx context.Context, apiContext *config.ScaledContext, cl
 	name = strings.ToLower(client.ExampleConfigType)
 	ec := featureflags.NewFeaturePack(name, apiContext.Management.ExampleConfigs(""), ctx, apiContext, clusterManager)
 	ec.AddCrds(name)
-	ec.AddStartFunc(KontainerDriver, []interface{}{apiContext.Schemas, apiContext})
+	ec.AddStartFunc(ExampleConfig, []interface{}{apiContext.Schemas})
 	return nil
 }
 

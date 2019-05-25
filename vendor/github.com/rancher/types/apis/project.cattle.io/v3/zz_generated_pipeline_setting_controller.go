@@ -90,6 +90,7 @@ type PipelineSettingInterface interface {
 	AddHandler(ctx context.Context, name string, sync PipelineSettingHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync PipelineSettingHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle PipelineSettingLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle PipelineSettingLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync PipelineSettingHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle PipelineSettingLifecycle)
 }
@@ -279,6 +280,11 @@ func (s *pipelineSettingClient) AddFeatureHandler(enabled func(string) bool, fea
 func (s *pipelineSettingClient) AddLifecycle(ctx context.Context, name string, lifecycle PipelineSettingLifecycle) {
 	sync := NewPipelineSettingLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *pipelineSettingClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle PipelineSettingLifecycle) {
+	sync := NewPipelineSettingLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *pipelineSettingClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync PipelineSettingHandlerFunc) {

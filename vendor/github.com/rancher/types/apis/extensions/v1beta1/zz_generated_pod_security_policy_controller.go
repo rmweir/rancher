@@ -90,6 +90,7 @@ type PodSecurityPolicyInterface interface {
 	AddHandler(ctx context.Context, name string, sync PodSecurityPolicyHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync PodSecurityPolicyHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle PodSecurityPolicyLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle PodSecurityPolicyLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync PodSecurityPolicyHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle PodSecurityPolicyLifecycle)
 }
@@ -279,6 +280,11 @@ func (s *podSecurityPolicyClient) AddFeatureHandler(enabled func(string) bool, f
 func (s *podSecurityPolicyClient) AddLifecycle(ctx context.Context, name string, lifecycle PodSecurityPolicyLifecycle) {
 	sync := NewPodSecurityPolicyLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *podSecurityPolicyClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle PodSecurityPolicyLifecycle) {
+	sync := NewPodSecurityPolicyLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *podSecurityPolicyClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync PodSecurityPolicyHandlerFunc) {

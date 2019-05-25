@@ -91,6 +91,7 @@ type ReplicaSetInterface interface {
 	AddHandler(ctx context.Context, name string, sync ReplicaSetHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync ReplicaSetHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle ReplicaSetLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle ReplicaSetLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync ReplicaSetHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle ReplicaSetLifecycle)
 }
@@ -280,6 +281,11 @@ func (s *replicaSetClient) AddFeatureHandler(enabled func(string) bool, feat str
 func (s *replicaSetClient) AddLifecycle(ctx context.Context, name string, lifecycle ReplicaSetLifecycle) {
 	sync := NewReplicaSetLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *replicaSetClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle ReplicaSetLifecycle) {
+	sync := NewReplicaSetLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *replicaSetClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync ReplicaSetHandlerFunc) {

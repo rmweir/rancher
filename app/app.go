@@ -42,6 +42,7 @@ type Config struct {
 	AuditLogMaxsize   int
 	AuditLogMaxbackup int
 	AuditLevel        int
+	Features          string
 }
 
 func buildScaledContext(ctx context.Context, kubeConfig rest.Config, cfg *Config) (*config.ScaledContext, *clustermanager.Manager, error) {
@@ -183,6 +184,9 @@ func addData(management *config.ManagementContext, cfg Config) error {
 		return err
 	}
 
+	if err := addFeature(cfg); err != nil {
+		return err
+	}
 	if err := addDefaultPodSecurityPolicyTemplates(management); err != nil {
 		return err
 	}

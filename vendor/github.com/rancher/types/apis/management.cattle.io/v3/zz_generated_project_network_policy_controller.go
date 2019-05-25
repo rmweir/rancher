@@ -90,6 +90,7 @@ type ProjectNetworkPolicyInterface interface {
 	AddHandler(ctx context.Context, name string, sync ProjectNetworkPolicyHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync ProjectNetworkPolicyHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle ProjectNetworkPolicyLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle ProjectNetworkPolicyLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync ProjectNetworkPolicyHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle ProjectNetworkPolicyLifecycle)
 }
@@ -279,6 +280,11 @@ func (s *projectNetworkPolicyClient) AddFeatureHandler(enabled func(string) bool
 func (s *projectNetworkPolicyClient) AddLifecycle(ctx context.Context, name string, lifecycle ProjectNetworkPolicyLifecycle) {
 	sync := NewProjectNetworkPolicyLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *projectNetworkPolicyClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle ProjectNetworkPolicyLifecycle) {
+	sync := NewProjectNetworkPolicyLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *projectNetworkPolicyClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync ProjectNetworkPolicyHandlerFunc) {

@@ -90,6 +90,7 @@ type WorkloadInterface interface {
 	AddHandler(ctx context.Context, name string, sync WorkloadHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync WorkloadHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle WorkloadLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle WorkloadLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync WorkloadHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle WorkloadLifecycle)
 }
@@ -279,6 +280,11 @@ func (s *workloadClient) AddFeatureHandler(enabled func(string) bool, feat strin
 func (s *workloadClient) AddLifecycle(ctx context.Context, name string, lifecycle WorkloadLifecycle) {
 	sync := NewWorkloadLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *workloadClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle WorkloadLifecycle) {
+	sync := NewWorkloadLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *workloadClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync WorkloadHandlerFunc) {

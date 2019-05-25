@@ -89,6 +89,7 @@ type ListenConfigInterface interface {
 	AddHandler(ctx context.Context, name string, sync ListenConfigHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync ListenConfigHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle ListenConfigLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle ListenConfigLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync ListenConfigHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle ListenConfigLifecycle)
 }
@@ -278,6 +279,11 @@ func (s *listenConfigClient) AddFeatureHandler(enabled func(string) bool, feat s
 func (s *listenConfigClient) AddLifecycle(ctx context.Context, name string, lifecycle ListenConfigLifecycle) {
 	sync := NewListenConfigLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *listenConfigClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle ListenConfigLifecycle) {
+	sync := NewListenConfigLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *listenConfigClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync ListenConfigHandlerFunc) {

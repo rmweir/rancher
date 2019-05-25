@@ -89,6 +89,7 @@ type NodeDriverInterface interface {
 	AddHandler(ctx context.Context, name string, sync NodeDriverHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync NodeDriverHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle NodeDriverLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle NodeDriverLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync NodeDriverHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle NodeDriverLifecycle)
 }
@@ -278,6 +279,11 @@ func (s *nodeDriverClient) AddFeatureHandler(enabled func(string) bool, feat str
 func (s *nodeDriverClient) AddLifecycle(ctx context.Context, name string, lifecycle NodeDriverLifecycle) {
 	sync := NewNodeDriverLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *nodeDriverClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle NodeDriverLifecycle) {
+	sync := NewNodeDriverLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *nodeDriverClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync NodeDriverHandlerFunc) {

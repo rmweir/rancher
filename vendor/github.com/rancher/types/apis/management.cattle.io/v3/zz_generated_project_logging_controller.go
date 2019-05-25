@@ -90,6 +90,7 @@ type ProjectLoggingInterface interface {
 	AddHandler(ctx context.Context, name string, sync ProjectLoggingHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync ProjectLoggingHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle ProjectLoggingLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle ProjectLoggingLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync ProjectLoggingHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle ProjectLoggingLifecycle)
 }
@@ -279,6 +280,11 @@ func (s *projectLoggingClient) AddFeatureHandler(enabled func(string) bool, feat
 func (s *projectLoggingClient) AddLifecycle(ctx context.Context, name string, lifecycle ProjectLoggingLifecycle) {
 	sync := NewProjectLoggingLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *projectLoggingClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle ProjectLoggingLifecycle) {
+	sync := NewProjectLoggingLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *projectLoggingClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync ProjectLoggingHandlerFunc) {

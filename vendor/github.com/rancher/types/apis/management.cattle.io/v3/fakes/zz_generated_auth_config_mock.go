@@ -600,6 +600,7 @@ var (
 	lockAuthConfigInterfaceMockAddClusterScopedHandler   sync.RWMutex
 	lockAuthConfigInterfaceMockAddClusterScopedLifecycle sync.RWMutex
 	lockAuthConfigInterfaceMockAddFeatureHandler         sync.RWMutex
+	lockAuthConfigInterfaceMockAddFeatureLifecycle       sync.RWMutex
 	lockAuthConfigInterfaceMockAddHandler                sync.RWMutex
 	lockAuthConfigInterfaceMockAddLifecycle              sync.RWMutex
 	lockAuthConfigInterfaceMockController                sync.RWMutex
@@ -633,6 +634,9 @@ var _ v3.AuthConfigInterface = &AuthConfigInterfaceMock{}
 //             },
 //             AddFeatureHandlerFunc: func(enabled func(string) bool, feat string, ctx context.Context, name string, sync v3.AuthConfigHandlerFunc)  {
 // 	               panic("mock out the AddFeatureHandler method")
+//             },
+//             AddFeatureLifecycleFunc: func(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v3.AuthConfigLifecycle)  {
+// 	               panic("mock out the AddFeatureLifecycle method")
 //             },
 //             AddHandlerFunc: func(ctx context.Context, name string, sync v3.AuthConfigHandlerFunc)  {
 // 	               panic("mock out the AddHandler method")
@@ -688,6 +692,9 @@ type AuthConfigInterfaceMock struct {
 
 	// AddFeatureHandlerFunc mocks the AddFeatureHandler method.
 	AddFeatureHandlerFunc func(enabled func(string) bool, feat string, ctx context.Context, name string, sync v3.AuthConfigHandlerFunc)
+
+	// AddFeatureLifecycleFunc mocks the AddFeatureLifecycle method.
+	AddFeatureLifecycleFunc func(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v3.AuthConfigLifecycle)
 
 	// AddHandlerFunc mocks the AddHandler method.
 	AddHandlerFunc func(ctx context.Context, name string, sync v3.AuthConfigHandlerFunc)
@@ -764,6 +771,19 @@ type AuthConfigInterfaceMock struct {
 			Name string
 			// Sync is the sync argument value.
 			Sync v3.AuthConfigHandlerFunc
+		}
+		// AddFeatureLifecycle holds details about calls to the AddFeatureLifecycle method.
+		AddFeatureLifecycle []struct {
+			// Enabled is the enabled argument value.
+			Enabled func(string) bool
+			// Feat is the feat argument value.
+			Feat string
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Name is the name argument value.
+			Name string
+			// Lifecycle is the lifecycle argument value.
+			Lifecycle v3.AuthConfigLifecycle
 		}
 		// AddHandler holds details about calls to the AddHandler method.
 		AddHandler []struct {
@@ -981,6 +1001,53 @@ func (mock *AuthConfigInterfaceMock) AddFeatureHandlerCalls() []struct {
 	lockAuthConfigInterfaceMockAddFeatureHandler.RLock()
 	calls = mock.calls.AddFeatureHandler
 	lockAuthConfigInterfaceMockAddFeatureHandler.RUnlock()
+	return calls
+}
+
+// AddFeatureLifecycle calls AddFeatureLifecycleFunc.
+func (mock *AuthConfigInterfaceMock) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v3.AuthConfigLifecycle) {
+	if mock.AddFeatureLifecycleFunc == nil {
+		panic("AuthConfigInterfaceMock.AddFeatureLifecycleFunc: method is nil but AuthConfigInterface.AddFeatureLifecycle was just called")
+	}
+	callInfo := struct {
+		Enabled   func(string) bool
+		Feat      string
+		Ctx       context.Context
+		Name      string
+		Lifecycle v3.AuthConfigLifecycle
+	}{
+		Enabled:   enabled,
+		Feat:      feat,
+		Ctx:       ctx,
+		Name:      name,
+		Lifecycle: lifecycle,
+	}
+	lockAuthConfigInterfaceMockAddFeatureLifecycle.Lock()
+	mock.calls.AddFeatureLifecycle = append(mock.calls.AddFeatureLifecycle, callInfo)
+	lockAuthConfigInterfaceMockAddFeatureLifecycle.Unlock()
+	mock.AddFeatureLifecycleFunc(enabled, feat, ctx, name, lifecycle)
+}
+
+// AddFeatureLifecycleCalls gets all the calls that were made to AddFeatureLifecycle.
+// Check the length with:
+//     len(mockedAuthConfigInterface.AddFeatureLifecycleCalls())
+func (mock *AuthConfigInterfaceMock) AddFeatureLifecycleCalls() []struct {
+	Enabled   func(string) bool
+	Feat      string
+	Ctx       context.Context
+	Name      string
+	Lifecycle v3.AuthConfigLifecycle
+} {
+	var calls []struct {
+		Enabled   func(string) bool
+		Feat      string
+		Ctx       context.Context
+		Name      string
+		Lifecycle v3.AuthConfigLifecycle
+	}
+	lockAuthConfigInterfaceMockAddFeatureLifecycle.RLock()
+	calls = mock.calls.AddFeatureLifecycle
+	lockAuthConfigInterfaceMockAddFeatureLifecycle.RUnlock()
 	return calls
 }
 

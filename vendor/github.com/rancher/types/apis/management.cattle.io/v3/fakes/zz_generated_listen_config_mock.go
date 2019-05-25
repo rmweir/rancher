@@ -600,6 +600,7 @@ var (
 	lockListenConfigInterfaceMockAddClusterScopedHandler   sync.RWMutex
 	lockListenConfigInterfaceMockAddClusterScopedLifecycle sync.RWMutex
 	lockListenConfigInterfaceMockAddFeatureHandler         sync.RWMutex
+	lockListenConfigInterfaceMockAddFeatureLifecycle       sync.RWMutex
 	lockListenConfigInterfaceMockAddHandler                sync.RWMutex
 	lockListenConfigInterfaceMockAddLifecycle              sync.RWMutex
 	lockListenConfigInterfaceMockController                sync.RWMutex
@@ -633,6 +634,9 @@ var _ v3.ListenConfigInterface = &ListenConfigInterfaceMock{}
 //             },
 //             AddFeatureHandlerFunc: func(enabled func(string) bool, feat string, ctx context.Context, name string, sync v3.ListenConfigHandlerFunc)  {
 // 	               panic("mock out the AddFeatureHandler method")
+//             },
+//             AddFeatureLifecycleFunc: func(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v3.ListenConfigLifecycle)  {
+// 	               panic("mock out the AddFeatureLifecycle method")
 //             },
 //             AddHandlerFunc: func(ctx context.Context, name string, sync v3.ListenConfigHandlerFunc)  {
 // 	               panic("mock out the AddHandler method")
@@ -688,6 +692,9 @@ type ListenConfigInterfaceMock struct {
 
 	// AddFeatureHandlerFunc mocks the AddFeatureHandler method.
 	AddFeatureHandlerFunc func(enabled func(string) bool, feat string, ctx context.Context, name string, sync v3.ListenConfigHandlerFunc)
+
+	// AddFeatureLifecycleFunc mocks the AddFeatureLifecycle method.
+	AddFeatureLifecycleFunc func(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v3.ListenConfigLifecycle)
 
 	// AddHandlerFunc mocks the AddHandler method.
 	AddHandlerFunc func(ctx context.Context, name string, sync v3.ListenConfigHandlerFunc)
@@ -764,6 +771,19 @@ type ListenConfigInterfaceMock struct {
 			Name string
 			// Sync is the sync argument value.
 			Sync v3.ListenConfigHandlerFunc
+		}
+		// AddFeatureLifecycle holds details about calls to the AddFeatureLifecycle method.
+		AddFeatureLifecycle []struct {
+			// Enabled is the enabled argument value.
+			Enabled func(string) bool
+			// Feat is the feat argument value.
+			Feat string
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Name is the name argument value.
+			Name string
+			// Lifecycle is the lifecycle argument value.
+			Lifecycle v3.ListenConfigLifecycle
 		}
 		// AddHandler holds details about calls to the AddHandler method.
 		AddHandler []struct {
@@ -981,6 +1001,53 @@ func (mock *ListenConfigInterfaceMock) AddFeatureHandlerCalls() []struct {
 	lockListenConfigInterfaceMockAddFeatureHandler.RLock()
 	calls = mock.calls.AddFeatureHandler
 	lockListenConfigInterfaceMockAddFeatureHandler.RUnlock()
+	return calls
+}
+
+// AddFeatureLifecycle calls AddFeatureLifecycleFunc.
+func (mock *ListenConfigInterfaceMock) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v3.ListenConfigLifecycle) {
+	if mock.AddFeatureLifecycleFunc == nil {
+		panic("ListenConfigInterfaceMock.AddFeatureLifecycleFunc: method is nil but ListenConfigInterface.AddFeatureLifecycle was just called")
+	}
+	callInfo := struct {
+		Enabled   func(string) bool
+		Feat      string
+		Ctx       context.Context
+		Name      string
+		Lifecycle v3.ListenConfigLifecycle
+	}{
+		Enabled:   enabled,
+		Feat:      feat,
+		Ctx:       ctx,
+		Name:      name,
+		Lifecycle: lifecycle,
+	}
+	lockListenConfigInterfaceMockAddFeatureLifecycle.Lock()
+	mock.calls.AddFeatureLifecycle = append(mock.calls.AddFeatureLifecycle, callInfo)
+	lockListenConfigInterfaceMockAddFeatureLifecycle.Unlock()
+	mock.AddFeatureLifecycleFunc(enabled, feat, ctx, name, lifecycle)
+}
+
+// AddFeatureLifecycleCalls gets all the calls that were made to AddFeatureLifecycle.
+// Check the length with:
+//     len(mockedListenConfigInterface.AddFeatureLifecycleCalls())
+func (mock *ListenConfigInterfaceMock) AddFeatureLifecycleCalls() []struct {
+	Enabled   func(string) bool
+	Feat      string
+	Ctx       context.Context
+	Name      string
+	Lifecycle v3.ListenConfigLifecycle
+} {
+	var calls []struct {
+		Enabled   func(string) bool
+		Feat      string
+		Ctx       context.Context
+		Name      string
+		Lifecycle v3.ListenConfigLifecycle
+	}
+	lockListenConfigInterfaceMockAddFeatureLifecycle.RLock()
+	calls = mock.calls.AddFeatureLifecycle
+	lockListenConfigInterfaceMockAddFeatureLifecycle.RUnlock()
 	return calls
 }
 

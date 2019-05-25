@@ -90,6 +90,7 @@ type ClusterLoggingInterface interface {
 	AddHandler(ctx context.Context, name string, sync ClusterLoggingHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync ClusterLoggingHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle ClusterLoggingLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle ClusterLoggingLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync ClusterLoggingHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle ClusterLoggingLifecycle)
 }
@@ -279,6 +280,11 @@ func (s *clusterLoggingClient) AddFeatureHandler(enabled func(string) bool, feat
 func (s *clusterLoggingClient) AddLifecycle(ctx context.Context, name string, lifecycle ClusterLoggingLifecycle) {
 	sync := NewClusterLoggingLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *clusterLoggingClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle ClusterLoggingLifecycle) {
+	sync := NewClusterLoggingLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *clusterLoggingClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync ClusterLoggingHandlerFunc) {

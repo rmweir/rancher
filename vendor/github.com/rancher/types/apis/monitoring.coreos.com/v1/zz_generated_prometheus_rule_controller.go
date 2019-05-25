@@ -91,6 +91,7 @@ type PrometheusRuleInterface interface {
 	AddHandler(ctx context.Context, name string, sync PrometheusRuleHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync PrometheusRuleHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle PrometheusRuleLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle PrometheusRuleLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync PrometheusRuleHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle PrometheusRuleLifecycle)
 }
@@ -280,6 +281,11 @@ func (s *prometheusRuleClient) AddFeatureHandler(enabled func(string) bool, feat
 func (s *prometheusRuleClient) AddLifecycle(ctx context.Context, name string, lifecycle PrometheusRuleLifecycle) {
 	sync := NewPrometheusRuleLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *prometheusRuleClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle PrometheusRuleLifecycle) {
+	sync := NewPrometheusRuleLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *prometheusRuleClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync PrometheusRuleHandlerFunc) {

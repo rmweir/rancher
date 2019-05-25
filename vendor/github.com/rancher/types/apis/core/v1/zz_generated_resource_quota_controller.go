@@ -91,6 +91,7 @@ type ResourceQuotaInterface interface {
 	AddHandler(ctx context.Context, name string, sync ResourceQuotaHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync ResourceQuotaHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle ResourceQuotaLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle ResourceQuotaLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync ResourceQuotaHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle ResourceQuotaLifecycle)
 }
@@ -280,6 +281,11 @@ func (s *resourceQuotaClient) AddFeatureHandler(enabled func(string) bool, feat 
 func (s *resourceQuotaClient) AddLifecycle(ctx context.Context, name string, lifecycle ResourceQuotaLifecycle) {
 	sync := NewResourceQuotaLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *resourceQuotaClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle ResourceQuotaLifecycle) {
+	sync := NewResourceQuotaLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *resourceQuotaClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync ResourceQuotaHandlerFunc) {

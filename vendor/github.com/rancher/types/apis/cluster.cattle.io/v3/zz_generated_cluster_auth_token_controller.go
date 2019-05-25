@@ -90,6 +90,7 @@ type ClusterAuthTokenInterface interface {
 	AddHandler(ctx context.Context, name string, sync ClusterAuthTokenHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync ClusterAuthTokenHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle ClusterAuthTokenLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle ClusterAuthTokenLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync ClusterAuthTokenHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle ClusterAuthTokenLifecycle)
 }
@@ -279,6 +280,11 @@ func (s *clusterAuthTokenClient) AddFeatureHandler(enabled func(string) bool, fe
 func (s *clusterAuthTokenClient) AddLifecycle(ctx context.Context, name string, lifecycle ClusterAuthTokenLifecycle) {
 	sync := NewClusterAuthTokenLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *clusterAuthTokenClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle ClusterAuthTokenLifecycle) {
+	sync := NewClusterAuthTokenLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *clusterAuthTokenClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync ClusterAuthTokenHandlerFunc) {

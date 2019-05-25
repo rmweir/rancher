@@ -90,6 +90,7 @@ type PipelineExecutionInterface interface {
 	AddHandler(ctx context.Context, name string, sync PipelineExecutionHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync PipelineExecutionHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle PipelineExecutionLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle PipelineExecutionLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync PipelineExecutionHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle PipelineExecutionLifecycle)
 }
@@ -279,6 +280,11 @@ func (s *pipelineExecutionClient) AddFeatureHandler(enabled func(string) bool, f
 func (s *pipelineExecutionClient) AddLifecycle(ctx context.Context, name string, lifecycle PipelineExecutionLifecycle) {
 	sync := NewPipelineExecutionLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *pipelineExecutionClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle PipelineExecutionLifecycle) {
+	sync := NewPipelineExecutionLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *pipelineExecutionClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync PipelineExecutionHandlerFunc) {

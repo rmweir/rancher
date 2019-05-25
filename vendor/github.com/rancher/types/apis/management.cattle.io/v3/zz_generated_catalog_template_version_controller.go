@@ -90,6 +90,7 @@ type CatalogTemplateVersionInterface interface {
 	AddHandler(ctx context.Context, name string, sync CatalogTemplateVersionHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync CatalogTemplateVersionHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle CatalogTemplateVersionLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle CatalogTemplateVersionLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync CatalogTemplateVersionHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle CatalogTemplateVersionLifecycle)
 }
@@ -279,6 +280,11 @@ func (s *catalogTemplateVersionClient) AddFeatureHandler(enabled func(string) bo
 func (s *catalogTemplateVersionClient) AddLifecycle(ctx context.Context, name string, lifecycle CatalogTemplateVersionLifecycle) {
 	sync := NewCatalogTemplateVersionLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *catalogTemplateVersionClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle CatalogTemplateVersionLifecycle) {
+	sync := NewCatalogTemplateVersionLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *catalogTemplateVersionClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync CatalogTemplateVersionHandlerFunc) {

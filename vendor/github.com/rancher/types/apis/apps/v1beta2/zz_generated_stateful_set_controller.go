@@ -91,6 +91,7 @@ type StatefulSetInterface interface {
 	AddHandler(ctx context.Context, name string, sync StatefulSetHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync StatefulSetHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle StatefulSetLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle StatefulSetLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync StatefulSetHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle StatefulSetLifecycle)
 }
@@ -280,6 +281,11 @@ func (s *statefulSetClient) AddFeatureHandler(enabled func(string) bool, feat st
 func (s *statefulSetClient) AddLifecycle(ctx context.Context, name string, lifecycle StatefulSetLifecycle) {
 	sync := NewStatefulSetLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *statefulSetClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle StatefulSetLifecycle) {
+	sync := NewStatefulSetLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *statefulSetClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync StatefulSetHandlerFunc) {

@@ -600,6 +600,7 @@ var (
 	lockProjectNetworkPolicyInterfaceMockAddClusterScopedHandler   sync.RWMutex
 	lockProjectNetworkPolicyInterfaceMockAddClusterScopedLifecycle sync.RWMutex
 	lockProjectNetworkPolicyInterfaceMockAddFeatureHandler         sync.RWMutex
+	lockProjectNetworkPolicyInterfaceMockAddFeatureLifecycle       sync.RWMutex
 	lockProjectNetworkPolicyInterfaceMockAddHandler                sync.RWMutex
 	lockProjectNetworkPolicyInterfaceMockAddLifecycle              sync.RWMutex
 	lockProjectNetworkPolicyInterfaceMockController                sync.RWMutex
@@ -633,6 +634,9 @@ var _ v3.ProjectNetworkPolicyInterface = &ProjectNetworkPolicyInterfaceMock{}
 //             },
 //             AddFeatureHandlerFunc: func(enabled func(string) bool, feat string, ctx context.Context, name string, sync v3.ProjectNetworkPolicyHandlerFunc)  {
 // 	               panic("mock out the AddFeatureHandler method")
+//             },
+//             AddFeatureLifecycleFunc: func(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v3.ProjectNetworkPolicyLifecycle)  {
+// 	               panic("mock out the AddFeatureLifecycle method")
 //             },
 //             AddHandlerFunc: func(ctx context.Context, name string, sync v3.ProjectNetworkPolicyHandlerFunc)  {
 // 	               panic("mock out the AddHandler method")
@@ -688,6 +692,9 @@ type ProjectNetworkPolicyInterfaceMock struct {
 
 	// AddFeatureHandlerFunc mocks the AddFeatureHandler method.
 	AddFeatureHandlerFunc func(enabled func(string) bool, feat string, ctx context.Context, name string, sync v3.ProjectNetworkPolicyHandlerFunc)
+
+	// AddFeatureLifecycleFunc mocks the AddFeatureLifecycle method.
+	AddFeatureLifecycleFunc func(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v3.ProjectNetworkPolicyLifecycle)
 
 	// AddHandlerFunc mocks the AddHandler method.
 	AddHandlerFunc func(ctx context.Context, name string, sync v3.ProjectNetworkPolicyHandlerFunc)
@@ -764,6 +771,19 @@ type ProjectNetworkPolicyInterfaceMock struct {
 			Name string
 			// Sync is the sync argument value.
 			Sync v3.ProjectNetworkPolicyHandlerFunc
+		}
+		// AddFeatureLifecycle holds details about calls to the AddFeatureLifecycle method.
+		AddFeatureLifecycle []struct {
+			// Enabled is the enabled argument value.
+			Enabled func(string) bool
+			// Feat is the feat argument value.
+			Feat string
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Name is the name argument value.
+			Name string
+			// Lifecycle is the lifecycle argument value.
+			Lifecycle v3.ProjectNetworkPolicyLifecycle
 		}
 		// AddHandler holds details about calls to the AddHandler method.
 		AddHandler []struct {
@@ -981,6 +1001,53 @@ func (mock *ProjectNetworkPolicyInterfaceMock) AddFeatureHandlerCalls() []struct
 	lockProjectNetworkPolicyInterfaceMockAddFeatureHandler.RLock()
 	calls = mock.calls.AddFeatureHandler
 	lockProjectNetworkPolicyInterfaceMockAddFeatureHandler.RUnlock()
+	return calls
+}
+
+// AddFeatureLifecycle calls AddFeatureLifecycleFunc.
+func (mock *ProjectNetworkPolicyInterfaceMock) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v3.ProjectNetworkPolicyLifecycle) {
+	if mock.AddFeatureLifecycleFunc == nil {
+		panic("ProjectNetworkPolicyInterfaceMock.AddFeatureLifecycleFunc: method is nil but ProjectNetworkPolicyInterface.AddFeatureLifecycle was just called")
+	}
+	callInfo := struct {
+		Enabled   func(string) bool
+		Feat      string
+		Ctx       context.Context
+		Name      string
+		Lifecycle v3.ProjectNetworkPolicyLifecycle
+	}{
+		Enabled:   enabled,
+		Feat:      feat,
+		Ctx:       ctx,
+		Name:      name,
+		Lifecycle: lifecycle,
+	}
+	lockProjectNetworkPolicyInterfaceMockAddFeatureLifecycle.Lock()
+	mock.calls.AddFeatureLifecycle = append(mock.calls.AddFeatureLifecycle, callInfo)
+	lockProjectNetworkPolicyInterfaceMockAddFeatureLifecycle.Unlock()
+	mock.AddFeatureLifecycleFunc(enabled, feat, ctx, name, lifecycle)
+}
+
+// AddFeatureLifecycleCalls gets all the calls that were made to AddFeatureLifecycle.
+// Check the length with:
+//     len(mockedProjectNetworkPolicyInterface.AddFeatureLifecycleCalls())
+func (mock *ProjectNetworkPolicyInterfaceMock) AddFeatureLifecycleCalls() []struct {
+	Enabled   func(string) bool
+	Feat      string
+	Ctx       context.Context
+	Name      string
+	Lifecycle v3.ProjectNetworkPolicyLifecycle
+} {
+	var calls []struct {
+		Enabled   func(string) bool
+		Feat      string
+		Ctx       context.Context
+		Name      string
+		Lifecycle v3.ProjectNetworkPolicyLifecycle
+	}
+	lockProjectNetworkPolicyInterfaceMockAddFeatureLifecycle.RLock()
+	calls = mock.calls.AddFeatureLifecycle
+	lockProjectNetworkPolicyInterfaceMockAddFeatureLifecycle.RUnlock()
 	return calls
 }
 

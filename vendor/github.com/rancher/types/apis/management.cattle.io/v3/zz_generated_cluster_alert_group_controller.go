@@ -90,6 +90,7 @@ type ClusterAlertGroupInterface interface {
 	AddHandler(ctx context.Context, name string, sync ClusterAlertGroupHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync ClusterAlertGroupHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle ClusterAlertGroupLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle ClusterAlertGroupLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync ClusterAlertGroupHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle ClusterAlertGroupLifecycle)
 }
@@ -279,6 +280,11 @@ func (s *clusterAlertGroupClient) AddFeatureHandler(enabled func(string) bool, f
 func (s *clusterAlertGroupClient) AddLifecycle(ctx context.Context, name string, lifecycle ClusterAlertGroupLifecycle) {
 	sync := NewClusterAlertGroupLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *clusterAlertGroupClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle ClusterAlertGroupLifecycle) {
+	sync := NewClusterAlertGroupLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *clusterAlertGroupClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync ClusterAlertGroupHandlerFunc) {

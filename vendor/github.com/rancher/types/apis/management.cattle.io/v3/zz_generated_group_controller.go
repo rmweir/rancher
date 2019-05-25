@@ -89,6 +89,7 @@ type GroupInterface interface {
 	AddHandler(ctx context.Context, name string, sync GroupHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync GroupHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle GroupLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle GroupLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync GroupHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle GroupLifecycle)
 }
@@ -278,6 +279,11 @@ func (s *groupClient) AddFeatureHandler(enabled func(string) bool, feat string, 
 func (s *groupClient) AddLifecycle(ctx context.Context, name string, lifecycle GroupLifecycle) {
 	sync := NewGroupLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *groupClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle GroupLifecycle) {
+	sync := NewGroupLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *groupClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync GroupHandlerFunc) {

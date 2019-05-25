@@ -91,6 +91,7 @@ type PodInterface interface {
 	AddHandler(ctx context.Context, name string, sync PodHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync PodHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle PodLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle PodLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync PodHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle PodLifecycle)
 }
@@ -280,6 +281,11 @@ func (s *podClient) AddFeatureHandler(enabled func(string) bool, feat string, ct
 func (s *podClient) AddLifecycle(ctx context.Context, name string, lifecycle PodLifecycle) {
 	sync := NewPodLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *podClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle PodLifecycle) {
+	sync := NewPodLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *podClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync PodHandlerFunc) {

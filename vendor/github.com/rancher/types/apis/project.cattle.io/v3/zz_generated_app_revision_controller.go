@@ -90,6 +90,7 @@ type AppRevisionInterface interface {
 	AddHandler(ctx context.Context, name string, sync AppRevisionHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync AppRevisionHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle AppRevisionLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle AppRevisionLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync AppRevisionHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle AppRevisionLifecycle)
 }
@@ -279,6 +280,11 @@ func (s *appRevisionClient) AddFeatureHandler(enabled func(string) bool, feat st
 func (s *appRevisionClient) AddLifecycle(ctx context.Context, name string, lifecycle AppRevisionLifecycle) {
 	sync := NewAppRevisionLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *appRevisionClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle AppRevisionLifecycle) {
+	sync := NewAppRevisionLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *appRevisionClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync AppRevisionHandlerFunc) {

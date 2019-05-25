@@ -89,6 +89,7 @@ type DynamicSchemaInterface interface {
 	AddHandler(ctx context.Context, name string, sync DynamicSchemaHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync DynamicSchemaHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle DynamicSchemaLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle DynamicSchemaLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync DynamicSchemaHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle DynamicSchemaLifecycle)
 }
@@ -278,6 +279,11 @@ func (s *dynamicSchemaClient) AddFeatureHandler(enabled func(string) bool, feat 
 func (s *dynamicSchemaClient) AddLifecycle(ctx context.Context, name string, lifecycle DynamicSchemaLifecycle) {
 	sync := NewDynamicSchemaLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *dynamicSchemaClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle DynamicSchemaLifecycle) {
+	sync := NewDynamicSchemaLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *dynamicSchemaClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync DynamicSchemaHandlerFunc) {

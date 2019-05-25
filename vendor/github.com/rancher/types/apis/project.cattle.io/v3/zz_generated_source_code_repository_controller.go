@@ -90,6 +90,7 @@ type SourceCodeRepositoryInterface interface {
 	AddHandler(ctx context.Context, name string, sync SourceCodeRepositoryHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync SourceCodeRepositoryHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle SourceCodeRepositoryLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle SourceCodeRepositoryLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync SourceCodeRepositoryHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle SourceCodeRepositoryLifecycle)
 }
@@ -279,6 +280,11 @@ func (s *sourceCodeRepositoryClient) AddFeatureHandler(enabled func(string) bool
 func (s *sourceCodeRepositoryClient) AddLifecycle(ctx context.Context, name string, lifecycle SourceCodeRepositoryLifecycle) {
 	sync := NewSourceCodeRepositoryLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *sourceCodeRepositoryClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle SourceCodeRepositoryLifecycle) {
+	sync := NewSourceCodeRepositoryLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *sourceCodeRepositoryClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync SourceCodeRepositoryHandlerFunc) {

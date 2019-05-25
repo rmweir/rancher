@@ -600,6 +600,7 @@ var (
 	lockGlobalRoleBindingInterfaceMockAddClusterScopedHandler   sync.RWMutex
 	lockGlobalRoleBindingInterfaceMockAddClusterScopedLifecycle sync.RWMutex
 	lockGlobalRoleBindingInterfaceMockAddFeatureHandler         sync.RWMutex
+	lockGlobalRoleBindingInterfaceMockAddFeatureLifecycle       sync.RWMutex
 	lockGlobalRoleBindingInterfaceMockAddHandler                sync.RWMutex
 	lockGlobalRoleBindingInterfaceMockAddLifecycle              sync.RWMutex
 	lockGlobalRoleBindingInterfaceMockController                sync.RWMutex
@@ -633,6 +634,9 @@ var _ v3.GlobalRoleBindingInterface = &GlobalRoleBindingInterfaceMock{}
 //             },
 //             AddFeatureHandlerFunc: func(enabled func(string) bool, feat string, ctx context.Context, name string, sync v3.GlobalRoleBindingHandlerFunc)  {
 // 	               panic("mock out the AddFeatureHandler method")
+//             },
+//             AddFeatureLifecycleFunc: func(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v3.GlobalRoleBindingLifecycle)  {
+// 	               panic("mock out the AddFeatureLifecycle method")
 //             },
 //             AddHandlerFunc: func(ctx context.Context, name string, sync v3.GlobalRoleBindingHandlerFunc)  {
 // 	               panic("mock out the AddHandler method")
@@ -688,6 +692,9 @@ type GlobalRoleBindingInterfaceMock struct {
 
 	// AddFeatureHandlerFunc mocks the AddFeatureHandler method.
 	AddFeatureHandlerFunc func(enabled func(string) bool, feat string, ctx context.Context, name string, sync v3.GlobalRoleBindingHandlerFunc)
+
+	// AddFeatureLifecycleFunc mocks the AddFeatureLifecycle method.
+	AddFeatureLifecycleFunc func(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v3.GlobalRoleBindingLifecycle)
 
 	// AddHandlerFunc mocks the AddHandler method.
 	AddHandlerFunc func(ctx context.Context, name string, sync v3.GlobalRoleBindingHandlerFunc)
@@ -764,6 +771,19 @@ type GlobalRoleBindingInterfaceMock struct {
 			Name string
 			// Sync is the sync argument value.
 			Sync v3.GlobalRoleBindingHandlerFunc
+		}
+		// AddFeatureLifecycle holds details about calls to the AddFeatureLifecycle method.
+		AddFeatureLifecycle []struct {
+			// Enabled is the enabled argument value.
+			Enabled func(string) bool
+			// Feat is the feat argument value.
+			Feat string
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Name is the name argument value.
+			Name string
+			// Lifecycle is the lifecycle argument value.
+			Lifecycle v3.GlobalRoleBindingLifecycle
 		}
 		// AddHandler holds details about calls to the AddHandler method.
 		AddHandler []struct {
@@ -981,6 +1001,53 @@ func (mock *GlobalRoleBindingInterfaceMock) AddFeatureHandlerCalls() []struct {
 	lockGlobalRoleBindingInterfaceMockAddFeatureHandler.RLock()
 	calls = mock.calls.AddFeatureHandler
 	lockGlobalRoleBindingInterfaceMockAddFeatureHandler.RUnlock()
+	return calls
+}
+
+// AddFeatureLifecycle calls AddFeatureLifecycleFunc.
+func (mock *GlobalRoleBindingInterfaceMock) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v3.GlobalRoleBindingLifecycle) {
+	if mock.AddFeatureLifecycleFunc == nil {
+		panic("GlobalRoleBindingInterfaceMock.AddFeatureLifecycleFunc: method is nil but GlobalRoleBindingInterface.AddFeatureLifecycle was just called")
+	}
+	callInfo := struct {
+		Enabled   func(string) bool
+		Feat      string
+		Ctx       context.Context
+		Name      string
+		Lifecycle v3.GlobalRoleBindingLifecycle
+	}{
+		Enabled:   enabled,
+		Feat:      feat,
+		Ctx:       ctx,
+		Name:      name,
+		Lifecycle: lifecycle,
+	}
+	lockGlobalRoleBindingInterfaceMockAddFeatureLifecycle.Lock()
+	mock.calls.AddFeatureLifecycle = append(mock.calls.AddFeatureLifecycle, callInfo)
+	lockGlobalRoleBindingInterfaceMockAddFeatureLifecycle.Unlock()
+	mock.AddFeatureLifecycleFunc(enabled, feat, ctx, name, lifecycle)
+}
+
+// AddFeatureLifecycleCalls gets all the calls that were made to AddFeatureLifecycle.
+// Check the length with:
+//     len(mockedGlobalRoleBindingInterface.AddFeatureLifecycleCalls())
+func (mock *GlobalRoleBindingInterfaceMock) AddFeatureLifecycleCalls() []struct {
+	Enabled   func(string) bool
+	Feat      string
+	Ctx       context.Context
+	Name      string
+	Lifecycle v3.GlobalRoleBindingLifecycle
+} {
+	var calls []struct {
+		Enabled   func(string) bool
+		Feat      string
+		Ctx       context.Context
+		Name      string
+		Lifecycle v3.GlobalRoleBindingLifecycle
+	}
+	lockGlobalRoleBindingInterfaceMockAddFeatureLifecycle.RLock()
+	calls = mock.calls.AddFeatureLifecycle
+	lockGlobalRoleBindingInterfaceMockAddFeatureLifecycle.RUnlock()
 	return calls
 }
 

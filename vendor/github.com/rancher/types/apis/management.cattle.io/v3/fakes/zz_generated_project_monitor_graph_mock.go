@@ -600,6 +600,7 @@ var (
 	lockProjectMonitorGraphInterfaceMockAddClusterScopedHandler   sync.RWMutex
 	lockProjectMonitorGraphInterfaceMockAddClusterScopedLifecycle sync.RWMutex
 	lockProjectMonitorGraphInterfaceMockAddFeatureHandler         sync.RWMutex
+	lockProjectMonitorGraphInterfaceMockAddFeatureLifecycle       sync.RWMutex
 	lockProjectMonitorGraphInterfaceMockAddHandler                sync.RWMutex
 	lockProjectMonitorGraphInterfaceMockAddLifecycle              sync.RWMutex
 	lockProjectMonitorGraphInterfaceMockController                sync.RWMutex
@@ -633,6 +634,9 @@ var _ v3.ProjectMonitorGraphInterface = &ProjectMonitorGraphInterfaceMock{}
 //             },
 //             AddFeatureHandlerFunc: func(enabled func(string) bool, feat string, ctx context.Context, name string, sync v3.ProjectMonitorGraphHandlerFunc)  {
 // 	               panic("mock out the AddFeatureHandler method")
+//             },
+//             AddFeatureLifecycleFunc: func(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v3.ProjectMonitorGraphLifecycle)  {
+// 	               panic("mock out the AddFeatureLifecycle method")
 //             },
 //             AddHandlerFunc: func(ctx context.Context, name string, sync v3.ProjectMonitorGraphHandlerFunc)  {
 // 	               panic("mock out the AddHandler method")
@@ -688,6 +692,9 @@ type ProjectMonitorGraphInterfaceMock struct {
 
 	// AddFeatureHandlerFunc mocks the AddFeatureHandler method.
 	AddFeatureHandlerFunc func(enabled func(string) bool, feat string, ctx context.Context, name string, sync v3.ProjectMonitorGraphHandlerFunc)
+
+	// AddFeatureLifecycleFunc mocks the AddFeatureLifecycle method.
+	AddFeatureLifecycleFunc func(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v3.ProjectMonitorGraphLifecycle)
 
 	// AddHandlerFunc mocks the AddHandler method.
 	AddHandlerFunc func(ctx context.Context, name string, sync v3.ProjectMonitorGraphHandlerFunc)
@@ -764,6 +771,19 @@ type ProjectMonitorGraphInterfaceMock struct {
 			Name string
 			// Sync is the sync argument value.
 			Sync v3.ProjectMonitorGraphHandlerFunc
+		}
+		// AddFeatureLifecycle holds details about calls to the AddFeatureLifecycle method.
+		AddFeatureLifecycle []struct {
+			// Enabled is the enabled argument value.
+			Enabled func(string) bool
+			// Feat is the feat argument value.
+			Feat string
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Name is the name argument value.
+			Name string
+			// Lifecycle is the lifecycle argument value.
+			Lifecycle v3.ProjectMonitorGraphLifecycle
 		}
 		// AddHandler holds details about calls to the AddHandler method.
 		AddHandler []struct {
@@ -981,6 +1001,53 @@ func (mock *ProjectMonitorGraphInterfaceMock) AddFeatureHandlerCalls() []struct 
 	lockProjectMonitorGraphInterfaceMockAddFeatureHandler.RLock()
 	calls = mock.calls.AddFeatureHandler
 	lockProjectMonitorGraphInterfaceMockAddFeatureHandler.RUnlock()
+	return calls
+}
+
+// AddFeatureLifecycle calls AddFeatureLifecycleFunc.
+func (mock *ProjectMonitorGraphInterfaceMock) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v3.ProjectMonitorGraphLifecycle) {
+	if mock.AddFeatureLifecycleFunc == nil {
+		panic("ProjectMonitorGraphInterfaceMock.AddFeatureLifecycleFunc: method is nil but ProjectMonitorGraphInterface.AddFeatureLifecycle was just called")
+	}
+	callInfo := struct {
+		Enabled   func(string) bool
+		Feat      string
+		Ctx       context.Context
+		Name      string
+		Lifecycle v3.ProjectMonitorGraphLifecycle
+	}{
+		Enabled:   enabled,
+		Feat:      feat,
+		Ctx:       ctx,
+		Name:      name,
+		Lifecycle: lifecycle,
+	}
+	lockProjectMonitorGraphInterfaceMockAddFeatureLifecycle.Lock()
+	mock.calls.AddFeatureLifecycle = append(mock.calls.AddFeatureLifecycle, callInfo)
+	lockProjectMonitorGraphInterfaceMockAddFeatureLifecycle.Unlock()
+	mock.AddFeatureLifecycleFunc(enabled, feat, ctx, name, lifecycle)
+}
+
+// AddFeatureLifecycleCalls gets all the calls that were made to AddFeatureLifecycle.
+// Check the length with:
+//     len(mockedProjectMonitorGraphInterface.AddFeatureLifecycleCalls())
+func (mock *ProjectMonitorGraphInterfaceMock) AddFeatureLifecycleCalls() []struct {
+	Enabled   func(string) bool
+	Feat      string
+	Ctx       context.Context
+	Name      string
+	Lifecycle v3.ProjectMonitorGraphLifecycle
+} {
+	var calls []struct {
+		Enabled   func(string) bool
+		Feat      string
+		Ctx       context.Context
+		Name      string
+		Lifecycle v3.ProjectMonitorGraphLifecycle
+	}
+	lockProjectMonitorGraphInterfaceMockAddFeatureLifecycle.RLock()
+	calls = mock.calls.AddFeatureLifecycle
+	lockProjectMonitorGraphInterfaceMockAddFeatureLifecycle.RUnlock()
 	return calls
 }
 

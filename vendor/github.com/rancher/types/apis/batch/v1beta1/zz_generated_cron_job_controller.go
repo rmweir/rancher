@@ -91,6 +91,7 @@ type CronJobInterface interface {
 	AddHandler(ctx context.Context, name string, sync CronJobHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync CronJobHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle CronJobLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle CronJobLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync CronJobHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle CronJobLifecycle)
 }
@@ -280,6 +281,11 @@ func (s *cronJobClient) AddFeatureHandler(enabled func(string) bool, feat string
 func (s *cronJobClient) AddLifecycle(ctx context.Context, name string, lifecycle CronJobLifecycle) {
 	sync := NewCronJobLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *cronJobClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle CronJobLifecycle) {
+	sync := NewCronJobLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *cronJobClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync CronJobHandlerFunc) {

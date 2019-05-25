@@ -91,6 +91,7 @@ type ServiceInterface interface {
 	AddHandler(ctx context.Context, name string, sync ServiceHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync ServiceHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle ServiceLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle ServiceLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync ServiceHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle ServiceLifecycle)
 }
@@ -280,6 +281,11 @@ func (s *serviceClient) AddFeatureHandler(enabled func(string) bool, feat string
 func (s *serviceClient) AddLifecycle(ctx context.Context, name string, lifecycle ServiceLifecycle) {
 	sync := NewServiceLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *serviceClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle ServiceLifecycle) {
+	sync := NewServiceLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *serviceClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync ServiceHandlerFunc) {

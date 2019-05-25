@@ -90,6 +90,7 @@ type MonitorMetricInterface interface {
 	AddHandler(ctx context.Context, name string, sync MonitorMetricHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync MonitorMetricHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle MonitorMetricLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle MonitorMetricLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync MonitorMetricHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle MonitorMetricLifecycle)
 }
@@ -279,6 +280,11 @@ func (s *monitorMetricClient) AddFeatureHandler(enabled func(string) bool, feat 
 func (s *monitorMetricClient) AddLifecycle(ctx context.Context, name string, lifecycle MonitorMetricLifecycle) {
 	sync := NewMonitorMetricLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *monitorMetricClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle MonitorMetricLifecycle) {
+	sync := NewMonitorMetricLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *monitorMetricClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync MonitorMetricHandlerFunc) {

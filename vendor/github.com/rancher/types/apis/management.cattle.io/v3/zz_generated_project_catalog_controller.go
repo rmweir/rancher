@@ -90,6 +90,7 @@ type ProjectCatalogInterface interface {
 	AddHandler(ctx context.Context, name string, sync ProjectCatalogHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync ProjectCatalogHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle ProjectCatalogLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle ProjectCatalogLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync ProjectCatalogHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle ProjectCatalogLifecycle)
 }
@@ -279,6 +280,11 @@ func (s *projectCatalogClient) AddFeatureHandler(enabled func(string) bool, feat
 func (s *projectCatalogClient) AddLifecycle(ctx context.Context, name string, lifecycle ProjectCatalogLifecycle) {
 	sync := NewProjectCatalogLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *projectCatalogClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle ProjectCatalogLifecycle) {
+	sync := NewProjectCatalogLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *projectCatalogClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync ProjectCatalogHandlerFunc) {

@@ -600,6 +600,7 @@ var (
 	lockCatalogTemplateInterfaceMockAddClusterScopedHandler   sync.RWMutex
 	lockCatalogTemplateInterfaceMockAddClusterScopedLifecycle sync.RWMutex
 	lockCatalogTemplateInterfaceMockAddFeatureHandler         sync.RWMutex
+	lockCatalogTemplateInterfaceMockAddFeatureLifecycle       sync.RWMutex
 	lockCatalogTemplateInterfaceMockAddHandler                sync.RWMutex
 	lockCatalogTemplateInterfaceMockAddLifecycle              sync.RWMutex
 	lockCatalogTemplateInterfaceMockController                sync.RWMutex
@@ -633,6 +634,9 @@ var _ v3.CatalogTemplateInterface = &CatalogTemplateInterfaceMock{}
 //             },
 //             AddFeatureHandlerFunc: func(enabled func(string) bool, feat string, ctx context.Context, name string, sync v3.CatalogTemplateHandlerFunc)  {
 // 	               panic("mock out the AddFeatureHandler method")
+//             },
+//             AddFeatureLifecycleFunc: func(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v3.CatalogTemplateLifecycle)  {
+// 	               panic("mock out the AddFeatureLifecycle method")
 //             },
 //             AddHandlerFunc: func(ctx context.Context, name string, sync v3.CatalogTemplateHandlerFunc)  {
 // 	               panic("mock out the AddHandler method")
@@ -688,6 +692,9 @@ type CatalogTemplateInterfaceMock struct {
 
 	// AddFeatureHandlerFunc mocks the AddFeatureHandler method.
 	AddFeatureHandlerFunc func(enabled func(string) bool, feat string, ctx context.Context, name string, sync v3.CatalogTemplateHandlerFunc)
+
+	// AddFeatureLifecycleFunc mocks the AddFeatureLifecycle method.
+	AddFeatureLifecycleFunc func(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v3.CatalogTemplateLifecycle)
 
 	// AddHandlerFunc mocks the AddHandler method.
 	AddHandlerFunc func(ctx context.Context, name string, sync v3.CatalogTemplateHandlerFunc)
@@ -764,6 +771,19 @@ type CatalogTemplateInterfaceMock struct {
 			Name string
 			// Sync is the sync argument value.
 			Sync v3.CatalogTemplateHandlerFunc
+		}
+		// AddFeatureLifecycle holds details about calls to the AddFeatureLifecycle method.
+		AddFeatureLifecycle []struct {
+			// Enabled is the enabled argument value.
+			Enabled func(string) bool
+			// Feat is the feat argument value.
+			Feat string
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Name is the name argument value.
+			Name string
+			// Lifecycle is the lifecycle argument value.
+			Lifecycle v3.CatalogTemplateLifecycle
 		}
 		// AddHandler holds details about calls to the AddHandler method.
 		AddHandler []struct {
@@ -981,6 +1001,53 @@ func (mock *CatalogTemplateInterfaceMock) AddFeatureHandlerCalls() []struct {
 	lockCatalogTemplateInterfaceMockAddFeatureHandler.RLock()
 	calls = mock.calls.AddFeatureHandler
 	lockCatalogTemplateInterfaceMockAddFeatureHandler.RUnlock()
+	return calls
+}
+
+// AddFeatureLifecycle calls AddFeatureLifecycleFunc.
+func (mock *CatalogTemplateInterfaceMock) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v3.CatalogTemplateLifecycle) {
+	if mock.AddFeatureLifecycleFunc == nil {
+		panic("CatalogTemplateInterfaceMock.AddFeatureLifecycleFunc: method is nil but CatalogTemplateInterface.AddFeatureLifecycle was just called")
+	}
+	callInfo := struct {
+		Enabled   func(string) bool
+		Feat      string
+		Ctx       context.Context
+		Name      string
+		Lifecycle v3.CatalogTemplateLifecycle
+	}{
+		Enabled:   enabled,
+		Feat:      feat,
+		Ctx:       ctx,
+		Name:      name,
+		Lifecycle: lifecycle,
+	}
+	lockCatalogTemplateInterfaceMockAddFeatureLifecycle.Lock()
+	mock.calls.AddFeatureLifecycle = append(mock.calls.AddFeatureLifecycle, callInfo)
+	lockCatalogTemplateInterfaceMockAddFeatureLifecycle.Unlock()
+	mock.AddFeatureLifecycleFunc(enabled, feat, ctx, name, lifecycle)
+}
+
+// AddFeatureLifecycleCalls gets all the calls that were made to AddFeatureLifecycle.
+// Check the length with:
+//     len(mockedCatalogTemplateInterface.AddFeatureLifecycleCalls())
+func (mock *CatalogTemplateInterfaceMock) AddFeatureLifecycleCalls() []struct {
+	Enabled   func(string) bool
+	Feat      string
+	Ctx       context.Context
+	Name      string
+	Lifecycle v3.CatalogTemplateLifecycle
+} {
+	var calls []struct {
+		Enabled   func(string) bool
+		Feat      string
+		Ctx       context.Context
+		Name      string
+		Lifecycle v3.CatalogTemplateLifecycle
+	}
+	lockCatalogTemplateInterfaceMockAddFeatureLifecycle.RLock()
+	calls = mock.calls.AddFeatureLifecycle
+	lockCatalogTemplateInterfaceMockAddFeatureLifecycle.RUnlock()
 	return calls
 }
 

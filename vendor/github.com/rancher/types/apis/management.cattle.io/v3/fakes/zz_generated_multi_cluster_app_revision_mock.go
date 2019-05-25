@@ -600,6 +600,7 @@ var (
 	lockMultiClusterAppRevisionInterfaceMockAddClusterScopedHandler   sync.RWMutex
 	lockMultiClusterAppRevisionInterfaceMockAddClusterScopedLifecycle sync.RWMutex
 	lockMultiClusterAppRevisionInterfaceMockAddFeatureHandler         sync.RWMutex
+	lockMultiClusterAppRevisionInterfaceMockAddFeatureLifecycle       sync.RWMutex
 	lockMultiClusterAppRevisionInterfaceMockAddHandler                sync.RWMutex
 	lockMultiClusterAppRevisionInterfaceMockAddLifecycle              sync.RWMutex
 	lockMultiClusterAppRevisionInterfaceMockController                sync.RWMutex
@@ -633,6 +634,9 @@ var _ v3.MultiClusterAppRevisionInterface = &MultiClusterAppRevisionInterfaceMoc
 //             },
 //             AddFeatureHandlerFunc: func(enabled func(string) bool, feat string, ctx context.Context, name string, sync v3.MultiClusterAppRevisionHandlerFunc)  {
 // 	               panic("mock out the AddFeatureHandler method")
+//             },
+//             AddFeatureLifecycleFunc: func(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v3.MultiClusterAppRevisionLifecycle)  {
+// 	               panic("mock out the AddFeatureLifecycle method")
 //             },
 //             AddHandlerFunc: func(ctx context.Context, name string, sync v3.MultiClusterAppRevisionHandlerFunc)  {
 // 	               panic("mock out the AddHandler method")
@@ -688,6 +692,9 @@ type MultiClusterAppRevisionInterfaceMock struct {
 
 	// AddFeatureHandlerFunc mocks the AddFeatureHandler method.
 	AddFeatureHandlerFunc func(enabled func(string) bool, feat string, ctx context.Context, name string, sync v3.MultiClusterAppRevisionHandlerFunc)
+
+	// AddFeatureLifecycleFunc mocks the AddFeatureLifecycle method.
+	AddFeatureLifecycleFunc func(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v3.MultiClusterAppRevisionLifecycle)
 
 	// AddHandlerFunc mocks the AddHandler method.
 	AddHandlerFunc func(ctx context.Context, name string, sync v3.MultiClusterAppRevisionHandlerFunc)
@@ -764,6 +771,19 @@ type MultiClusterAppRevisionInterfaceMock struct {
 			Name string
 			// Sync is the sync argument value.
 			Sync v3.MultiClusterAppRevisionHandlerFunc
+		}
+		// AddFeatureLifecycle holds details about calls to the AddFeatureLifecycle method.
+		AddFeatureLifecycle []struct {
+			// Enabled is the enabled argument value.
+			Enabled func(string) bool
+			// Feat is the feat argument value.
+			Feat string
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Name is the name argument value.
+			Name string
+			// Lifecycle is the lifecycle argument value.
+			Lifecycle v3.MultiClusterAppRevisionLifecycle
 		}
 		// AddHandler holds details about calls to the AddHandler method.
 		AddHandler []struct {
@@ -981,6 +1001,53 @@ func (mock *MultiClusterAppRevisionInterfaceMock) AddFeatureHandlerCalls() []str
 	lockMultiClusterAppRevisionInterfaceMockAddFeatureHandler.RLock()
 	calls = mock.calls.AddFeatureHandler
 	lockMultiClusterAppRevisionInterfaceMockAddFeatureHandler.RUnlock()
+	return calls
+}
+
+// AddFeatureLifecycle calls AddFeatureLifecycleFunc.
+func (mock *MultiClusterAppRevisionInterfaceMock) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v3.MultiClusterAppRevisionLifecycle) {
+	if mock.AddFeatureLifecycleFunc == nil {
+		panic("MultiClusterAppRevisionInterfaceMock.AddFeatureLifecycleFunc: method is nil but MultiClusterAppRevisionInterface.AddFeatureLifecycle was just called")
+	}
+	callInfo := struct {
+		Enabled   func(string) bool
+		Feat      string
+		Ctx       context.Context
+		Name      string
+		Lifecycle v3.MultiClusterAppRevisionLifecycle
+	}{
+		Enabled:   enabled,
+		Feat:      feat,
+		Ctx:       ctx,
+		Name:      name,
+		Lifecycle: lifecycle,
+	}
+	lockMultiClusterAppRevisionInterfaceMockAddFeatureLifecycle.Lock()
+	mock.calls.AddFeatureLifecycle = append(mock.calls.AddFeatureLifecycle, callInfo)
+	lockMultiClusterAppRevisionInterfaceMockAddFeatureLifecycle.Unlock()
+	mock.AddFeatureLifecycleFunc(enabled, feat, ctx, name, lifecycle)
+}
+
+// AddFeatureLifecycleCalls gets all the calls that were made to AddFeatureLifecycle.
+// Check the length with:
+//     len(mockedMultiClusterAppRevisionInterface.AddFeatureLifecycleCalls())
+func (mock *MultiClusterAppRevisionInterfaceMock) AddFeatureLifecycleCalls() []struct {
+	Enabled   func(string) bool
+	Feat      string
+	Ctx       context.Context
+	Name      string
+	Lifecycle v3.MultiClusterAppRevisionLifecycle
+} {
+	var calls []struct {
+		Enabled   func(string) bool
+		Feat      string
+		Ctx       context.Context
+		Name      string
+		Lifecycle v3.MultiClusterAppRevisionLifecycle
+	}
+	lockMultiClusterAppRevisionInterfaceMockAddFeatureLifecycle.RLock()
+	calls = mock.calls.AddFeatureLifecycle
+	lockMultiClusterAppRevisionInterfaceMockAddFeatureLifecycle.RUnlock()
 	return calls
 }
 

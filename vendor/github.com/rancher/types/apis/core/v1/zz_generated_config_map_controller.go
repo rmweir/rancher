@@ -91,6 +91,7 @@ type ConfigMapInterface interface {
 	AddHandler(ctx context.Context, name string, sync ConfigMapHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync ConfigMapHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle ConfigMapLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle ConfigMapLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync ConfigMapHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle ConfigMapLifecycle)
 }
@@ -280,6 +281,11 @@ func (s *configMapClient) AddFeatureHandler(enabled func(string) bool, feat stri
 func (s *configMapClient) AddLifecycle(ctx context.Context, name string, lifecycle ConfigMapLifecycle) {
 	sync := NewConfigMapLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *configMapClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle ConfigMapLifecycle) {
+	sync := NewConfigMapLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *configMapClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync ConfigMapHandlerFunc) {

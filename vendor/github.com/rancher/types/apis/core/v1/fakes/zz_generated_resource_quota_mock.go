@@ -601,6 +601,7 @@ var (
 	lockResourceQuotaInterfaceMockAddClusterScopedHandler   sync.RWMutex
 	lockResourceQuotaInterfaceMockAddClusterScopedLifecycle sync.RWMutex
 	lockResourceQuotaInterfaceMockAddFeatureHandler         sync.RWMutex
+	lockResourceQuotaInterfaceMockAddFeatureLifecycle       sync.RWMutex
 	lockResourceQuotaInterfaceMockAddHandler                sync.RWMutex
 	lockResourceQuotaInterfaceMockAddLifecycle              sync.RWMutex
 	lockResourceQuotaInterfaceMockController                sync.RWMutex
@@ -634,6 +635,9 @@ var _ v1a.ResourceQuotaInterface = &ResourceQuotaInterfaceMock{}
 //             },
 //             AddFeatureHandlerFunc: func(enabled func(string) bool, feat string, ctx context.Context, name string, sync v1a.ResourceQuotaHandlerFunc)  {
 // 	               panic("mock out the AddFeatureHandler method")
+//             },
+//             AddFeatureLifecycleFunc: func(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v1a.ResourceQuotaLifecycle)  {
+// 	               panic("mock out the AddFeatureLifecycle method")
 //             },
 //             AddHandlerFunc: func(ctx context.Context, name string, sync v1a.ResourceQuotaHandlerFunc)  {
 // 	               panic("mock out the AddHandler method")
@@ -689,6 +693,9 @@ type ResourceQuotaInterfaceMock struct {
 
 	// AddFeatureHandlerFunc mocks the AddFeatureHandler method.
 	AddFeatureHandlerFunc func(enabled func(string) bool, feat string, ctx context.Context, name string, sync v1a.ResourceQuotaHandlerFunc)
+
+	// AddFeatureLifecycleFunc mocks the AddFeatureLifecycle method.
+	AddFeatureLifecycleFunc func(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v1a.ResourceQuotaLifecycle)
 
 	// AddHandlerFunc mocks the AddHandler method.
 	AddHandlerFunc func(ctx context.Context, name string, sync v1a.ResourceQuotaHandlerFunc)
@@ -765,6 +772,19 @@ type ResourceQuotaInterfaceMock struct {
 			Name string
 			// Sync is the sync argument value.
 			Sync v1a.ResourceQuotaHandlerFunc
+		}
+		// AddFeatureLifecycle holds details about calls to the AddFeatureLifecycle method.
+		AddFeatureLifecycle []struct {
+			// Enabled is the enabled argument value.
+			Enabled func(string) bool
+			// Feat is the feat argument value.
+			Feat string
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Name is the name argument value.
+			Name string
+			// Lifecycle is the lifecycle argument value.
+			Lifecycle v1a.ResourceQuotaLifecycle
 		}
 		// AddHandler holds details about calls to the AddHandler method.
 		AddHandler []struct {
@@ -982,6 +1002,53 @@ func (mock *ResourceQuotaInterfaceMock) AddFeatureHandlerCalls() []struct {
 	lockResourceQuotaInterfaceMockAddFeatureHandler.RLock()
 	calls = mock.calls.AddFeatureHandler
 	lockResourceQuotaInterfaceMockAddFeatureHandler.RUnlock()
+	return calls
+}
+
+// AddFeatureLifecycle calls AddFeatureLifecycleFunc.
+func (mock *ResourceQuotaInterfaceMock) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v1a.ResourceQuotaLifecycle) {
+	if mock.AddFeatureLifecycleFunc == nil {
+		panic("ResourceQuotaInterfaceMock.AddFeatureLifecycleFunc: method is nil but ResourceQuotaInterface.AddFeatureLifecycle was just called")
+	}
+	callInfo := struct {
+		Enabled   func(string) bool
+		Feat      string
+		Ctx       context.Context
+		Name      string
+		Lifecycle v1a.ResourceQuotaLifecycle
+	}{
+		Enabled:   enabled,
+		Feat:      feat,
+		Ctx:       ctx,
+		Name:      name,
+		Lifecycle: lifecycle,
+	}
+	lockResourceQuotaInterfaceMockAddFeatureLifecycle.Lock()
+	mock.calls.AddFeatureLifecycle = append(mock.calls.AddFeatureLifecycle, callInfo)
+	lockResourceQuotaInterfaceMockAddFeatureLifecycle.Unlock()
+	mock.AddFeatureLifecycleFunc(enabled, feat, ctx, name, lifecycle)
+}
+
+// AddFeatureLifecycleCalls gets all the calls that were made to AddFeatureLifecycle.
+// Check the length with:
+//     len(mockedResourceQuotaInterface.AddFeatureLifecycleCalls())
+func (mock *ResourceQuotaInterfaceMock) AddFeatureLifecycleCalls() []struct {
+	Enabled   func(string) bool
+	Feat      string
+	Ctx       context.Context
+	Name      string
+	Lifecycle v1a.ResourceQuotaLifecycle
+} {
+	var calls []struct {
+		Enabled   func(string) bool
+		Feat      string
+		Ctx       context.Context
+		Name      string
+		Lifecycle v1a.ResourceQuotaLifecycle
+	}
+	lockResourceQuotaInterfaceMockAddFeatureLifecycle.RLock()
+	calls = mock.calls.AddFeatureLifecycle
+	lockResourceQuotaInterfaceMockAddFeatureLifecycle.RUnlock()
 	return calls
 }
 

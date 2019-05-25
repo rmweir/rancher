@@ -601,6 +601,7 @@ var (
 	lockNamespaceInterfaceMockAddClusterScopedHandler   sync.RWMutex
 	lockNamespaceInterfaceMockAddClusterScopedLifecycle sync.RWMutex
 	lockNamespaceInterfaceMockAddFeatureHandler         sync.RWMutex
+	lockNamespaceInterfaceMockAddFeatureLifecycle       sync.RWMutex
 	lockNamespaceInterfaceMockAddHandler                sync.RWMutex
 	lockNamespaceInterfaceMockAddLifecycle              sync.RWMutex
 	lockNamespaceInterfaceMockController                sync.RWMutex
@@ -634,6 +635,9 @@ var _ v1a.NamespaceInterface = &NamespaceInterfaceMock{}
 //             },
 //             AddFeatureHandlerFunc: func(enabled func(string) bool, feat string, ctx context.Context, name string, sync v1a.NamespaceHandlerFunc)  {
 // 	               panic("mock out the AddFeatureHandler method")
+//             },
+//             AddFeatureLifecycleFunc: func(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v1a.NamespaceLifecycle)  {
+// 	               panic("mock out the AddFeatureLifecycle method")
 //             },
 //             AddHandlerFunc: func(ctx context.Context, name string, sync v1a.NamespaceHandlerFunc)  {
 // 	               panic("mock out the AddHandler method")
@@ -689,6 +693,9 @@ type NamespaceInterfaceMock struct {
 
 	// AddFeatureHandlerFunc mocks the AddFeatureHandler method.
 	AddFeatureHandlerFunc func(enabled func(string) bool, feat string, ctx context.Context, name string, sync v1a.NamespaceHandlerFunc)
+
+	// AddFeatureLifecycleFunc mocks the AddFeatureLifecycle method.
+	AddFeatureLifecycleFunc func(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v1a.NamespaceLifecycle)
 
 	// AddHandlerFunc mocks the AddHandler method.
 	AddHandlerFunc func(ctx context.Context, name string, sync v1a.NamespaceHandlerFunc)
@@ -765,6 +772,19 @@ type NamespaceInterfaceMock struct {
 			Name string
 			// Sync is the sync argument value.
 			Sync v1a.NamespaceHandlerFunc
+		}
+		// AddFeatureLifecycle holds details about calls to the AddFeatureLifecycle method.
+		AddFeatureLifecycle []struct {
+			// Enabled is the enabled argument value.
+			Enabled func(string) bool
+			// Feat is the feat argument value.
+			Feat string
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Name is the name argument value.
+			Name string
+			// Lifecycle is the lifecycle argument value.
+			Lifecycle v1a.NamespaceLifecycle
 		}
 		// AddHandler holds details about calls to the AddHandler method.
 		AddHandler []struct {
@@ -982,6 +1002,53 @@ func (mock *NamespaceInterfaceMock) AddFeatureHandlerCalls() []struct {
 	lockNamespaceInterfaceMockAddFeatureHandler.RLock()
 	calls = mock.calls.AddFeatureHandler
 	lockNamespaceInterfaceMockAddFeatureHandler.RUnlock()
+	return calls
+}
+
+// AddFeatureLifecycle calls AddFeatureLifecycleFunc.
+func (mock *NamespaceInterfaceMock) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v1a.NamespaceLifecycle) {
+	if mock.AddFeatureLifecycleFunc == nil {
+		panic("NamespaceInterfaceMock.AddFeatureLifecycleFunc: method is nil but NamespaceInterface.AddFeatureLifecycle was just called")
+	}
+	callInfo := struct {
+		Enabled   func(string) bool
+		Feat      string
+		Ctx       context.Context
+		Name      string
+		Lifecycle v1a.NamespaceLifecycle
+	}{
+		Enabled:   enabled,
+		Feat:      feat,
+		Ctx:       ctx,
+		Name:      name,
+		Lifecycle: lifecycle,
+	}
+	lockNamespaceInterfaceMockAddFeatureLifecycle.Lock()
+	mock.calls.AddFeatureLifecycle = append(mock.calls.AddFeatureLifecycle, callInfo)
+	lockNamespaceInterfaceMockAddFeatureLifecycle.Unlock()
+	mock.AddFeatureLifecycleFunc(enabled, feat, ctx, name, lifecycle)
+}
+
+// AddFeatureLifecycleCalls gets all the calls that were made to AddFeatureLifecycle.
+// Check the length with:
+//     len(mockedNamespaceInterface.AddFeatureLifecycleCalls())
+func (mock *NamespaceInterfaceMock) AddFeatureLifecycleCalls() []struct {
+	Enabled   func(string) bool
+	Feat      string
+	Ctx       context.Context
+	Name      string
+	Lifecycle v1a.NamespaceLifecycle
+} {
+	var calls []struct {
+		Enabled   func(string) bool
+		Feat      string
+		Ctx       context.Context
+		Name      string
+		Lifecycle v1a.NamespaceLifecycle
+	}
+	lockNamespaceInterfaceMockAddFeatureLifecycle.RLock()
+	calls = mock.calls.AddFeatureLifecycle
+	lockNamespaceInterfaceMockAddFeatureLifecycle.RUnlock()
 	return calls
 }
 

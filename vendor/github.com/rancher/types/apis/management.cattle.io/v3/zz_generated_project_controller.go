@@ -90,6 +90,7 @@ type ProjectInterface interface {
 	AddHandler(ctx context.Context, name string, sync ProjectHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync ProjectHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle ProjectLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle ProjectLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync ProjectHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle ProjectLifecycle)
 }
@@ -279,6 +280,11 @@ func (s *projectClient) AddFeatureHandler(enabled func(string) bool, feat string
 func (s *projectClient) AddLifecycle(ctx context.Context, name string, lifecycle ProjectLifecycle) {
 	sync := NewProjectLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *projectClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle ProjectLifecycle) {
+	sync := NewProjectLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *projectClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync ProjectHandlerFunc) {

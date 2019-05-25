@@ -600,6 +600,7 @@ var (
 	lockGlobalDNSInterfaceMockAddClusterScopedHandler   sync.RWMutex
 	lockGlobalDNSInterfaceMockAddClusterScopedLifecycle sync.RWMutex
 	lockGlobalDNSInterfaceMockAddFeatureHandler         sync.RWMutex
+	lockGlobalDNSInterfaceMockAddFeatureLifecycle       sync.RWMutex
 	lockGlobalDNSInterfaceMockAddHandler                sync.RWMutex
 	lockGlobalDNSInterfaceMockAddLifecycle              sync.RWMutex
 	lockGlobalDNSInterfaceMockController                sync.RWMutex
@@ -633,6 +634,9 @@ var _ v3.GlobalDNSInterface = &GlobalDNSInterfaceMock{}
 //             },
 //             AddFeatureHandlerFunc: func(enabled func(string) bool, feat string, ctx context.Context, name string, sync v3.GlobalDNSHandlerFunc)  {
 // 	               panic("mock out the AddFeatureHandler method")
+//             },
+//             AddFeatureLifecycleFunc: func(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v3.GlobalDNSLifecycle)  {
+// 	               panic("mock out the AddFeatureLifecycle method")
 //             },
 //             AddHandlerFunc: func(ctx context.Context, name string, sync v3.GlobalDNSHandlerFunc)  {
 // 	               panic("mock out the AddHandler method")
@@ -688,6 +692,9 @@ type GlobalDNSInterfaceMock struct {
 
 	// AddFeatureHandlerFunc mocks the AddFeatureHandler method.
 	AddFeatureHandlerFunc func(enabled func(string) bool, feat string, ctx context.Context, name string, sync v3.GlobalDNSHandlerFunc)
+
+	// AddFeatureLifecycleFunc mocks the AddFeatureLifecycle method.
+	AddFeatureLifecycleFunc func(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v3.GlobalDNSLifecycle)
 
 	// AddHandlerFunc mocks the AddHandler method.
 	AddHandlerFunc func(ctx context.Context, name string, sync v3.GlobalDNSHandlerFunc)
@@ -764,6 +771,19 @@ type GlobalDNSInterfaceMock struct {
 			Name string
 			// Sync is the sync argument value.
 			Sync v3.GlobalDNSHandlerFunc
+		}
+		// AddFeatureLifecycle holds details about calls to the AddFeatureLifecycle method.
+		AddFeatureLifecycle []struct {
+			// Enabled is the enabled argument value.
+			Enabled func(string) bool
+			// Feat is the feat argument value.
+			Feat string
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Name is the name argument value.
+			Name string
+			// Lifecycle is the lifecycle argument value.
+			Lifecycle v3.GlobalDNSLifecycle
 		}
 		// AddHandler holds details about calls to the AddHandler method.
 		AddHandler []struct {
@@ -981,6 +1001,53 @@ func (mock *GlobalDNSInterfaceMock) AddFeatureHandlerCalls() []struct {
 	lockGlobalDNSInterfaceMockAddFeatureHandler.RLock()
 	calls = mock.calls.AddFeatureHandler
 	lockGlobalDNSInterfaceMockAddFeatureHandler.RUnlock()
+	return calls
+}
+
+// AddFeatureLifecycle calls AddFeatureLifecycleFunc.
+func (mock *GlobalDNSInterfaceMock) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v3.GlobalDNSLifecycle) {
+	if mock.AddFeatureLifecycleFunc == nil {
+		panic("GlobalDNSInterfaceMock.AddFeatureLifecycleFunc: method is nil but GlobalDNSInterface.AddFeatureLifecycle was just called")
+	}
+	callInfo := struct {
+		Enabled   func(string) bool
+		Feat      string
+		Ctx       context.Context
+		Name      string
+		Lifecycle v3.GlobalDNSLifecycle
+	}{
+		Enabled:   enabled,
+		Feat:      feat,
+		Ctx:       ctx,
+		Name:      name,
+		Lifecycle: lifecycle,
+	}
+	lockGlobalDNSInterfaceMockAddFeatureLifecycle.Lock()
+	mock.calls.AddFeatureLifecycle = append(mock.calls.AddFeatureLifecycle, callInfo)
+	lockGlobalDNSInterfaceMockAddFeatureLifecycle.Unlock()
+	mock.AddFeatureLifecycleFunc(enabled, feat, ctx, name, lifecycle)
+}
+
+// AddFeatureLifecycleCalls gets all the calls that were made to AddFeatureLifecycle.
+// Check the length with:
+//     len(mockedGlobalDNSInterface.AddFeatureLifecycleCalls())
+func (mock *GlobalDNSInterfaceMock) AddFeatureLifecycleCalls() []struct {
+	Enabled   func(string) bool
+	Feat      string
+	Ctx       context.Context
+	Name      string
+	Lifecycle v3.GlobalDNSLifecycle
+} {
+	var calls []struct {
+		Enabled   func(string) bool
+		Feat      string
+		Ctx       context.Context
+		Name      string
+		Lifecycle v3.GlobalDNSLifecycle
+	}
+	lockGlobalDNSInterfaceMockAddFeatureLifecycle.RLock()
+	calls = mock.calls.AddFeatureLifecycle
+	lockGlobalDNSInterfaceMockAddFeatureLifecycle.RUnlock()
 	return calls
 }
 

@@ -89,6 +89,7 @@ type UserInterface interface {
 	AddHandler(ctx context.Context, name string, sync UserHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync UserHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle UserLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle UserLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync UserHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle UserLifecycle)
 }
@@ -278,6 +279,11 @@ func (s *userClient) AddFeatureHandler(enabled func(string) bool, feat string, c
 func (s *userClient) AddLifecycle(ctx context.Context, name string, lifecycle UserLifecycle) {
 	sync := NewUserLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *userClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle UserLifecycle) {
+	sync := NewUserLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *userClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync UserHandlerFunc) {

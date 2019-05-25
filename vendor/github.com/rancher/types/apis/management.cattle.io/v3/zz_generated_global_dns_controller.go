@@ -90,6 +90,7 @@ type GlobalDNSInterface interface {
 	AddHandler(ctx context.Context, name string, sync GlobalDNSHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync GlobalDNSHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle GlobalDNSLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle GlobalDNSLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync GlobalDNSHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle GlobalDNSLifecycle)
 }
@@ -279,6 +280,11 @@ func (s *globalDnsClient) AddFeatureHandler(enabled func(string) bool, feat stri
 func (s *globalDnsClient) AddLifecycle(ctx context.Context, name string, lifecycle GlobalDNSLifecycle) {
 	sync := NewGlobalDNSLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *globalDnsClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle GlobalDNSLifecycle) {
+	sync := NewGlobalDNSLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *globalDnsClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync GlobalDNSHandlerFunc) {

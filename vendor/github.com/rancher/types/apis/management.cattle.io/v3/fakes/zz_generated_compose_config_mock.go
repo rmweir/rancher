@@ -600,6 +600,7 @@ var (
 	lockComposeConfigInterfaceMockAddClusterScopedHandler   sync.RWMutex
 	lockComposeConfigInterfaceMockAddClusterScopedLifecycle sync.RWMutex
 	lockComposeConfigInterfaceMockAddFeatureHandler         sync.RWMutex
+	lockComposeConfigInterfaceMockAddFeatureLifecycle       sync.RWMutex
 	lockComposeConfigInterfaceMockAddHandler                sync.RWMutex
 	lockComposeConfigInterfaceMockAddLifecycle              sync.RWMutex
 	lockComposeConfigInterfaceMockController                sync.RWMutex
@@ -633,6 +634,9 @@ var _ v3.ComposeConfigInterface = &ComposeConfigInterfaceMock{}
 //             },
 //             AddFeatureHandlerFunc: func(enabled func(string) bool, feat string, ctx context.Context, name string, sync v3.ComposeConfigHandlerFunc)  {
 // 	               panic("mock out the AddFeatureHandler method")
+//             },
+//             AddFeatureLifecycleFunc: func(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v3.ComposeConfigLifecycle)  {
+// 	               panic("mock out the AddFeatureLifecycle method")
 //             },
 //             AddHandlerFunc: func(ctx context.Context, name string, sync v3.ComposeConfigHandlerFunc)  {
 // 	               panic("mock out the AddHandler method")
@@ -688,6 +692,9 @@ type ComposeConfigInterfaceMock struct {
 
 	// AddFeatureHandlerFunc mocks the AddFeatureHandler method.
 	AddFeatureHandlerFunc func(enabled func(string) bool, feat string, ctx context.Context, name string, sync v3.ComposeConfigHandlerFunc)
+
+	// AddFeatureLifecycleFunc mocks the AddFeatureLifecycle method.
+	AddFeatureLifecycleFunc func(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v3.ComposeConfigLifecycle)
 
 	// AddHandlerFunc mocks the AddHandler method.
 	AddHandlerFunc func(ctx context.Context, name string, sync v3.ComposeConfigHandlerFunc)
@@ -764,6 +771,19 @@ type ComposeConfigInterfaceMock struct {
 			Name string
 			// Sync is the sync argument value.
 			Sync v3.ComposeConfigHandlerFunc
+		}
+		// AddFeatureLifecycle holds details about calls to the AddFeatureLifecycle method.
+		AddFeatureLifecycle []struct {
+			// Enabled is the enabled argument value.
+			Enabled func(string) bool
+			// Feat is the feat argument value.
+			Feat string
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Name is the name argument value.
+			Name string
+			// Lifecycle is the lifecycle argument value.
+			Lifecycle v3.ComposeConfigLifecycle
 		}
 		// AddHandler holds details about calls to the AddHandler method.
 		AddHandler []struct {
@@ -981,6 +1001,53 @@ func (mock *ComposeConfigInterfaceMock) AddFeatureHandlerCalls() []struct {
 	lockComposeConfigInterfaceMockAddFeatureHandler.RLock()
 	calls = mock.calls.AddFeatureHandler
 	lockComposeConfigInterfaceMockAddFeatureHandler.RUnlock()
+	return calls
+}
+
+// AddFeatureLifecycle calls AddFeatureLifecycleFunc.
+func (mock *ComposeConfigInterfaceMock) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v3.ComposeConfigLifecycle) {
+	if mock.AddFeatureLifecycleFunc == nil {
+		panic("ComposeConfigInterfaceMock.AddFeatureLifecycleFunc: method is nil but ComposeConfigInterface.AddFeatureLifecycle was just called")
+	}
+	callInfo := struct {
+		Enabled   func(string) bool
+		Feat      string
+		Ctx       context.Context
+		Name      string
+		Lifecycle v3.ComposeConfigLifecycle
+	}{
+		Enabled:   enabled,
+		Feat:      feat,
+		Ctx:       ctx,
+		Name:      name,
+		Lifecycle: lifecycle,
+	}
+	lockComposeConfigInterfaceMockAddFeatureLifecycle.Lock()
+	mock.calls.AddFeatureLifecycle = append(mock.calls.AddFeatureLifecycle, callInfo)
+	lockComposeConfigInterfaceMockAddFeatureLifecycle.Unlock()
+	mock.AddFeatureLifecycleFunc(enabled, feat, ctx, name, lifecycle)
+}
+
+// AddFeatureLifecycleCalls gets all the calls that were made to AddFeatureLifecycle.
+// Check the length with:
+//     len(mockedComposeConfigInterface.AddFeatureLifecycleCalls())
+func (mock *ComposeConfigInterfaceMock) AddFeatureLifecycleCalls() []struct {
+	Enabled   func(string) bool
+	Feat      string
+	Ctx       context.Context
+	Name      string
+	Lifecycle v3.ComposeConfigLifecycle
+} {
+	var calls []struct {
+		Enabled   func(string) bool
+		Feat      string
+		Ctx       context.Context
+		Name      string
+		Lifecycle v3.ComposeConfigLifecycle
+	}
+	lockComposeConfigInterfaceMockAddFeatureLifecycle.RLock()
+	calls = mock.calls.AddFeatureLifecycle
+	lockComposeConfigInterfaceMockAddFeatureLifecycle.RUnlock()
 	return calls
 }
 

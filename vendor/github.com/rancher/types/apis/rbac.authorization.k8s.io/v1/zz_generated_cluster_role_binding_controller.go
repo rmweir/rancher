@@ -90,6 +90,7 @@ type ClusterRoleBindingInterface interface {
 	AddHandler(ctx context.Context, name string, sync ClusterRoleBindingHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync ClusterRoleBindingHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle ClusterRoleBindingLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle ClusterRoleBindingLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync ClusterRoleBindingHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle ClusterRoleBindingLifecycle)
 }
@@ -279,6 +280,11 @@ func (s *clusterRoleBindingClient) AddFeatureHandler(enabled func(string) bool, 
 func (s *clusterRoleBindingClient) AddLifecycle(ctx context.Context, name string, lifecycle ClusterRoleBindingLifecycle) {
 	sync := NewClusterRoleBindingLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *clusterRoleBindingClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle ClusterRoleBindingLifecycle) {
+	sync := NewClusterRoleBindingLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *clusterRoleBindingClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync ClusterRoleBindingHandlerFunc) {

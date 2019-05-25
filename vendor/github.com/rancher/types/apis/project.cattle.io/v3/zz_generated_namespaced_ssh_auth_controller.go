@@ -90,6 +90,7 @@ type NamespacedSSHAuthInterface interface {
 	AddHandler(ctx context.Context, name string, sync NamespacedSSHAuthHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync NamespacedSSHAuthHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle NamespacedSSHAuthLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle NamespacedSSHAuthLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync NamespacedSSHAuthHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle NamespacedSSHAuthLifecycle)
 }
@@ -279,6 +280,11 @@ func (s *namespacedSshAuthClient) AddFeatureHandler(enabled func(string) bool, f
 func (s *namespacedSshAuthClient) AddLifecycle(ctx context.Context, name string, lifecycle NamespacedSSHAuthLifecycle) {
 	sync := NewNamespacedSSHAuthLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *namespacedSshAuthClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle NamespacedSSHAuthLifecycle) {
+	sync := NewNamespacedSSHAuthLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *namespacedSshAuthClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync NamespacedSSHAuthHandlerFunc) {

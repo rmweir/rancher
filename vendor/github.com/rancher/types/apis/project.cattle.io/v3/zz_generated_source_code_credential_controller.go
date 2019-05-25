@@ -90,6 +90,7 @@ type SourceCodeCredentialInterface interface {
 	AddHandler(ctx context.Context, name string, sync SourceCodeCredentialHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync SourceCodeCredentialHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle SourceCodeCredentialLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle SourceCodeCredentialLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync SourceCodeCredentialHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle SourceCodeCredentialLifecycle)
 }
@@ -279,6 +280,11 @@ func (s *sourceCodeCredentialClient) AddFeatureHandler(enabled func(string) bool
 func (s *sourceCodeCredentialClient) AddLifecycle(ctx context.Context, name string, lifecycle SourceCodeCredentialLifecycle) {
 	sync := NewSourceCodeCredentialLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *sourceCodeCredentialClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle SourceCodeCredentialLifecycle) {
+	sync := NewSourceCodeCredentialLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *sourceCodeCredentialClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync SourceCodeCredentialHandlerFunc) {

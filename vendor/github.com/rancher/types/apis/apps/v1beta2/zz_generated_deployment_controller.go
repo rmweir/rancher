@@ -91,6 +91,7 @@ type DeploymentInterface interface {
 	AddHandler(ctx context.Context, name string, sync DeploymentHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync DeploymentHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle DeploymentLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle DeploymentLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync DeploymentHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle DeploymentLifecycle)
 }
@@ -280,6 +281,11 @@ func (s *deploymentClient) AddFeatureHandler(enabled func(string) bool, feat str
 func (s *deploymentClient) AddLifecycle(ctx context.Context, name string, lifecycle DeploymentLifecycle) {
 	sync := NewDeploymentLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *deploymentClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle DeploymentLifecycle) {
+	sync := NewDeploymentLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *deploymentClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync DeploymentHandlerFunc) {

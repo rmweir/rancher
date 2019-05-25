@@ -89,6 +89,7 @@ type CatalogInterface interface {
 	AddHandler(ctx context.Context, name string, sync CatalogHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync CatalogHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle CatalogLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle CatalogLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync CatalogHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle CatalogLifecycle)
 }
@@ -278,6 +279,11 @@ func (s *catalogClient) AddFeatureHandler(enabled func(string) bool, feat string
 func (s *catalogClient) AddLifecycle(ctx context.Context, name string, lifecycle CatalogLifecycle) {
 	sync := NewCatalogLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *catalogClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle CatalogLifecycle) {
+	sync := NewCatalogLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *catalogClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync CatalogHandlerFunc) {

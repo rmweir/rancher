@@ -91,6 +91,7 @@ type SecretInterface interface {
 	AddHandler(ctx context.Context, name string, sync SecretHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync SecretHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle SecretLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle SecretLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync SecretHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle SecretLifecycle)
 }
@@ -280,6 +281,11 @@ func (s *secretClient) AddFeatureHandler(enabled func(string) bool, feat string,
 func (s *secretClient) AddLifecycle(ctx context.Context, name string, lifecycle SecretLifecycle) {
 	sync := NewSecretLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *secretClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle SecretLifecycle) {
+	sync := NewSecretLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *secretClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync SecretHandlerFunc) {

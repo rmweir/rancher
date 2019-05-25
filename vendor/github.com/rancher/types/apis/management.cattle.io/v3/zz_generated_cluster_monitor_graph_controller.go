@@ -90,6 +90,7 @@ type ClusterMonitorGraphInterface interface {
 	AddHandler(ctx context.Context, name string, sync ClusterMonitorGraphHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync ClusterMonitorGraphHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle ClusterMonitorGraphLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle ClusterMonitorGraphLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync ClusterMonitorGraphHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle ClusterMonitorGraphLifecycle)
 }
@@ -279,6 +280,11 @@ func (s *clusterMonitorGraphClient) AddFeatureHandler(enabled func(string) bool,
 func (s *clusterMonitorGraphClient) AddLifecycle(ctx context.Context, name string, lifecycle ClusterMonitorGraphLifecycle) {
 	sync := NewClusterMonitorGraphLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *clusterMonitorGraphClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle ClusterMonitorGraphLifecycle) {
+	sync := NewClusterMonitorGraphLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *clusterMonitorGraphClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync ClusterMonitorGraphHandlerFunc) {

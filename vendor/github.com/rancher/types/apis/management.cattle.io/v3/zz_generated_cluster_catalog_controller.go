@@ -90,6 +90,7 @@ type ClusterCatalogInterface interface {
 	AddHandler(ctx context.Context, name string, sync ClusterCatalogHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync ClusterCatalogHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle ClusterCatalogLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle ClusterCatalogLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync ClusterCatalogHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle ClusterCatalogLifecycle)
 }
@@ -279,6 +280,11 @@ func (s *clusterCatalogClient) AddFeatureHandler(enabled func(string) bool, feat
 func (s *clusterCatalogClient) AddLifecycle(ctx context.Context, name string, lifecycle ClusterCatalogLifecycle) {
 	sync := NewClusterCatalogLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *clusterCatalogClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle ClusterCatalogLifecycle) {
+	sync := NewClusterCatalogLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *clusterCatalogClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync ClusterCatalogHandlerFunc) {

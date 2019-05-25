@@ -600,6 +600,7 @@ var (
 	lockPrincipalInterfaceMockAddClusterScopedHandler   sync.RWMutex
 	lockPrincipalInterfaceMockAddClusterScopedLifecycle sync.RWMutex
 	lockPrincipalInterfaceMockAddFeatureHandler         sync.RWMutex
+	lockPrincipalInterfaceMockAddFeatureLifecycle       sync.RWMutex
 	lockPrincipalInterfaceMockAddHandler                sync.RWMutex
 	lockPrincipalInterfaceMockAddLifecycle              sync.RWMutex
 	lockPrincipalInterfaceMockController                sync.RWMutex
@@ -633,6 +634,9 @@ var _ v3.PrincipalInterface = &PrincipalInterfaceMock{}
 //             },
 //             AddFeatureHandlerFunc: func(enabled func(string) bool, feat string, ctx context.Context, name string, sync v3.PrincipalHandlerFunc)  {
 // 	               panic("mock out the AddFeatureHandler method")
+//             },
+//             AddFeatureLifecycleFunc: func(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v3.PrincipalLifecycle)  {
+// 	               panic("mock out the AddFeatureLifecycle method")
 //             },
 //             AddHandlerFunc: func(ctx context.Context, name string, sync v3.PrincipalHandlerFunc)  {
 // 	               panic("mock out the AddHandler method")
@@ -688,6 +692,9 @@ type PrincipalInterfaceMock struct {
 
 	// AddFeatureHandlerFunc mocks the AddFeatureHandler method.
 	AddFeatureHandlerFunc func(enabled func(string) bool, feat string, ctx context.Context, name string, sync v3.PrincipalHandlerFunc)
+
+	// AddFeatureLifecycleFunc mocks the AddFeatureLifecycle method.
+	AddFeatureLifecycleFunc func(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v3.PrincipalLifecycle)
 
 	// AddHandlerFunc mocks the AddHandler method.
 	AddHandlerFunc func(ctx context.Context, name string, sync v3.PrincipalHandlerFunc)
@@ -764,6 +771,19 @@ type PrincipalInterfaceMock struct {
 			Name string
 			// Sync is the sync argument value.
 			Sync v3.PrincipalHandlerFunc
+		}
+		// AddFeatureLifecycle holds details about calls to the AddFeatureLifecycle method.
+		AddFeatureLifecycle []struct {
+			// Enabled is the enabled argument value.
+			Enabled func(string) bool
+			// Feat is the feat argument value.
+			Feat string
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Name is the name argument value.
+			Name string
+			// Lifecycle is the lifecycle argument value.
+			Lifecycle v3.PrincipalLifecycle
 		}
 		// AddHandler holds details about calls to the AddHandler method.
 		AddHandler []struct {
@@ -981,6 +1001,53 @@ func (mock *PrincipalInterfaceMock) AddFeatureHandlerCalls() []struct {
 	lockPrincipalInterfaceMockAddFeatureHandler.RLock()
 	calls = mock.calls.AddFeatureHandler
 	lockPrincipalInterfaceMockAddFeatureHandler.RUnlock()
+	return calls
+}
+
+// AddFeatureLifecycle calls AddFeatureLifecycleFunc.
+func (mock *PrincipalInterfaceMock) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v3.PrincipalLifecycle) {
+	if mock.AddFeatureLifecycleFunc == nil {
+		panic("PrincipalInterfaceMock.AddFeatureLifecycleFunc: method is nil but PrincipalInterface.AddFeatureLifecycle was just called")
+	}
+	callInfo := struct {
+		Enabled   func(string) bool
+		Feat      string
+		Ctx       context.Context
+		Name      string
+		Lifecycle v3.PrincipalLifecycle
+	}{
+		Enabled:   enabled,
+		Feat:      feat,
+		Ctx:       ctx,
+		Name:      name,
+		Lifecycle: lifecycle,
+	}
+	lockPrincipalInterfaceMockAddFeatureLifecycle.Lock()
+	mock.calls.AddFeatureLifecycle = append(mock.calls.AddFeatureLifecycle, callInfo)
+	lockPrincipalInterfaceMockAddFeatureLifecycle.Unlock()
+	mock.AddFeatureLifecycleFunc(enabled, feat, ctx, name, lifecycle)
+}
+
+// AddFeatureLifecycleCalls gets all the calls that were made to AddFeatureLifecycle.
+// Check the length with:
+//     len(mockedPrincipalInterface.AddFeatureLifecycleCalls())
+func (mock *PrincipalInterfaceMock) AddFeatureLifecycleCalls() []struct {
+	Enabled   func(string) bool
+	Feat      string
+	Ctx       context.Context
+	Name      string
+	Lifecycle v3.PrincipalLifecycle
+} {
+	var calls []struct {
+		Enabled   func(string) bool
+		Feat      string
+		Ctx       context.Context
+		Name      string
+		Lifecycle v3.PrincipalLifecycle
+	}
+	lockPrincipalInterfaceMockAddFeatureLifecycle.RLock()
+	calls = mock.calls.AddFeatureLifecycle
+	lockPrincipalInterfaceMockAddFeatureLifecycle.RUnlock()
 	return calls
 }
 

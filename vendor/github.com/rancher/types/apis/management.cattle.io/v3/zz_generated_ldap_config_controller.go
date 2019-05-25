@@ -89,6 +89,7 @@ type LdapConfigInterface interface {
 	AddHandler(ctx context.Context, name string, sync LdapConfigHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync LdapConfigHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle LdapConfigLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle LdapConfigLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync LdapConfigHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle LdapConfigLifecycle)
 }
@@ -278,6 +279,11 @@ func (s *ldapConfigClient) AddFeatureHandler(enabled func(string) bool, feat str
 func (s *ldapConfigClient) AddLifecycle(ctx context.Context, name string, lifecycle LdapConfigLifecycle) {
 	sync := NewLdapConfigLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *ldapConfigClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle LdapConfigLifecycle) {
+	sync := NewLdapConfigLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *ldapConfigClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync LdapConfigHandlerFunc) {

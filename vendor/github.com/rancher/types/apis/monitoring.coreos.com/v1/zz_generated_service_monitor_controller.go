@@ -91,6 +91,7 @@ type ServiceMonitorInterface interface {
 	AddHandler(ctx context.Context, name string, sync ServiceMonitorHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync ServiceMonitorHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle ServiceMonitorLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle ServiceMonitorLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync ServiceMonitorHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle ServiceMonitorLifecycle)
 }
@@ -280,6 +281,11 @@ func (s *serviceMonitorClient) AddFeatureHandler(enabled func(string) bool, feat
 func (s *serviceMonitorClient) AddLifecycle(ctx context.Context, name string, lifecycle ServiceMonitorLifecycle) {
 	sync := NewServiceMonitorLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *serviceMonitorClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle ServiceMonitorLifecycle) {
+	sync := NewServiceMonitorLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *serviceMonitorClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync ServiceMonitorHandlerFunc) {

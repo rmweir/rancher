@@ -91,6 +91,7 @@ type DaemonSetInterface interface {
 	AddHandler(ctx context.Context, name string, sync DaemonSetHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync DaemonSetHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle DaemonSetLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle DaemonSetLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync DaemonSetHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle DaemonSetLifecycle)
 }
@@ -280,6 +281,11 @@ func (s *daemonSetClient) AddFeatureHandler(enabled func(string) bool, feat stri
 func (s *daemonSetClient) AddLifecycle(ctx context.Context, name string, lifecycle DaemonSetLifecycle) {
 	sync := NewDaemonSetLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *daemonSetClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle DaemonSetLifecycle) {
+	sync := NewDaemonSetLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *daemonSetClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync DaemonSetHandlerFunc) {

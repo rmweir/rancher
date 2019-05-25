@@ -90,6 +90,7 @@ type ProjectAlertRuleInterface interface {
 	AddHandler(ctx context.Context, name string, sync ProjectAlertRuleHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync ProjectAlertRuleHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle ProjectAlertRuleLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle ProjectAlertRuleLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync ProjectAlertRuleHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle ProjectAlertRuleLifecycle)
 }
@@ -279,6 +280,11 @@ func (s *projectAlertRuleClient) AddFeatureHandler(enabled func(string) bool, fe
 func (s *projectAlertRuleClient) AddLifecycle(ctx context.Context, name string, lifecycle ProjectAlertRuleLifecycle) {
 	sync := NewProjectAlertRuleLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *projectAlertRuleClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle ProjectAlertRuleLifecycle) {
+	sync := NewProjectAlertRuleLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *projectAlertRuleClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync ProjectAlertRuleHandlerFunc) {

@@ -90,6 +90,7 @@ type ProjectAlertGroupInterface interface {
 	AddHandler(ctx context.Context, name string, sync ProjectAlertGroupHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync ProjectAlertGroupHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle ProjectAlertGroupLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle ProjectAlertGroupLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync ProjectAlertGroupHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle ProjectAlertGroupLifecycle)
 }
@@ -279,6 +280,11 @@ func (s *projectAlertGroupClient) AddFeatureHandler(enabled func(string) bool, f
 func (s *projectAlertGroupClient) AddLifecycle(ctx context.Context, name string, lifecycle ProjectAlertGroupLifecycle) {
 	sync := NewProjectAlertGroupLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *projectAlertGroupClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle ProjectAlertGroupLifecycle) {
+	sync := NewProjectAlertGroupLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *projectAlertGroupClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync ProjectAlertGroupHandlerFunc) {

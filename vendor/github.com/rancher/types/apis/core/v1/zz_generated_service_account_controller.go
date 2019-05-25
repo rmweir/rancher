@@ -91,6 +91,7 @@ type ServiceAccountInterface interface {
 	AddHandler(ctx context.Context, name string, sync ServiceAccountHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync ServiceAccountHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle ServiceAccountLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle ServiceAccountLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync ServiceAccountHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle ServiceAccountLifecycle)
 }
@@ -280,6 +281,11 @@ func (s *serviceAccountClient) AddFeatureHandler(enabled func(string) bool, feat
 func (s *serviceAccountClient) AddLifecycle(ctx context.Context, name string, lifecycle ServiceAccountLifecycle) {
 	sync := NewServiceAccountLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *serviceAccountClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle ServiceAccountLifecycle) {
+	sync := NewServiceAccountLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *serviceAccountClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync ServiceAccountHandlerFunc) {

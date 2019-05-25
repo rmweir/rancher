@@ -90,6 +90,7 @@ type SSHAuthInterface interface {
 	AddHandler(ctx context.Context, name string, sync SSHAuthHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync SSHAuthHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle SSHAuthLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle SSHAuthLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync SSHAuthHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle SSHAuthLifecycle)
 }
@@ -279,6 +280,11 @@ func (s *sshAuthClient) AddFeatureHandler(enabled func(string) bool, feat string
 func (s *sshAuthClient) AddLifecycle(ctx context.Context, name string, lifecycle SSHAuthLifecycle) {
 	sync := NewSSHAuthLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *sshAuthClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle SSHAuthLifecycle) {
+	sync := NewSSHAuthLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *sshAuthClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync SSHAuthHandlerFunc) {

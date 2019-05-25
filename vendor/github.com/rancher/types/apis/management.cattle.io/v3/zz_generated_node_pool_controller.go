@@ -90,6 +90,7 @@ type NodePoolInterface interface {
 	AddHandler(ctx context.Context, name string, sync NodePoolHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync NodePoolHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle NodePoolLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle NodePoolLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync NodePoolHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle NodePoolLifecycle)
 }
@@ -279,6 +280,11 @@ func (s *nodePoolClient) AddFeatureHandler(enabled func(string) bool, feat strin
 func (s *nodePoolClient) AddLifecycle(ctx context.Context, name string, lifecycle NodePoolLifecycle) {
 	sync := NewNodePoolLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *nodePoolClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle NodePoolLifecycle) {
+	sync := NewNodePoolLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *nodePoolClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync NodePoolHandlerFunc) {

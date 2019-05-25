@@ -89,6 +89,7 @@ type PrincipalInterface interface {
 	AddHandler(ctx context.Context, name string, sync PrincipalHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync PrincipalHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle PrincipalLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle PrincipalLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync PrincipalHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle PrincipalLifecycle)
 }
@@ -278,6 +279,11 @@ func (s *principalClient) AddFeatureHandler(enabled func(string) bool, feat stri
 func (s *principalClient) AddLifecycle(ctx context.Context, name string, lifecycle PrincipalLifecycle) {
 	sync := NewPrincipalLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *principalClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle PrincipalLifecycle) {
+	sync := NewPrincipalLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *principalClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync PrincipalHandlerFunc) {

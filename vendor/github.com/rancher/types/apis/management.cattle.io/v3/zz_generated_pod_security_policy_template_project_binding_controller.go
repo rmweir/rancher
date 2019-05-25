@@ -90,6 +90,7 @@ type PodSecurityPolicyTemplateProjectBindingInterface interface {
 	AddHandler(ctx context.Context, name string, sync PodSecurityPolicyTemplateProjectBindingHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync PodSecurityPolicyTemplateProjectBindingHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle PodSecurityPolicyTemplateProjectBindingLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle PodSecurityPolicyTemplateProjectBindingLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync PodSecurityPolicyTemplateProjectBindingHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle PodSecurityPolicyTemplateProjectBindingLifecycle)
 }
@@ -279,6 +280,11 @@ func (s *podSecurityPolicyTemplateProjectBindingClient) AddFeatureHandler(enable
 func (s *podSecurityPolicyTemplateProjectBindingClient) AddLifecycle(ctx context.Context, name string, lifecycle PodSecurityPolicyTemplateProjectBindingLifecycle) {
 	sync := NewPodSecurityPolicyTemplateProjectBindingLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *podSecurityPolicyTemplateProjectBindingClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle PodSecurityPolicyTemplateProjectBindingLifecycle) {
+	sync := NewPodSecurityPolicyTemplateProjectBindingLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *podSecurityPolicyTemplateProjectBindingClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync PodSecurityPolicyTemplateProjectBindingHandlerFunc) {

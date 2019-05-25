@@ -600,6 +600,7 @@ var (
 	lockGroupMemberInterfaceMockAddClusterScopedHandler   sync.RWMutex
 	lockGroupMemberInterfaceMockAddClusterScopedLifecycle sync.RWMutex
 	lockGroupMemberInterfaceMockAddFeatureHandler         sync.RWMutex
+	lockGroupMemberInterfaceMockAddFeatureLifecycle       sync.RWMutex
 	lockGroupMemberInterfaceMockAddHandler                sync.RWMutex
 	lockGroupMemberInterfaceMockAddLifecycle              sync.RWMutex
 	lockGroupMemberInterfaceMockController                sync.RWMutex
@@ -633,6 +634,9 @@ var _ v3.GroupMemberInterface = &GroupMemberInterfaceMock{}
 //             },
 //             AddFeatureHandlerFunc: func(enabled func(string) bool, feat string, ctx context.Context, name string, sync v3.GroupMemberHandlerFunc)  {
 // 	               panic("mock out the AddFeatureHandler method")
+//             },
+//             AddFeatureLifecycleFunc: func(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v3.GroupMemberLifecycle)  {
+// 	               panic("mock out the AddFeatureLifecycle method")
 //             },
 //             AddHandlerFunc: func(ctx context.Context, name string, sync v3.GroupMemberHandlerFunc)  {
 // 	               panic("mock out the AddHandler method")
@@ -688,6 +692,9 @@ type GroupMemberInterfaceMock struct {
 
 	// AddFeatureHandlerFunc mocks the AddFeatureHandler method.
 	AddFeatureHandlerFunc func(enabled func(string) bool, feat string, ctx context.Context, name string, sync v3.GroupMemberHandlerFunc)
+
+	// AddFeatureLifecycleFunc mocks the AddFeatureLifecycle method.
+	AddFeatureLifecycleFunc func(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v3.GroupMemberLifecycle)
 
 	// AddHandlerFunc mocks the AddHandler method.
 	AddHandlerFunc func(ctx context.Context, name string, sync v3.GroupMemberHandlerFunc)
@@ -764,6 +771,19 @@ type GroupMemberInterfaceMock struct {
 			Name string
 			// Sync is the sync argument value.
 			Sync v3.GroupMemberHandlerFunc
+		}
+		// AddFeatureLifecycle holds details about calls to the AddFeatureLifecycle method.
+		AddFeatureLifecycle []struct {
+			// Enabled is the enabled argument value.
+			Enabled func(string) bool
+			// Feat is the feat argument value.
+			Feat string
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Name is the name argument value.
+			Name string
+			// Lifecycle is the lifecycle argument value.
+			Lifecycle v3.GroupMemberLifecycle
 		}
 		// AddHandler holds details about calls to the AddHandler method.
 		AddHandler []struct {
@@ -981,6 +1001,53 @@ func (mock *GroupMemberInterfaceMock) AddFeatureHandlerCalls() []struct {
 	lockGroupMemberInterfaceMockAddFeatureHandler.RLock()
 	calls = mock.calls.AddFeatureHandler
 	lockGroupMemberInterfaceMockAddFeatureHandler.RUnlock()
+	return calls
+}
+
+// AddFeatureLifecycle calls AddFeatureLifecycleFunc.
+func (mock *GroupMemberInterfaceMock) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v3.GroupMemberLifecycle) {
+	if mock.AddFeatureLifecycleFunc == nil {
+		panic("GroupMemberInterfaceMock.AddFeatureLifecycleFunc: method is nil but GroupMemberInterface.AddFeatureLifecycle was just called")
+	}
+	callInfo := struct {
+		Enabled   func(string) bool
+		Feat      string
+		Ctx       context.Context
+		Name      string
+		Lifecycle v3.GroupMemberLifecycle
+	}{
+		Enabled:   enabled,
+		Feat:      feat,
+		Ctx:       ctx,
+		Name:      name,
+		Lifecycle: lifecycle,
+	}
+	lockGroupMemberInterfaceMockAddFeatureLifecycle.Lock()
+	mock.calls.AddFeatureLifecycle = append(mock.calls.AddFeatureLifecycle, callInfo)
+	lockGroupMemberInterfaceMockAddFeatureLifecycle.Unlock()
+	mock.AddFeatureLifecycleFunc(enabled, feat, ctx, name, lifecycle)
+}
+
+// AddFeatureLifecycleCalls gets all the calls that were made to AddFeatureLifecycle.
+// Check the length with:
+//     len(mockedGroupMemberInterface.AddFeatureLifecycleCalls())
+func (mock *GroupMemberInterfaceMock) AddFeatureLifecycleCalls() []struct {
+	Enabled   func(string) bool
+	Feat      string
+	Ctx       context.Context
+	Name      string
+	Lifecycle v3.GroupMemberLifecycle
+} {
+	var calls []struct {
+		Enabled   func(string) bool
+		Feat      string
+		Ctx       context.Context
+		Name      string
+		Lifecycle v3.GroupMemberLifecycle
+	}
+	lockGroupMemberInterfaceMockAddFeatureLifecycle.RLock()
+	calls = mock.calls.AddFeatureLifecycle
+	lockGroupMemberInterfaceMockAddFeatureLifecycle.RUnlock()
 	return calls
 }
 

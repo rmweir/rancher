@@ -90,6 +90,7 @@ type ServiceAccountTokenInterface interface {
 	AddHandler(ctx context.Context, name string, sync ServiceAccountTokenHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync ServiceAccountTokenHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle ServiceAccountTokenLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle ServiceAccountTokenLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync ServiceAccountTokenHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle ServiceAccountTokenLifecycle)
 }
@@ -279,6 +280,11 @@ func (s *serviceAccountTokenClient) AddFeatureHandler(enabled func(string) bool,
 func (s *serviceAccountTokenClient) AddLifecycle(ctx context.Context, name string, lifecycle ServiceAccountTokenLifecycle) {
 	sync := NewServiceAccountTokenLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *serviceAccountTokenClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle ServiceAccountTokenLifecycle) {
+	sync := NewServiceAccountTokenLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *serviceAccountTokenClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync ServiceAccountTokenHandlerFunc) {

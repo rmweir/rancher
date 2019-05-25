@@ -91,6 +91,7 @@ type PersistentVolumeClaimInterface interface {
 	AddHandler(ctx context.Context, name string, sync PersistentVolumeClaimHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync PersistentVolumeClaimHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle PersistentVolumeClaimLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle PersistentVolumeClaimLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync PersistentVolumeClaimHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle PersistentVolumeClaimLifecycle)
 }
@@ -280,6 +281,11 @@ func (s *persistentVolumeClaimClient) AddFeatureHandler(enabled func(string) boo
 func (s *persistentVolumeClaimClient) AddLifecycle(ctx context.Context, name string, lifecycle PersistentVolumeClaimLifecycle) {
 	sync := NewPersistentVolumeClaimLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *persistentVolumeClaimClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle PersistentVolumeClaimLifecycle) {
+	sync := NewPersistentVolumeClaimLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *persistentVolumeClaimClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync PersistentVolumeClaimHandlerFunc) {

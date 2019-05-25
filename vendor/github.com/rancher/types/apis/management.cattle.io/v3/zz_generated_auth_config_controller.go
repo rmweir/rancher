@@ -89,6 +89,7 @@ type AuthConfigInterface interface {
 	AddHandler(ctx context.Context, name string, sync AuthConfigHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync AuthConfigHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle AuthConfigLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle AuthConfigLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync AuthConfigHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle AuthConfigLifecycle)
 }
@@ -278,6 +279,11 @@ func (s *authConfigClient) AddFeatureHandler(enabled func(string) bool, feat str
 func (s *authConfigClient) AddLifecycle(ctx context.Context, name string, lifecycle AuthConfigLifecycle) {
 	sync := NewAuthConfigLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *authConfigClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle AuthConfigLifecycle) {
+	sync := NewAuthConfigLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *authConfigClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync AuthConfigHandlerFunc) {

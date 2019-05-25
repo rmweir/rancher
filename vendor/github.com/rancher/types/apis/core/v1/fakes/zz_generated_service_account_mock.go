@@ -601,6 +601,7 @@ var (
 	lockServiceAccountInterfaceMockAddClusterScopedHandler   sync.RWMutex
 	lockServiceAccountInterfaceMockAddClusterScopedLifecycle sync.RWMutex
 	lockServiceAccountInterfaceMockAddFeatureHandler         sync.RWMutex
+	lockServiceAccountInterfaceMockAddFeatureLifecycle       sync.RWMutex
 	lockServiceAccountInterfaceMockAddHandler                sync.RWMutex
 	lockServiceAccountInterfaceMockAddLifecycle              sync.RWMutex
 	lockServiceAccountInterfaceMockController                sync.RWMutex
@@ -634,6 +635,9 @@ var _ v1a.ServiceAccountInterface = &ServiceAccountInterfaceMock{}
 //             },
 //             AddFeatureHandlerFunc: func(enabled func(string) bool, feat string, ctx context.Context, name string, sync v1a.ServiceAccountHandlerFunc)  {
 // 	               panic("mock out the AddFeatureHandler method")
+//             },
+//             AddFeatureLifecycleFunc: func(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v1a.ServiceAccountLifecycle)  {
+// 	               panic("mock out the AddFeatureLifecycle method")
 //             },
 //             AddHandlerFunc: func(ctx context.Context, name string, sync v1a.ServiceAccountHandlerFunc)  {
 // 	               panic("mock out the AddHandler method")
@@ -689,6 +693,9 @@ type ServiceAccountInterfaceMock struct {
 
 	// AddFeatureHandlerFunc mocks the AddFeatureHandler method.
 	AddFeatureHandlerFunc func(enabled func(string) bool, feat string, ctx context.Context, name string, sync v1a.ServiceAccountHandlerFunc)
+
+	// AddFeatureLifecycleFunc mocks the AddFeatureLifecycle method.
+	AddFeatureLifecycleFunc func(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v1a.ServiceAccountLifecycle)
 
 	// AddHandlerFunc mocks the AddHandler method.
 	AddHandlerFunc func(ctx context.Context, name string, sync v1a.ServiceAccountHandlerFunc)
@@ -765,6 +772,19 @@ type ServiceAccountInterfaceMock struct {
 			Name string
 			// Sync is the sync argument value.
 			Sync v1a.ServiceAccountHandlerFunc
+		}
+		// AddFeatureLifecycle holds details about calls to the AddFeatureLifecycle method.
+		AddFeatureLifecycle []struct {
+			// Enabled is the enabled argument value.
+			Enabled func(string) bool
+			// Feat is the feat argument value.
+			Feat string
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Name is the name argument value.
+			Name string
+			// Lifecycle is the lifecycle argument value.
+			Lifecycle v1a.ServiceAccountLifecycle
 		}
 		// AddHandler holds details about calls to the AddHandler method.
 		AddHandler []struct {
@@ -982,6 +1002,53 @@ func (mock *ServiceAccountInterfaceMock) AddFeatureHandlerCalls() []struct {
 	lockServiceAccountInterfaceMockAddFeatureHandler.RLock()
 	calls = mock.calls.AddFeatureHandler
 	lockServiceAccountInterfaceMockAddFeatureHandler.RUnlock()
+	return calls
+}
+
+// AddFeatureLifecycle calls AddFeatureLifecycleFunc.
+func (mock *ServiceAccountInterfaceMock) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v1a.ServiceAccountLifecycle) {
+	if mock.AddFeatureLifecycleFunc == nil {
+		panic("ServiceAccountInterfaceMock.AddFeatureLifecycleFunc: method is nil but ServiceAccountInterface.AddFeatureLifecycle was just called")
+	}
+	callInfo := struct {
+		Enabled   func(string) bool
+		Feat      string
+		Ctx       context.Context
+		Name      string
+		Lifecycle v1a.ServiceAccountLifecycle
+	}{
+		Enabled:   enabled,
+		Feat:      feat,
+		Ctx:       ctx,
+		Name:      name,
+		Lifecycle: lifecycle,
+	}
+	lockServiceAccountInterfaceMockAddFeatureLifecycle.Lock()
+	mock.calls.AddFeatureLifecycle = append(mock.calls.AddFeatureLifecycle, callInfo)
+	lockServiceAccountInterfaceMockAddFeatureLifecycle.Unlock()
+	mock.AddFeatureLifecycleFunc(enabled, feat, ctx, name, lifecycle)
+}
+
+// AddFeatureLifecycleCalls gets all the calls that were made to AddFeatureLifecycle.
+// Check the length with:
+//     len(mockedServiceAccountInterface.AddFeatureLifecycleCalls())
+func (mock *ServiceAccountInterfaceMock) AddFeatureLifecycleCalls() []struct {
+	Enabled   func(string) bool
+	Feat      string
+	Ctx       context.Context
+	Name      string
+	Lifecycle v1a.ServiceAccountLifecycle
+} {
+	var calls []struct {
+		Enabled   func(string) bool
+		Feat      string
+		Ctx       context.Context
+		Name      string
+		Lifecycle v1a.ServiceAccountLifecycle
+	}
+	lockServiceAccountInterfaceMockAddFeatureLifecycle.RLock()
+	calls = mock.calls.AddFeatureLifecycle
+	lockServiceAccountInterfaceMockAddFeatureLifecycle.RUnlock()
 	return calls
 }
 

@@ -90,6 +90,7 @@ type SourceCodeProviderConfigInterface interface {
 	AddHandler(ctx context.Context, name string, sync SourceCodeProviderConfigHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync SourceCodeProviderConfigHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle SourceCodeProviderConfigLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle SourceCodeProviderConfigLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync SourceCodeProviderConfigHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle SourceCodeProviderConfigLifecycle)
 }
@@ -279,6 +280,11 @@ func (s *sourceCodeProviderConfigClient) AddFeatureHandler(enabled func(string) 
 func (s *sourceCodeProviderConfigClient) AddLifecycle(ctx context.Context, name string, lifecycle SourceCodeProviderConfigLifecycle) {
 	sync := NewSourceCodeProviderConfigLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *sourceCodeProviderConfigClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle SourceCodeProviderConfigLifecycle) {
+	sync := NewSourceCodeProviderConfigLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *sourceCodeProviderConfigClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync SourceCodeProviderConfigHandlerFunc) {

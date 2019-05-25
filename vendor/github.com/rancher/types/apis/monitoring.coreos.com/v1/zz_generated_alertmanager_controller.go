@@ -91,6 +91,7 @@ type AlertmanagerInterface interface {
 	AddHandler(ctx context.Context, name string, sync AlertmanagerHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync AlertmanagerHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle AlertmanagerLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle AlertmanagerLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync AlertmanagerHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle AlertmanagerLifecycle)
 }
@@ -280,6 +281,11 @@ func (s *alertmanagerClient) AddFeatureHandler(enabled func(string) bool, feat s
 func (s *alertmanagerClient) AddLifecycle(ctx context.Context, name string, lifecycle AlertmanagerLifecycle) {
 	sync := NewAlertmanagerLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *alertmanagerClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle AlertmanagerLifecycle) {
+	sync := NewAlertmanagerLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *alertmanagerClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync AlertmanagerHandlerFunc) {

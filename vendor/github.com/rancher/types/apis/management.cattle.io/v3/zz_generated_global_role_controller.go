@@ -89,6 +89,7 @@ type GlobalRoleInterface interface {
 	AddHandler(ctx context.Context, name string, sync GlobalRoleHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync GlobalRoleHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle GlobalRoleLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle GlobalRoleLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync GlobalRoleHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle GlobalRoleLifecycle)
 }
@@ -278,6 +279,11 @@ func (s *globalRoleClient) AddFeatureHandler(enabled func(string) bool, feat str
 func (s *globalRoleClient) AddLifecycle(ctx context.Context, name string, lifecycle GlobalRoleLifecycle) {
 	sync := NewGlobalRoleLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *globalRoleClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle GlobalRoleLifecycle) {
+	sync := NewGlobalRoleLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *globalRoleClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync GlobalRoleHandlerFunc) {

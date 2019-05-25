@@ -90,6 +90,7 @@ type AppInterface interface {
 	AddHandler(ctx context.Context, name string, sync AppHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync AppHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle AppLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle AppLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync AppHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle AppLifecycle)
 }
@@ -279,6 +280,11 @@ func (s *appClient) AddFeatureHandler(enabled func(string) bool, feat string, ct
 func (s *appClient) AddLifecycle(ctx context.Context, name string, lifecycle AppLifecycle) {
 	sync := NewAppLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *appClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle AppLifecycle) {
+	sync := NewAppLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *appClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync AppHandlerFunc) {

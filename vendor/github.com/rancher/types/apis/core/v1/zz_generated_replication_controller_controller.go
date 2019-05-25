@@ -91,6 +91,7 @@ type ReplicationControllerInterface interface {
 	AddHandler(ctx context.Context, name string, sync ReplicationControllerHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync ReplicationControllerHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle ReplicationControllerLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle ReplicationControllerLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync ReplicationControllerHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle ReplicationControllerLifecycle)
 }
@@ -280,6 +281,11 @@ func (s *replicationControllerClient) AddFeatureHandler(enabled func(string) boo
 func (s *replicationControllerClient) AddLifecycle(ctx context.Context, name string, lifecycle ReplicationControllerLifecycle) {
 	sync := NewReplicationControllerLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *replicationControllerClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle ReplicationControllerLifecycle) {
+	sync := NewReplicationControllerLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *replicationControllerClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync ReplicationControllerHandlerFunc) {

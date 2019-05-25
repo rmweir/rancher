@@ -601,6 +601,7 @@ var (
 	lockPersistentVolumeClaimInterfaceMockAddClusterScopedHandler   sync.RWMutex
 	lockPersistentVolumeClaimInterfaceMockAddClusterScopedLifecycle sync.RWMutex
 	lockPersistentVolumeClaimInterfaceMockAddFeatureHandler         sync.RWMutex
+	lockPersistentVolumeClaimInterfaceMockAddFeatureLifecycle       sync.RWMutex
 	lockPersistentVolumeClaimInterfaceMockAddHandler                sync.RWMutex
 	lockPersistentVolumeClaimInterfaceMockAddLifecycle              sync.RWMutex
 	lockPersistentVolumeClaimInterfaceMockController                sync.RWMutex
@@ -634,6 +635,9 @@ var _ v1a.PersistentVolumeClaimInterface = &PersistentVolumeClaimInterfaceMock{}
 //             },
 //             AddFeatureHandlerFunc: func(enabled func(string) bool, feat string, ctx context.Context, name string, sync v1a.PersistentVolumeClaimHandlerFunc)  {
 // 	               panic("mock out the AddFeatureHandler method")
+//             },
+//             AddFeatureLifecycleFunc: func(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v1a.PersistentVolumeClaimLifecycle)  {
+// 	               panic("mock out the AddFeatureLifecycle method")
 //             },
 //             AddHandlerFunc: func(ctx context.Context, name string, sync v1a.PersistentVolumeClaimHandlerFunc)  {
 // 	               panic("mock out the AddHandler method")
@@ -689,6 +693,9 @@ type PersistentVolumeClaimInterfaceMock struct {
 
 	// AddFeatureHandlerFunc mocks the AddFeatureHandler method.
 	AddFeatureHandlerFunc func(enabled func(string) bool, feat string, ctx context.Context, name string, sync v1a.PersistentVolumeClaimHandlerFunc)
+
+	// AddFeatureLifecycleFunc mocks the AddFeatureLifecycle method.
+	AddFeatureLifecycleFunc func(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v1a.PersistentVolumeClaimLifecycle)
 
 	// AddHandlerFunc mocks the AddHandler method.
 	AddHandlerFunc func(ctx context.Context, name string, sync v1a.PersistentVolumeClaimHandlerFunc)
@@ -765,6 +772,19 @@ type PersistentVolumeClaimInterfaceMock struct {
 			Name string
 			// Sync is the sync argument value.
 			Sync v1a.PersistentVolumeClaimHandlerFunc
+		}
+		// AddFeatureLifecycle holds details about calls to the AddFeatureLifecycle method.
+		AddFeatureLifecycle []struct {
+			// Enabled is the enabled argument value.
+			Enabled func(string) bool
+			// Feat is the feat argument value.
+			Feat string
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Name is the name argument value.
+			Name string
+			// Lifecycle is the lifecycle argument value.
+			Lifecycle v1a.PersistentVolumeClaimLifecycle
 		}
 		// AddHandler holds details about calls to the AddHandler method.
 		AddHandler []struct {
@@ -982,6 +1002,53 @@ func (mock *PersistentVolumeClaimInterfaceMock) AddFeatureHandlerCalls() []struc
 	lockPersistentVolumeClaimInterfaceMockAddFeatureHandler.RLock()
 	calls = mock.calls.AddFeatureHandler
 	lockPersistentVolumeClaimInterfaceMockAddFeatureHandler.RUnlock()
+	return calls
+}
+
+// AddFeatureLifecycle calls AddFeatureLifecycleFunc.
+func (mock *PersistentVolumeClaimInterfaceMock) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v1a.PersistentVolumeClaimLifecycle) {
+	if mock.AddFeatureLifecycleFunc == nil {
+		panic("PersistentVolumeClaimInterfaceMock.AddFeatureLifecycleFunc: method is nil but PersistentVolumeClaimInterface.AddFeatureLifecycle was just called")
+	}
+	callInfo := struct {
+		Enabled   func(string) bool
+		Feat      string
+		Ctx       context.Context
+		Name      string
+		Lifecycle v1a.PersistentVolumeClaimLifecycle
+	}{
+		Enabled:   enabled,
+		Feat:      feat,
+		Ctx:       ctx,
+		Name:      name,
+		Lifecycle: lifecycle,
+	}
+	lockPersistentVolumeClaimInterfaceMockAddFeatureLifecycle.Lock()
+	mock.calls.AddFeatureLifecycle = append(mock.calls.AddFeatureLifecycle, callInfo)
+	lockPersistentVolumeClaimInterfaceMockAddFeatureLifecycle.Unlock()
+	mock.AddFeatureLifecycleFunc(enabled, feat, ctx, name, lifecycle)
+}
+
+// AddFeatureLifecycleCalls gets all the calls that were made to AddFeatureLifecycle.
+// Check the length with:
+//     len(mockedPersistentVolumeClaimInterface.AddFeatureLifecycleCalls())
+func (mock *PersistentVolumeClaimInterfaceMock) AddFeatureLifecycleCalls() []struct {
+	Enabled   func(string) bool
+	Feat      string
+	Ctx       context.Context
+	Name      string
+	Lifecycle v1a.PersistentVolumeClaimLifecycle
+} {
+	var calls []struct {
+		Enabled   func(string) bool
+		Feat      string
+		Ctx       context.Context
+		Name      string
+		Lifecycle v1a.PersistentVolumeClaimLifecycle
+	}
+	lockPersistentVolumeClaimInterfaceMockAddFeatureLifecycle.RLock()
+	calls = mock.calls.AddFeatureLifecycle
+	lockPersistentVolumeClaimInterfaceMockAddFeatureLifecycle.RUnlock()
 	return calls
 }
 

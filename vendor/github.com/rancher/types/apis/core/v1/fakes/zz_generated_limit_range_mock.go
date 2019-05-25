@@ -601,6 +601,7 @@ var (
 	lockLimitRangeInterfaceMockAddClusterScopedHandler   sync.RWMutex
 	lockLimitRangeInterfaceMockAddClusterScopedLifecycle sync.RWMutex
 	lockLimitRangeInterfaceMockAddFeatureHandler         sync.RWMutex
+	lockLimitRangeInterfaceMockAddFeatureLifecycle       sync.RWMutex
 	lockLimitRangeInterfaceMockAddHandler                sync.RWMutex
 	lockLimitRangeInterfaceMockAddLifecycle              sync.RWMutex
 	lockLimitRangeInterfaceMockController                sync.RWMutex
@@ -634,6 +635,9 @@ var _ v1a.LimitRangeInterface = &LimitRangeInterfaceMock{}
 //             },
 //             AddFeatureHandlerFunc: func(enabled func(string) bool, feat string, ctx context.Context, name string, sync v1a.LimitRangeHandlerFunc)  {
 // 	               panic("mock out the AddFeatureHandler method")
+//             },
+//             AddFeatureLifecycleFunc: func(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v1a.LimitRangeLifecycle)  {
+// 	               panic("mock out the AddFeatureLifecycle method")
 //             },
 //             AddHandlerFunc: func(ctx context.Context, name string, sync v1a.LimitRangeHandlerFunc)  {
 // 	               panic("mock out the AddHandler method")
@@ -689,6 +693,9 @@ type LimitRangeInterfaceMock struct {
 
 	// AddFeatureHandlerFunc mocks the AddFeatureHandler method.
 	AddFeatureHandlerFunc func(enabled func(string) bool, feat string, ctx context.Context, name string, sync v1a.LimitRangeHandlerFunc)
+
+	// AddFeatureLifecycleFunc mocks the AddFeatureLifecycle method.
+	AddFeatureLifecycleFunc func(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v1a.LimitRangeLifecycle)
 
 	// AddHandlerFunc mocks the AddHandler method.
 	AddHandlerFunc func(ctx context.Context, name string, sync v1a.LimitRangeHandlerFunc)
@@ -765,6 +772,19 @@ type LimitRangeInterfaceMock struct {
 			Name string
 			// Sync is the sync argument value.
 			Sync v1a.LimitRangeHandlerFunc
+		}
+		// AddFeatureLifecycle holds details about calls to the AddFeatureLifecycle method.
+		AddFeatureLifecycle []struct {
+			// Enabled is the enabled argument value.
+			Enabled func(string) bool
+			// Feat is the feat argument value.
+			Feat string
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Name is the name argument value.
+			Name string
+			// Lifecycle is the lifecycle argument value.
+			Lifecycle v1a.LimitRangeLifecycle
 		}
 		// AddHandler holds details about calls to the AddHandler method.
 		AddHandler []struct {
@@ -982,6 +1002,53 @@ func (mock *LimitRangeInterfaceMock) AddFeatureHandlerCalls() []struct {
 	lockLimitRangeInterfaceMockAddFeatureHandler.RLock()
 	calls = mock.calls.AddFeatureHandler
 	lockLimitRangeInterfaceMockAddFeatureHandler.RUnlock()
+	return calls
+}
+
+// AddFeatureLifecycle calls AddFeatureLifecycleFunc.
+func (mock *LimitRangeInterfaceMock) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v1a.LimitRangeLifecycle) {
+	if mock.AddFeatureLifecycleFunc == nil {
+		panic("LimitRangeInterfaceMock.AddFeatureLifecycleFunc: method is nil but LimitRangeInterface.AddFeatureLifecycle was just called")
+	}
+	callInfo := struct {
+		Enabled   func(string) bool
+		Feat      string
+		Ctx       context.Context
+		Name      string
+		Lifecycle v1a.LimitRangeLifecycle
+	}{
+		Enabled:   enabled,
+		Feat:      feat,
+		Ctx:       ctx,
+		Name:      name,
+		Lifecycle: lifecycle,
+	}
+	lockLimitRangeInterfaceMockAddFeatureLifecycle.Lock()
+	mock.calls.AddFeatureLifecycle = append(mock.calls.AddFeatureLifecycle, callInfo)
+	lockLimitRangeInterfaceMockAddFeatureLifecycle.Unlock()
+	mock.AddFeatureLifecycleFunc(enabled, feat, ctx, name, lifecycle)
+}
+
+// AddFeatureLifecycleCalls gets all the calls that were made to AddFeatureLifecycle.
+// Check the length with:
+//     len(mockedLimitRangeInterface.AddFeatureLifecycleCalls())
+func (mock *LimitRangeInterfaceMock) AddFeatureLifecycleCalls() []struct {
+	Enabled   func(string) bool
+	Feat      string
+	Ctx       context.Context
+	Name      string
+	Lifecycle v1a.LimitRangeLifecycle
+} {
+	var calls []struct {
+		Enabled   func(string) bool
+		Feat      string
+		Ctx       context.Context
+		Name      string
+		Lifecycle v1a.LimitRangeLifecycle
+	}
+	lockLimitRangeInterfaceMockAddFeatureLifecycle.RLock()
+	calls = mock.calls.AddFeatureLifecycle
+	lockLimitRangeInterfaceMockAddFeatureLifecycle.RUnlock()
 	return calls
 }
 

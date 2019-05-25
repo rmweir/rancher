@@ -89,6 +89,7 @@ type AuthProviderInterface interface {
 	AddHandler(ctx context.Context, name string, sync AuthProviderHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync AuthProviderHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle AuthProviderLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle AuthProviderLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync AuthProviderHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle AuthProviderLifecycle)
 }
@@ -278,6 +279,11 @@ func (s *authProviderClient) AddFeatureHandler(enabled func(string) bool, feat s
 func (s *authProviderClient) AddLifecycle(ctx context.Context, name string, lifecycle AuthProviderLifecycle) {
 	sync := NewAuthProviderLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *authProviderClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle AuthProviderLifecycle) {
+	sync := NewAuthProviderLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *authProviderClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync AuthProviderHandlerFunc) {

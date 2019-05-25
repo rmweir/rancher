@@ -600,6 +600,7 @@ var (
 	lockEtcdBackupInterfaceMockAddClusterScopedHandler   sync.RWMutex
 	lockEtcdBackupInterfaceMockAddClusterScopedLifecycle sync.RWMutex
 	lockEtcdBackupInterfaceMockAddFeatureHandler         sync.RWMutex
+	lockEtcdBackupInterfaceMockAddFeatureLifecycle       sync.RWMutex
 	lockEtcdBackupInterfaceMockAddHandler                sync.RWMutex
 	lockEtcdBackupInterfaceMockAddLifecycle              sync.RWMutex
 	lockEtcdBackupInterfaceMockController                sync.RWMutex
@@ -633,6 +634,9 @@ var _ v3.EtcdBackupInterface = &EtcdBackupInterfaceMock{}
 //             },
 //             AddFeatureHandlerFunc: func(enabled func(string) bool, feat string, ctx context.Context, name string, sync v3.EtcdBackupHandlerFunc)  {
 // 	               panic("mock out the AddFeatureHandler method")
+//             },
+//             AddFeatureLifecycleFunc: func(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v3.EtcdBackupLifecycle)  {
+// 	               panic("mock out the AddFeatureLifecycle method")
 //             },
 //             AddHandlerFunc: func(ctx context.Context, name string, sync v3.EtcdBackupHandlerFunc)  {
 // 	               panic("mock out the AddHandler method")
@@ -688,6 +692,9 @@ type EtcdBackupInterfaceMock struct {
 
 	// AddFeatureHandlerFunc mocks the AddFeatureHandler method.
 	AddFeatureHandlerFunc func(enabled func(string) bool, feat string, ctx context.Context, name string, sync v3.EtcdBackupHandlerFunc)
+
+	// AddFeatureLifecycleFunc mocks the AddFeatureLifecycle method.
+	AddFeatureLifecycleFunc func(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v3.EtcdBackupLifecycle)
 
 	// AddHandlerFunc mocks the AddHandler method.
 	AddHandlerFunc func(ctx context.Context, name string, sync v3.EtcdBackupHandlerFunc)
@@ -764,6 +771,19 @@ type EtcdBackupInterfaceMock struct {
 			Name string
 			// Sync is the sync argument value.
 			Sync v3.EtcdBackupHandlerFunc
+		}
+		// AddFeatureLifecycle holds details about calls to the AddFeatureLifecycle method.
+		AddFeatureLifecycle []struct {
+			// Enabled is the enabled argument value.
+			Enabled func(string) bool
+			// Feat is the feat argument value.
+			Feat string
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Name is the name argument value.
+			Name string
+			// Lifecycle is the lifecycle argument value.
+			Lifecycle v3.EtcdBackupLifecycle
 		}
 		// AddHandler holds details about calls to the AddHandler method.
 		AddHandler []struct {
@@ -981,6 +1001,53 @@ func (mock *EtcdBackupInterfaceMock) AddFeatureHandlerCalls() []struct {
 	lockEtcdBackupInterfaceMockAddFeatureHandler.RLock()
 	calls = mock.calls.AddFeatureHandler
 	lockEtcdBackupInterfaceMockAddFeatureHandler.RUnlock()
+	return calls
+}
+
+// AddFeatureLifecycle calls AddFeatureLifecycleFunc.
+func (mock *EtcdBackupInterfaceMock) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v3.EtcdBackupLifecycle) {
+	if mock.AddFeatureLifecycleFunc == nil {
+		panic("EtcdBackupInterfaceMock.AddFeatureLifecycleFunc: method is nil but EtcdBackupInterface.AddFeatureLifecycle was just called")
+	}
+	callInfo := struct {
+		Enabled   func(string) bool
+		Feat      string
+		Ctx       context.Context
+		Name      string
+		Lifecycle v3.EtcdBackupLifecycle
+	}{
+		Enabled:   enabled,
+		Feat:      feat,
+		Ctx:       ctx,
+		Name:      name,
+		Lifecycle: lifecycle,
+	}
+	lockEtcdBackupInterfaceMockAddFeatureLifecycle.Lock()
+	mock.calls.AddFeatureLifecycle = append(mock.calls.AddFeatureLifecycle, callInfo)
+	lockEtcdBackupInterfaceMockAddFeatureLifecycle.Unlock()
+	mock.AddFeatureLifecycleFunc(enabled, feat, ctx, name, lifecycle)
+}
+
+// AddFeatureLifecycleCalls gets all the calls that were made to AddFeatureLifecycle.
+// Check the length with:
+//     len(mockedEtcdBackupInterface.AddFeatureLifecycleCalls())
+func (mock *EtcdBackupInterfaceMock) AddFeatureLifecycleCalls() []struct {
+	Enabled   func(string) bool
+	Feat      string
+	Ctx       context.Context
+	Name      string
+	Lifecycle v3.EtcdBackupLifecycle
+} {
+	var calls []struct {
+		Enabled   func(string) bool
+		Feat      string
+		Ctx       context.Context
+		Name      string
+		Lifecycle v3.EtcdBackupLifecycle
+	}
+	lockEtcdBackupInterfaceMockAddFeatureLifecycle.RLock()
+	calls = mock.calls.AddFeatureLifecycle
+	lockEtcdBackupInterfaceMockAddFeatureLifecycle.RUnlock()
 	return calls
 }
 

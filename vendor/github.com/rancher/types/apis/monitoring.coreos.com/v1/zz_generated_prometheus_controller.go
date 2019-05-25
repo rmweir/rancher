@@ -91,6 +91,7 @@ type PrometheusInterface interface {
 	AddHandler(ctx context.Context, name string, sync PrometheusHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync PrometheusHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle PrometheusLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle PrometheusLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync PrometheusHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle PrometheusLifecycle)
 }
@@ -280,6 +281,11 @@ func (s *prometheusClient) AddFeatureHandler(enabled func(string) bool, feat str
 func (s *prometheusClient) AddLifecycle(ctx context.Context, name string, lifecycle PrometheusLifecycle) {
 	sync := NewPrometheusLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *prometheusClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle PrometheusLifecycle) {
+	sync := NewPrometheusLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *prometheusClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync PrometheusHandlerFunc) {

@@ -89,6 +89,7 @@ type TemplateVersionInterface interface {
 	AddHandler(ctx context.Context, name string, sync TemplateVersionHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync TemplateVersionHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle TemplateVersionLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle TemplateVersionLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync TemplateVersionHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle TemplateVersionLifecycle)
 }
@@ -278,6 +279,11 @@ func (s *templateVersionClient) AddFeatureHandler(enabled func(string) bool, fea
 func (s *templateVersionClient) AddLifecycle(ctx context.Context, name string, lifecycle TemplateVersionLifecycle) {
 	sync := NewTemplateVersionLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *templateVersionClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle TemplateVersionLifecycle) {
+	sync := NewTemplateVersionLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *templateVersionClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync TemplateVersionHandlerFunc) {

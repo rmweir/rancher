@@ -90,6 +90,7 @@ type CertificateInterface interface {
 	AddHandler(ctx context.Context, name string, sync CertificateHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync CertificateHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle CertificateLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle CertificateLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync CertificateHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle CertificateLifecycle)
 }
@@ -279,6 +280,11 @@ func (s *certificateClient) AddFeatureHandler(enabled func(string) bool, feat st
 func (s *certificateClient) AddLifecycle(ctx context.Context, name string, lifecycle CertificateLifecycle) {
 	sync := NewCertificateLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *certificateClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle CertificateLifecycle) {
+	sync := NewCertificateLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *certificateClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync CertificateHandlerFunc) {

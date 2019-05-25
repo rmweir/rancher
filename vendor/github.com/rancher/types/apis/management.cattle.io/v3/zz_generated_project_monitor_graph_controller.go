@@ -90,6 +90,7 @@ type ProjectMonitorGraphInterface interface {
 	AddHandler(ctx context.Context, name string, sync ProjectMonitorGraphHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync ProjectMonitorGraphHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle ProjectMonitorGraphLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle ProjectMonitorGraphLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync ProjectMonitorGraphHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle ProjectMonitorGraphLifecycle)
 }
@@ -279,6 +280,11 @@ func (s *projectMonitorGraphClient) AddFeatureHandler(enabled func(string) bool,
 func (s *projectMonitorGraphClient) AddLifecycle(ctx context.Context, name string, lifecycle ProjectMonitorGraphLifecycle) {
 	sync := NewProjectMonitorGraphLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *projectMonitorGraphClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle ProjectMonitorGraphLifecycle) {
+	sync := NewProjectMonitorGraphLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *projectMonitorGraphClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync ProjectMonitorGraphHandlerFunc) {

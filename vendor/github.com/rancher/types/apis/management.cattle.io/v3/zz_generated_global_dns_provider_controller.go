@@ -90,6 +90,7 @@ type GlobalDNSProviderInterface interface {
 	AddHandler(ctx context.Context, name string, sync GlobalDNSProviderHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync GlobalDNSProviderHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle GlobalDNSProviderLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle GlobalDNSProviderLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync GlobalDNSProviderHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle GlobalDNSProviderLifecycle)
 }
@@ -279,6 +280,11 @@ func (s *globalDnsProviderClient) AddFeatureHandler(enabled func(string) bool, f
 func (s *globalDnsProviderClient) AddLifecycle(ctx context.Context, name string, lifecycle GlobalDNSProviderLifecycle) {
 	sync := NewGlobalDNSProviderLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *globalDnsProviderClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle GlobalDNSProviderLifecycle) {
+	sync := NewGlobalDNSProviderLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *globalDnsProviderClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync GlobalDNSProviderHandlerFunc) {

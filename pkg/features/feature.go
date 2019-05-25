@@ -141,13 +141,11 @@ func RunFeatureFns() {
 }
 
 func (f *FeaturePack) start() {
-
 	s := f.Schemas.Schema(&managementschema.Version, f.Name)
-	/*s.Store = &featStore{
+	s.Store = &featStore{
 		s.Store,
 		f.Name,
-	}*/
-
+	}
 	origValidator := s.Validator
 	s.Validator = func(types *types.APIContext, schema *types.Schema, m map[string]interface{}) error {
 		feat := feature.Feature(f.Name)

@@ -91,6 +91,7 @@ type LimitRangeInterface interface {
 	AddHandler(ctx context.Context, name string, sync LimitRangeHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync LimitRangeHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle LimitRangeLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle LimitRangeLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync LimitRangeHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle LimitRangeLifecycle)
 }
@@ -280,6 +281,11 @@ func (s *limitRangeClient) AddFeatureHandler(enabled func(string) bool, feat str
 func (s *limitRangeClient) AddLifecycle(ctx context.Context, name string, lifecycle LimitRangeLifecycle) {
 	sync := NewLimitRangeLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *limitRangeClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle LimitRangeLifecycle) {
+	sync := NewLimitRangeLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *limitRangeClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync LimitRangeHandlerFunc) {

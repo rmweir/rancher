@@ -90,6 +90,7 @@ type EtcdBackupInterface interface {
 	AddHandler(ctx context.Context, name string, sync EtcdBackupHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync EtcdBackupHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle EtcdBackupLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle EtcdBackupLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync EtcdBackupHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle EtcdBackupLifecycle)
 }
@@ -279,6 +280,11 @@ func (s *etcdBackupClient) AddFeatureHandler(enabled func(string) bool, feat str
 func (s *etcdBackupClient) AddLifecycle(ctx context.Context, name string, lifecycle EtcdBackupLifecycle) {
 	sync := NewEtcdBackupLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *etcdBackupClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle EtcdBackupLifecycle) {
+	sync := NewEtcdBackupLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *etcdBackupClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync EtcdBackupHandlerFunc) {

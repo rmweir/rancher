@@ -90,6 +90,7 @@ type NamespaceInterface interface {
 	AddHandler(ctx context.Context, name string, sync NamespaceHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync NamespaceHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle NamespaceLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle NamespaceLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync NamespaceHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle NamespaceLifecycle)
 }
@@ -279,6 +280,11 @@ func (s *namespaceClient) AddFeatureHandler(enabled func(string) bool, feat stri
 func (s *namespaceClient) AddLifecycle(ctx context.Context, name string, lifecycle NamespaceLifecycle) {
 	sync := NewNamespaceLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *namespaceClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle NamespaceLifecycle) {
+	sync := NewNamespaceLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *namespaceClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync NamespaceHandlerFunc) {

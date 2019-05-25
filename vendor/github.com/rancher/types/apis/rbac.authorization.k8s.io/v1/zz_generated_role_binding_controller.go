@@ -91,6 +91,7 @@ type RoleBindingInterface interface {
 	AddHandler(ctx context.Context, name string, sync RoleBindingHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync RoleBindingHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle RoleBindingLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle RoleBindingLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync RoleBindingHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle RoleBindingLifecycle)
 }
@@ -280,6 +281,11 @@ func (s *roleBindingClient) AddFeatureHandler(enabled func(string) bool, feat st
 func (s *roleBindingClient) AddLifecycle(ctx context.Context, name string, lifecycle RoleBindingLifecycle) {
 	sync := NewRoleBindingLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *roleBindingClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle RoleBindingLifecycle) {
+	sync := NewRoleBindingLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *roleBindingClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync RoleBindingHandlerFunc) {

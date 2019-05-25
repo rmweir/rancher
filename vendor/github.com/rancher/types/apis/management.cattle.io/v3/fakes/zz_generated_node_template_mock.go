@@ -600,6 +600,7 @@ var (
 	lockNodeTemplateInterfaceMockAddClusterScopedHandler   sync.RWMutex
 	lockNodeTemplateInterfaceMockAddClusterScopedLifecycle sync.RWMutex
 	lockNodeTemplateInterfaceMockAddFeatureHandler         sync.RWMutex
+	lockNodeTemplateInterfaceMockAddFeatureLifecycle       sync.RWMutex
 	lockNodeTemplateInterfaceMockAddHandler                sync.RWMutex
 	lockNodeTemplateInterfaceMockAddLifecycle              sync.RWMutex
 	lockNodeTemplateInterfaceMockController                sync.RWMutex
@@ -633,6 +634,9 @@ var _ v3.NodeTemplateInterface = &NodeTemplateInterfaceMock{}
 //             },
 //             AddFeatureHandlerFunc: func(enabled func(string) bool, feat string, ctx context.Context, name string, sync v3.NodeTemplateHandlerFunc)  {
 // 	               panic("mock out the AddFeatureHandler method")
+//             },
+//             AddFeatureLifecycleFunc: func(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v3.NodeTemplateLifecycle)  {
+// 	               panic("mock out the AddFeatureLifecycle method")
 //             },
 //             AddHandlerFunc: func(ctx context.Context, name string, sync v3.NodeTemplateHandlerFunc)  {
 // 	               panic("mock out the AddHandler method")
@@ -688,6 +692,9 @@ type NodeTemplateInterfaceMock struct {
 
 	// AddFeatureHandlerFunc mocks the AddFeatureHandler method.
 	AddFeatureHandlerFunc func(enabled func(string) bool, feat string, ctx context.Context, name string, sync v3.NodeTemplateHandlerFunc)
+
+	// AddFeatureLifecycleFunc mocks the AddFeatureLifecycle method.
+	AddFeatureLifecycleFunc func(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v3.NodeTemplateLifecycle)
 
 	// AddHandlerFunc mocks the AddHandler method.
 	AddHandlerFunc func(ctx context.Context, name string, sync v3.NodeTemplateHandlerFunc)
@@ -764,6 +771,19 @@ type NodeTemplateInterfaceMock struct {
 			Name string
 			// Sync is the sync argument value.
 			Sync v3.NodeTemplateHandlerFunc
+		}
+		// AddFeatureLifecycle holds details about calls to the AddFeatureLifecycle method.
+		AddFeatureLifecycle []struct {
+			// Enabled is the enabled argument value.
+			Enabled func(string) bool
+			// Feat is the feat argument value.
+			Feat string
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Name is the name argument value.
+			Name string
+			// Lifecycle is the lifecycle argument value.
+			Lifecycle v3.NodeTemplateLifecycle
 		}
 		// AddHandler holds details about calls to the AddHandler method.
 		AddHandler []struct {
@@ -981,6 +1001,53 @@ func (mock *NodeTemplateInterfaceMock) AddFeatureHandlerCalls() []struct {
 	lockNodeTemplateInterfaceMockAddFeatureHandler.RLock()
 	calls = mock.calls.AddFeatureHandler
 	lockNodeTemplateInterfaceMockAddFeatureHandler.RUnlock()
+	return calls
+}
+
+// AddFeatureLifecycle calls AddFeatureLifecycleFunc.
+func (mock *NodeTemplateInterfaceMock) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v3.NodeTemplateLifecycle) {
+	if mock.AddFeatureLifecycleFunc == nil {
+		panic("NodeTemplateInterfaceMock.AddFeatureLifecycleFunc: method is nil but NodeTemplateInterface.AddFeatureLifecycle was just called")
+	}
+	callInfo := struct {
+		Enabled   func(string) bool
+		Feat      string
+		Ctx       context.Context
+		Name      string
+		Lifecycle v3.NodeTemplateLifecycle
+	}{
+		Enabled:   enabled,
+		Feat:      feat,
+		Ctx:       ctx,
+		Name:      name,
+		Lifecycle: lifecycle,
+	}
+	lockNodeTemplateInterfaceMockAddFeatureLifecycle.Lock()
+	mock.calls.AddFeatureLifecycle = append(mock.calls.AddFeatureLifecycle, callInfo)
+	lockNodeTemplateInterfaceMockAddFeatureLifecycle.Unlock()
+	mock.AddFeatureLifecycleFunc(enabled, feat, ctx, name, lifecycle)
+}
+
+// AddFeatureLifecycleCalls gets all the calls that were made to AddFeatureLifecycle.
+// Check the length with:
+//     len(mockedNodeTemplateInterface.AddFeatureLifecycleCalls())
+func (mock *NodeTemplateInterfaceMock) AddFeatureLifecycleCalls() []struct {
+	Enabled   func(string) bool
+	Feat      string
+	Ctx       context.Context
+	Name      string
+	Lifecycle v3.NodeTemplateLifecycle
+} {
+	var calls []struct {
+		Enabled   func(string) bool
+		Feat      string
+		Ctx       context.Context
+		Name      string
+		Lifecycle v3.NodeTemplateLifecycle
+	}
+	lockNodeTemplateInterfaceMockAddFeatureLifecycle.RLock()
+	calls = mock.calls.AddFeatureLifecycle
+	lockNodeTemplateInterfaceMockAddFeatureLifecycle.RUnlock()
 	return calls
 }
 

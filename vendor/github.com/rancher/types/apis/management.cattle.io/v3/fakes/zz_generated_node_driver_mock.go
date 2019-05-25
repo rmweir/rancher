@@ -600,6 +600,7 @@ var (
 	lockNodeDriverInterfaceMockAddClusterScopedHandler   sync.RWMutex
 	lockNodeDriverInterfaceMockAddClusterScopedLifecycle sync.RWMutex
 	lockNodeDriverInterfaceMockAddFeatureHandler         sync.RWMutex
+	lockNodeDriverInterfaceMockAddFeatureLifecycle       sync.RWMutex
 	lockNodeDriverInterfaceMockAddHandler                sync.RWMutex
 	lockNodeDriverInterfaceMockAddLifecycle              sync.RWMutex
 	lockNodeDriverInterfaceMockController                sync.RWMutex
@@ -633,6 +634,9 @@ var _ v3.NodeDriverInterface = &NodeDriverInterfaceMock{}
 //             },
 //             AddFeatureHandlerFunc: func(enabled func(string) bool, feat string, ctx context.Context, name string, sync v3.NodeDriverHandlerFunc)  {
 // 	               panic("mock out the AddFeatureHandler method")
+//             },
+//             AddFeatureLifecycleFunc: func(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v3.NodeDriverLifecycle)  {
+// 	               panic("mock out the AddFeatureLifecycle method")
 //             },
 //             AddHandlerFunc: func(ctx context.Context, name string, sync v3.NodeDriverHandlerFunc)  {
 // 	               panic("mock out the AddHandler method")
@@ -688,6 +692,9 @@ type NodeDriverInterfaceMock struct {
 
 	// AddFeatureHandlerFunc mocks the AddFeatureHandler method.
 	AddFeatureHandlerFunc func(enabled func(string) bool, feat string, ctx context.Context, name string, sync v3.NodeDriverHandlerFunc)
+
+	// AddFeatureLifecycleFunc mocks the AddFeatureLifecycle method.
+	AddFeatureLifecycleFunc func(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v3.NodeDriverLifecycle)
 
 	// AddHandlerFunc mocks the AddHandler method.
 	AddHandlerFunc func(ctx context.Context, name string, sync v3.NodeDriverHandlerFunc)
@@ -764,6 +771,19 @@ type NodeDriverInterfaceMock struct {
 			Name string
 			// Sync is the sync argument value.
 			Sync v3.NodeDriverHandlerFunc
+		}
+		// AddFeatureLifecycle holds details about calls to the AddFeatureLifecycle method.
+		AddFeatureLifecycle []struct {
+			// Enabled is the enabled argument value.
+			Enabled func(string) bool
+			// Feat is the feat argument value.
+			Feat string
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Name is the name argument value.
+			Name string
+			// Lifecycle is the lifecycle argument value.
+			Lifecycle v3.NodeDriverLifecycle
 		}
 		// AddHandler holds details about calls to the AddHandler method.
 		AddHandler []struct {
@@ -981,6 +1001,53 @@ func (mock *NodeDriverInterfaceMock) AddFeatureHandlerCalls() []struct {
 	lockNodeDriverInterfaceMockAddFeatureHandler.RLock()
 	calls = mock.calls.AddFeatureHandler
 	lockNodeDriverInterfaceMockAddFeatureHandler.RUnlock()
+	return calls
+}
+
+// AddFeatureLifecycle calls AddFeatureLifecycleFunc.
+func (mock *NodeDriverInterfaceMock) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v3.NodeDriverLifecycle) {
+	if mock.AddFeatureLifecycleFunc == nil {
+		panic("NodeDriverInterfaceMock.AddFeatureLifecycleFunc: method is nil but NodeDriverInterface.AddFeatureLifecycle was just called")
+	}
+	callInfo := struct {
+		Enabled   func(string) bool
+		Feat      string
+		Ctx       context.Context
+		Name      string
+		Lifecycle v3.NodeDriverLifecycle
+	}{
+		Enabled:   enabled,
+		Feat:      feat,
+		Ctx:       ctx,
+		Name:      name,
+		Lifecycle: lifecycle,
+	}
+	lockNodeDriverInterfaceMockAddFeatureLifecycle.Lock()
+	mock.calls.AddFeatureLifecycle = append(mock.calls.AddFeatureLifecycle, callInfo)
+	lockNodeDriverInterfaceMockAddFeatureLifecycle.Unlock()
+	mock.AddFeatureLifecycleFunc(enabled, feat, ctx, name, lifecycle)
+}
+
+// AddFeatureLifecycleCalls gets all the calls that were made to AddFeatureLifecycle.
+// Check the length with:
+//     len(mockedNodeDriverInterface.AddFeatureLifecycleCalls())
+func (mock *NodeDriverInterfaceMock) AddFeatureLifecycleCalls() []struct {
+	Enabled   func(string) bool
+	Feat      string
+	Ctx       context.Context
+	Name      string
+	Lifecycle v3.NodeDriverLifecycle
+} {
+	var calls []struct {
+		Enabled   func(string) bool
+		Feat      string
+		Ctx       context.Context
+		Name      string
+		Lifecycle v3.NodeDriverLifecycle
+	}
+	lockNodeDriverInterfaceMockAddFeatureLifecycle.RLock()
+	calls = mock.calls.AddFeatureLifecycle
+	lockNodeDriverInterfaceMockAddFeatureLifecycle.RUnlock()
 	return calls
 }
 

@@ -90,6 +90,7 @@ type BasicAuthInterface interface {
 	AddHandler(ctx context.Context, name string, sync BasicAuthHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync BasicAuthHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle BasicAuthLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle BasicAuthLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync BasicAuthHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle BasicAuthLifecycle)
 }
@@ -279,6 +280,11 @@ func (s *basicAuthClient) AddFeatureHandler(enabled func(string) bool, feat stri
 func (s *basicAuthClient) AddLifecycle(ctx context.Context, name string, lifecycle BasicAuthLifecycle) {
 	sync := NewBasicAuthLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *basicAuthClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle BasicAuthLifecycle) {
+	sync := NewBasicAuthLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *basicAuthClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync BasicAuthHandlerFunc) {

@@ -90,6 +90,7 @@ type MultiClusterAppRevisionInterface interface {
 	AddHandler(ctx context.Context, name string, sync MultiClusterAppRevisionHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync MultiClusterAppRevisionHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle MultiClusterAppRevisionLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle MultiClusterAppRevisionLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync MultiClusterAppRevisionHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle MultiClusterAppRevisionLifecycle)
 }
@@ -279,6 +280,11 @@ func (s *multiClusterAppRevisionClient) AddFeatureHandler(enabled func(string) b
 func (s *multiClusterAppRevisionClient) AddLifecycle(ctx context.Context, name string, lifecycle MultiClusterAppRevisionLifecycle) {
 	sync := NewMultiClusterAppRevisionLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *multiClusterAppRevisionClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle MultiClusterAppRevisionLifecycle) {
+	sync := NewMultiClusterAppRevisionLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *multiClusterAppRevisionClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync MultiClusterAppRevisionHandlerFunc) {

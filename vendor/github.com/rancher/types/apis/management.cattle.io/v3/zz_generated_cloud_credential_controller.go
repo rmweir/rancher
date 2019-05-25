@@ -90,6 +90,7 @@ type CloudCredentialInterface interface {
 	AddHandler(ctx context.Context, name string, sync CloudCredentialHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync CloudCredentialHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle CloudCredentialLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle CloudCredentialLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync CloudCredentialHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle CloudCredentialLifecycle)
 }
@@ -279,6 +280,11 @@ func (s *cloudCredentialClient) AddFeatureHandler(enabled func(string) bool, fea
 func (s *cloudCredentialClient) AddLifecycle(ctx context.Context, name string, lifecycle CloudCredentialLifecycle) {
 	sync := NewCloudCredentialLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *cloudCredentialClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle CloudCredentialLifecycle) {
+	sync := NewCloudCredentialLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *cloudCredentialClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync CloudCredentialHandlerFunc) {

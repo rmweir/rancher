@@ -601,6 +601,7 @@ var (
 	lockEndpointsInterfaceMockAddClusterScopedHandler   sync.RWMutex
 	lockEndpointsInterfaceMockAddClusterScopedLifecycle sync.RWMutex
 	lockEndpointsInterfaceMockAddFeatureHandler         sync.RWMutex
+	lockEndpointsInterfaceMockAddFeatureLifecycle       sync.RWMutex
 	lockEndpointsInterfaceMockAddHandler                sync.RWMutex
 	lockEndpointsInterfaceMockAddLifecycle              sync.RWMutex
 	lockEndpointsInterfaceMockController                sync.RWMutex
@@ -634,6 +635,9 @@ var _ v1a.EndpointsInterface = &EndpointsInterfaceMock{}
 //             },
 //             AddFeatureHandlerFunc: func(enabled func(string) bool, feat string, ctx context.Context, name string, sync v1a.EndpointsHandlerFunc)  {
 // 	               panic("mock out the AddFeatureHandler method")
+//             },
+//             AddFeatureLifecycleFunc: func(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v1a.EndpointsLifecycle)  {
+// 	               panic("mock out the AddFeatureLifecycle method")
 //             },
 //             AddHandlerFunc: func(ctx context.Context, name string, sync v1a.EndpointsHandlerFunc)  {
 // 	               panic("mock out the AddHandler method")
@@ -689,6 +693,9 @@ type EndpointsInterfaceMock struct {
 
 	// AddFeatureHandlerFunc mocks the AddFeatureHandler method.
 	AddFeatureHandlerFunc func(enabled func(string) bool, feat string, ctx context.Context, name string, sync v1a.EndpointsHandlerFunc)
+
+	// AddFeatureLifecycleFunc mocks the AddFeatureLifecycle method.
+	AddFeatureLifecycleFunc func(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v1a.EndpointsLifecycle)
 
 	// AddHandlerFunc mocks the AddHandler method.
 	AddHandlerFunc func(ctx context.Context, name string, sync v1a.EndpointsHandlerFunc)
@@ -765,6 +772,19 @@ type EndpointsInterfaceMock struct {
 			Name string
 			// Sync is the sync argument value.
 			Sync v1a.EndpointsHandlerFunc
+		}
+		// AddFeatureLifecycle holds details about calls to the AddFeatureLifecycle method.
+		AddFeatureLifecycle []struct {
+			// Enabled is the enabled argument value.
+			Enabled func(string) bool
+			// Feat is the feat argument value.
+			Feat string
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Name is the name argument value.
+			Name string
+			// Lifecycle is the lifecycle argument value.
+			Lifecycle v1a.EndpointsLifecycle
 		}
 		// AddHandler holds details about calls to the AddHandler method.
 		AddHandler []struct {
@@ -982,6 +1002,53 @@ func (mock *EndpointsInterfaceMock) AddFeatureHandlerCalls() []struct {
 	lockEndpointsInterfaceMockAddFeatureHandler.RLock()
 	calls = mock.calls.AddFeatureHandler
 	lockEndpointsInterfaceMockAddFeatureHandler.RUnlock()
+	return calls
+}
+
+// AddFeatureLifecycle calls AddFeatureLifecycleFunc.
+func (mock *EndpointsInterfaceMock) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle v1a.EndpointsLifecycle) {
+	if mock.AddFeatureLifecycleFunc == nil {
+		panic("EndpointsInterfaceMock.AddFeatureLifecycleFunc: method is nil but EndpointsInterface.AddFeatureLifecycle was just called")
+	}
+	callInfo := struct {
+		Enabled   func(string) bool
+		Feat      string
+		Ctx       context.Context
+		Name      string
+		Lifecycle v1a.EndpointsLifecycle
+	}{
+		Enabled:   enabled,
+		Feat:      feat,
+		Ctx:       ctx,
+		Name:      name,
+		Lifecycle: lifecycle,
+	}
+	lockEndpointsInterfaceMockAddFeatureLifecycle.Lock()
+	mock.calls.AddFeatureLifecycle = append(mock.calls.AddFeatureLifecycle, callInfo)
+	lockEndpointsInterfaceMockAddFeatureLifecycle.Unlock()
+	mock.AddFeatureLifecycleFunc(enabled, feat, ctx, name, lifecycle)
+}
+
+// AddFeatureLifecycleCalls gets all the calls that were made to AddFeatureLifecycle.
+// Check the length with:
+//     len(mockedEndpointsInterface.AddFeatureLifecycleCalls())
+func (mock *EndpointsInterfaceMock) AddFeatureLifecycleCalls() []struct {
+	Enabled   func(string) bool
+	Feat      string
+	Ctx       context.Context
+	Name      string
+	Lifecycle v1a.EndpointsLifecycle
+} {
+	var calls []struct {
+		Enabled   func(string) bool
+		Feat      string
+		Ctx       context.Context
+		Name      string
+		Lifecycle v1a.EndpointsLifecycle
+	}
+	lockEndpointsInterfaceMockAddFeatureLifecycle.RLock()
+	calls = mock.calls.AddFeatureLifecycle
+	lockEndpointsInterfaceMockAddFeatureLifecycle.RUnlock()
 	return calls
 }
 

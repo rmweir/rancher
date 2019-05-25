@@ -40,11 +40,8 @@ func Register(ctx context.Context, management *config.ManagementContext) {
 		kontainerDriverLister: management.Management.KontainerDrivers("").Controller().Lister(),
 		kontainerDrivers:      management.Management.KontainerDrivers(""),
 	}
-
-	if !featureflags.GlobalFeatures.Enabled("kontainerDriver") {
-		return
-	}
-	management.Management.KontainerDrivers("").AddLifecycle(ctx, "mgmt-kontainer-driver-lifecycle", lifecycle)
+	// management.Management.KontainerDrivers("").AddFeaLifecycle(ctx, "mgmt-kontainer-driver-lifecycle", lifecycle)
+	management.Management.KontainerDrivers("").AddFeatureLifecycle(featureflags.IsFeatEnabled, "kontainerdriver", ctx, "mgmt-kontainer-driver-lifecycle", lifecycle)
 }
 
 type Lifecycle struct {
@@ -57,9 +54,6 @@ type Lifecycle struct {
 }
 
 func (l *Lifecycle) Create(obj *v3.KontainerDriver) (runtime.Object, error) {
-	if !featureflags.GlobalFeatures.Enabled("kontainerDriver") {
-		return nil, nil
-	}
 	logrus.Infof("create kontainerdriver %v", obj.Name)
 
 	// return early if driver is not active

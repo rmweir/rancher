@@ -89,6 +89,7 @@ type ComposeConfigInterface interface {
 	AddHandler(ctx context.Context, name string, sync ComposeConfigHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync ComposeConfigHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle ComposeConfigLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle ComposeConfigLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync ComposeConfigHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle ComposeConfigLifecycle)
 }
@@ -278,6 +279,11 @@ func (s *composeConfigClient) AddFeatureHandler(enabled func(string) bool, feat 
 func (s *composeConfigClient) AddLifecycle(ctx context.Context, name string, lifecycle ComposeConfigLifecycle) {
 	sync := NewComposeConfigLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *composeConfigClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle ComposeConfigLifecycle) {
+	sync := NewComposeConfigLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *composeConfigClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync ComposeConfigHandlerFunc) {

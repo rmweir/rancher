@@ -90,6 +90,7 @@ type NamespacedCertificateInterface interface {
 	AddHandler(ctx context.Context, name string, sync NamespacedCertificateHandlerFunc)
 	AddFeatureHandler(enabled func(string) bool, feat string, ctx context.Context, name string, sync NamespacedCertificateHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle NamespacedCertificateLifecycle)
+	AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle NamespacedCertificateLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync NamespacedCertificateHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle NamespacedCertificateLifecycle)
 }
@@ -279,6 +280,11 @@ func (s *namespacedCertificateClient) AddFeatureHandler(enabled func(string) boo
 func (s *namespacedCertificateClient) AddLifecycle(ctx context.Context, name string, lifecycle NamespacedCertificateLifecycle) {
 	sync := NewNamespacedCertificateLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *namespacedCertificateClient) AddFeatureLifecycle(enabled func(string) bool, feat string, ctx context.Context, name string, lifecycle NamespacedCertificateLifecycle) {
+	sync := NewNamespacedCertificateLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(enabled, feat, ctx, name, sync)
 }
 
 func (s *namespacedCertificateClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync NamespacedCertificateHandlerFunc) {
