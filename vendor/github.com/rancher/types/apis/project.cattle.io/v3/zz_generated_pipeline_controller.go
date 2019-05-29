@@ -167,6 +167,7 @@ func (c *pipelineController) AddFeatureHandler(enabled func(string) bool, feat s
 }
 
 func (c *pipelineController) AddClusterScopedHandler(ctx context.Context, name, cluster string, handler PipelineHandlerFunc) {
+	resource.PutClusterScoped(PipelineGroupVersionResource)
 	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
 		if obj == nil {
 			return handler(key, nil)

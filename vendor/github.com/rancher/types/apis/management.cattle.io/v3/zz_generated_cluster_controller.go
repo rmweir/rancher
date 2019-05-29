@@ -166,6 +166,7 @@ func (c *clusterController) AddFeatureHandler(enabled func(string) bool, feat st
 }
 
 func (c *clusterController) AddClusterScopedHandler(ctx context.Context, name, cluster string, handler ClusterHandlerFunc) {
+	resource.PutClusterScoped(ClusterGroupVersionResource)
 	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
 		if obj == nil {
 			return handler(key, nil)

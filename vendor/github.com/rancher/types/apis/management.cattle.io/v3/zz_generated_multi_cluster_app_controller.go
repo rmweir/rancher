@@ -167,6 +167,7 @@ func (c *multiClusterAppController) AddFeatureHandler(enabled func(string) bool,
 }
 
 func (c *multiClusterAppController) AddClusterScopedHandler(ctx context.Context, name, cluster string, handler MultiClusterAppHandlerFunc) {
+	resource.PutClusterScoped(MultiClusterAppGroupVersionResource)
 	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
 		if obj == nil {
 			return handler(key, nil)

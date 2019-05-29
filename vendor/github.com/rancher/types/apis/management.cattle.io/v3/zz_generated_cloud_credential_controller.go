@@ -167,6 +167,7 @@ func (c *cloudCredentialController) AddFeatureHandler(enabled func(string) bool,
 }
 
 func (c *cloudCredentialController) AddClusterScopedHandler(ctx context.Context, name, cluster string, handler CloudCredentialHandlerFunc) {
+	resource.PutClusterScoped(CloudCredentialGroupVersionResource)
 	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
 		if obj == nil {
 			return handler(key, nil)

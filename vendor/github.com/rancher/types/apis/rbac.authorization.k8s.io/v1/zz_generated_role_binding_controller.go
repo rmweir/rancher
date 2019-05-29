@@ -168,6 +168,7 @@ func (c *roleBindingController) AddFeatureHandler(enabled func(string) bool, fea
 }
 
 func (c *roleBindingController) AddClusterScopedHandler(ctx context.Context, name, cluster string, handler RoleBindingHandlerFunc) {
+	resource.PutClusterScoped(RoleBindingGroupVersionResource)
 	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
 		if obj == nil {
 			return handler(key, nil)

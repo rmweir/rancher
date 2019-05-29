@@ -168,6 +168,7 @@ func (c *serviceMonitorController) AddFeatureHandler(enabled func(string) bool, 
 }
 
 func (c *serviceMonitorController) AddClusterScopedHandler(ctx context.Context, name, cluster string, handler ServiceMonitorHandlerFunc) {
+	resource.PutClusterScoped(ServiceMonitorGroupVersionResource)
 	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
 		if obj == nil {
 			return handler(key, nil)

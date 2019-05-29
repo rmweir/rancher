@@ -167,6 +167,7 @@ func (c *projectNetworkPolicyController) AddFeatureHandler(enabled func(string) 
 }
 
 func (c *projectNetworkPolicyController) AddClusterScopedHandler(ctx context.Context, name, cluster string, handler ProjectNetworkPolicyHandlerFunc) {
+	resource.PutClusterScoped(ProjectNetworkPolicyGroupVersionResource)
 	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
 		if obj == nil {
 			return handler(key, nil)

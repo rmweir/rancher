@@ -167,6 +167,7 @@ func (c *namespacedBasicAuthController) AddFeatureHandler(enabled func(string) b
 }
 
 func (c *namespacedBasicAuthController) AddClusterScopedHandler(ctx context.Context, name, cluster string, handler NamespacedBasicAuthHandlerFunc) {
+	resource.PutClusterScoped(NamespacedBasicAuthGroupVersionResource)
 	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
 		if obj == nil {
 			return handler(key, nil)

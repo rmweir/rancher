@@ -167,6 +167,7 @@ func (c *notifierController) AddFeatureHandler(enabled func(string) bool, feat s
 }
 
 func (c *notifierController) AddClusterScopedHandler(ctx context.Context, name, cluster string, handler NotifierHandlerFunc) {
+	resource.PutClusterScoped(NotifierGroupVersionResource)
 	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
 		if obj == nil {
 			return handler(key, nil)

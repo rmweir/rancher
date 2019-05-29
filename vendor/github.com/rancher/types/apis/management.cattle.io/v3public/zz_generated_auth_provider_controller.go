@@ -166,6 +166,7 @@ func (c *authProviderController) AddFeatureHandler(enabled func(string) bool, fe
 }
 
 func (c *authProviderController) AddClusterScopedHandler(ctx context.Context, name, cluster string, handler AuthProviderHandlerFunc) {
+	resource.PutClusterScoped(AuthProviderGroupVersionResource)
 	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
 		if obj == nil {
 			return handler(key, nil)

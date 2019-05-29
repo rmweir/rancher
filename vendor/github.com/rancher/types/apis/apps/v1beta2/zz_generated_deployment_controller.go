@@ -168,6 +168,7 @@ func (c *deploymentController) AddFeatureHandler(enabled func(string) bool, feat
 }
 
 func (c *deploymentController) AddClusterScopedHandler(ctx context.Context, name, cluster string, handler DeploymentHandlerFunc) {
+	resource.PutClusterScoped(DeploymentGroupVersionResource)
 	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
 		if obj == nil {
 			return handler(key, nil)

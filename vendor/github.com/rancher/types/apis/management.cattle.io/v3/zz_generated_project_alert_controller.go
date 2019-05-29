@@ -167,6 +167,7 @@ func (c *projectAlertController) AddFeatureHandler(enabled func(string) bool, fe
 }
 
 func (c *projectAlertController) AddClusterScopedHandler(ctx context.Context, name, cluster string, handler ProjectAlertHandlerFunc) {
+	resource.PutClusterScoped(ProjectAlertGroupVersionResource)
 	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
 		if obj == nil {
 			return handler(key, nil)

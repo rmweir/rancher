@@ -166,6 +166,7 @@ func (c *composeConfigController) AddFeatureHandler(enabled func(string) bool, f
 }
 
 func (c *composeConfigController) AddClusterScopedHandler(ctx context.Context, name, cluster string, handler ComposeConfigHandlerFunc) {
+	resource.PutClusterScoped(ComposeConfigGroupVersionResource)
 	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
 		if obj == nil {
 			return handler(key, nil)

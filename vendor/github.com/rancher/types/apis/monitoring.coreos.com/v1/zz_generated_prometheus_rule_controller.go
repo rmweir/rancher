@@ -168,6 +168,7 @@ func (c *prometheusRuleController) AddFeatureHandler(enabled func(string) bool, 
 }
 
 func (c *prometheusRuleController) AddClusterScopedHandler(ctx context.Context, name, cluster string, handler PrometheusRuleHandlerFunc) {
+	resource.PutClusterScoped(PrometheusRuleGroupVersionResource)
 	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
 		if obj == nil {
 			return handler(key, nil)

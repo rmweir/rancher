@@ -167,6 +167,7 @@ func (c *workloadController) AddFeatureHandler(enabled func(string) bool, feat s
 }
 
 func (c *workloadController) AddClusterScopedHandler(ctx context.Context, name, cluster string, handler WorkloadHandlerFunc) {
+	resource.PutClusterScoped(WorkloadGroupVersionResource)
 	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
 		if obj == nil {
 			return handler(key, nil)

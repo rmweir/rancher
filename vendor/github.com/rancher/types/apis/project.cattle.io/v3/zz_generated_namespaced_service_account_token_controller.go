@@ -167,6 +167,7 @@ func (c *namespacedServiceAccountTokenController) AddFeatureHandler(enabled func
 }
 
 func (c *namespacedServiceAccountTokenController) AddClusterScopedHandler(ctx context.Context, name, cluster string, handler NamespacedServiceAccountTokenHandlerFunc) {
+	resource.PutClusterScoped(NamespacedServiceAccountTokenGroupVersionResource)
 	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
 		if obj == nil {
 			return handler(key, nil)

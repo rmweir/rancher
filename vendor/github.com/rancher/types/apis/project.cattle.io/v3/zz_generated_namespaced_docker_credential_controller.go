@@ -167,6 +167,7 @@ func (c *namespacedDockerCredentialController) AddFeatureHandler(enabled func(st
 }
 
 func (c *namespacedDockerCredentialController) AddClusterScopedHandler(ctx context.Context, name, cluster string, handler NamespacedDockerCredentialHandlerFunc) {
+	resource.PutClusterScoped(NamespacedDockerCredentialGroupVersionResource)
 	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
 		if obj == nil {
 			return handler(key, nil)

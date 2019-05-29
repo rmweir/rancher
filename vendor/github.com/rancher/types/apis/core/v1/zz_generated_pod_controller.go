@@ -168,6 +168,7 @@ func (c *podController) AddFeatureHandler(enabled func(string) bool, feat string
 }
 
 func (c *podController) AddClusterScopedHandler(ctx context.Context, name, cluster string, handler PodHandlerFunc) {
+	resource.PutClusterScoped(PodGroupVersionResource)
 	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
 		if obj == nil {
 			return handler(key, nil)

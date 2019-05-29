@@ -167,6 +167,7 @@ func (c *namespacedCertificateController) AddFeatureHandler(enabled func(string)
 }
 
 func (c *namespacedCertificateController) AddClusterScopedHandler(ctx context.Context, name, cluster string, handler NamespacedCertificateHandlerFunc) {
+	resource.PutClusterScoped(NamespacedCertificateGroupVersionResource)
 	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
 		if obj == nil {
 			return handler(key, nil)

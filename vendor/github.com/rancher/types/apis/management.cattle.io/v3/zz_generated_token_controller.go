@@ -166,6 +166,7 @@ func (c *tokenController) AddFeatureHandler(enabled func(string) bool, feat stri
 }
 
 func (c *tokenController) AddClusterScopedHandler(ctx context.Context, name, cluster string, handler TokenHandlerFunc) {
+	resource.PutClusterScoped(TokenGroupVersionResource)
 	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
 		if obj == nil {
 			return handler(key, nil)

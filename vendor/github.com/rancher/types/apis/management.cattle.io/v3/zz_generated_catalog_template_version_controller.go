@@ -167,6 +167,7 @@ func (c *catalogTemplateVersionController) AddFeatureHandler(enabled func(string
 }
 
 func (c *catalogTemplateVersionController) AddClusterScopedHandler(ctx context.Context, name, cluster string, handler CatalogTemplateVersionHandlerFunc) {
+	resource.PutClusterScoped(CatalogTemplateVersionGroupVersionResource)
 	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
 		if obj == nil {
 			return handler(key, nil)

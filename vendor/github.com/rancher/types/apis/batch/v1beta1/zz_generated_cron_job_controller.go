@@ -168,6 +168,7 @@ func (c *cronJobController) AddFeatureHandler(enabled func(string) bool, feat st
 }
 
 func (c *cronJobController) AddClusterScopedHandler(ctx context.Context, name, cluster string, handler CronJobHandlerFunc) {
+	resource.PutClusterScoped(CronJobGroupVersionResource)
 	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
 		if obj == nil {
 			return handler(key, nil)

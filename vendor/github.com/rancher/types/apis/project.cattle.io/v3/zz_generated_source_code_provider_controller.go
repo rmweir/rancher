@@ -166,6 +166,7 @@ func (c *sourceCodeProviderController) AddFeatureHandler(enabled func(string) bo
 }
 
 func (c *sourceCodeProviderController) AddClusterScopedHandler(ctx context.Context, name, cluster string, handler SourceCodeProviderHandlerFunc) {
+	resource.PutClusterScoped(SourceCodeProviderGroupVersionResource)
 	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
 		if obj == nil {
 			return handler(key, nil)
