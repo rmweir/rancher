@@ -15,6 +15,7 @@ import (
 	"github.com/rancher/norman/types/convert"
 	"github.com/rancher/norman/types/slice"
 	"github.com/rancher/norman/types/values"
+	"github.com/rancher/rancher/pkg/features"
 	"github.com/rancher/rancher/pkg/ref"
 	"github.com/rancher/rancher/pkg/rkedialerfactory"
 	"github.com/rancher/rancher/pkg/settings"
@@ -310,6 +311,10 @@ func (p *Provisioner) Create(cluster *v3.Cluster) (runtime.Object, error) {
 	cluster, err = p.pending(cluster)
 	if err != nil {
 		return cluster, err
+	}
+
+	if features.Randomizer.Enabled() {
+		logrus.Info("Cluster name [%s] may be changed by a cluster randomizer", cluster.Spec.DisplayName)
 	}
 
 	return p.provision(cluster)

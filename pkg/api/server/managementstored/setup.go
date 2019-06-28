@@ -128,6 +128,7 @@ func Setup(ctx context.Context, apiContext *config.ScaledContext, clusterManager
 		client.GlobalDNSProviderType,
 		client.ClusterTemplateType,
 		client.ClusterTemplateRevisionType,
+		client.ClusterRandomizerType,
 	)
 
 	factory.BatchCreateCRDs(ctx, config.ManagementStorageContext, schemas, &projectschema.Version,
@@ -480,6 +481,11 @@ func Feature(schemas *types.Schemas) {
 	schema.Store = featStore.New(schema.Store)
 }
 
+func ClusterRandomizer(schemas *types.Schemas) {
+	schema := schemas.Schema(&managementschema.Version, client.ClusterRandomizerType)
+	schema.Enabled = features.Randomizer.Enabled
+}
+
 func LoggingTypes(schemas *types.Schemas, management *config.ScaledContext, clusterManager *clustermanager.Manager, k8sProxy http.Handler) {
 	handler := logging.NewHandler(
 		management.Dialer,
@@ -643,7 +649,7 @@ func KontainerDriver(schemas *types.Schemas, management *config.ScaledContext) {
 	schema.ActionHandler = handler.ActionHandler
 	schema.Formatter = kontainerdriver.NewFormatter(management)
 	schema.Store = kontainerdriver.NewStore(management, schema.Store)
-	schema.Enabled = features.ClusterRandomizer.Enabled
+	schema.Enabled = features.Randomizer.Enabled
 	kontainerDriverValidator := kontainerdriver.Validator{
 		KontainerDriverLister: management.Management.KontainerDrivers("").Controller().Lister(),
 	}

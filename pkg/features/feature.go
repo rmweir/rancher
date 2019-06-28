@@ -17,7 +17,7 @@ var (
 
 	// Features, ex.: ClusterRandomName = newFeature("cluster-randomizer", false)
 
-	ClusterRandomizer = newFeature("cluster-randomizer", true)
+	Randomizer = newFeature("cluster-randomizer", true)
 )
 
 type feature struct {

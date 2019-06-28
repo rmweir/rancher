@@ -11,6 +11,7 @@ import (
 	"github.com/rancher/rancher/pkg/controllers/management/clusterdeploy"
 	"github.com/rancher/rancher/pkg/controllers/management/clustergc"
 	"github.com/rancher/rancher/pkg/controllers/management/clusterprovisioner"
+	"github.com/rancher/rancher/pkg/controllers/management/clusterrandomizer"
 	"github.com/rancher/rancher/pkg/controllers/management/clusterstats"
 	"github.com/rancher/rancher/pkg/controllers/management/clusterstatus"
 	"github.com/rancher/rancher/pkg/controllers/management/clustertemplate"
@@ -39,6 +40,7 @@ func Register(ctx context.Context, management *config.ManagementContext, manager
 	clusterdeploy.Register(ctx, management, manager)
 	clustergc.Register(ctx, management)
 	clusterprovisioner.Register(ctx, management)
+	clusterrandomizer.Register(ctx, management)
 	clusterstats.Register(ctx, management, manager)
 	clusterstatus.Register(ctx, management)
 	compose.Register(ctx, management, manager)
