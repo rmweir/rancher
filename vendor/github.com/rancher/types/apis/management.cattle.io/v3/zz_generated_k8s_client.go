@@ -79,6 +79,7 @@ type Interface interface {
 	CloudCredentialsGetter
 	ClusterTemplatesGetter
 	ClusterTemplateRevisionsGetter
+	ClusterRandomizersGetter
 }
 
 type Clients struct {
@@ -143,6 +144,7 @@ type Clients struct {
 	CloudCredential                         CloudCredentialClient
 	ClusterTemplate                         ClusterTemplateClient
 	ClusterTemplateRevision                 ClusterTemplateRevisionClient
+	ClusterRandomizer                       ClusterRandomizerClient
 }
 
 type Client struct {
@@ -209,6 +211,7 @@ type Client struct {
 	cloudCredentialControllers                         map[string]CloudCredentialController
 	clusterTemplateControllers                         map[string]ClusterTemplateController
 	clusterTemplateRevisionControllers                 map[string]ClusterTemplateRevisionController
+	clusterRandomizerControllers                       map[string]ClusterRandomizerController
 }
 
 func Factory(ctx context.Context, config rest.Config) (context.Context, controller.Starter, error) {
@@ -421,6 +424,9 @@ func NewClientsFromInterface(iface Interface) *Clients {
 		ClusterTemplateRevision: &clusterTemplateRevisionClient2{
 			iface: iface.ClusterTemplateRevisions(""),
 		},
+		ClusterRandomizer: &clusterRandomizerClient2{
+			iface: iface.ClusterRandomizers(""),
+		},
 	}
 }
 
@@ -496,6 +502,7 @@ func NewForConfig(config rest.Config) (Interface, error) {
 		cloudCredentialControllers:                         map[string]CloudCredentialController{},
 		clusterTemplateControllers:                         map[string]ClusterTemplateController{},
 		clusterTemplateRevisionControllers:                 map[string]ClusterTemplateRevisionController{},
+		clusterRandomizerControllers:                       map[string]ClusterRandomizerController{},
 	}, nil
 }
 
@@ -1272,6 +1279,19 @@ type ClusterTemplateRevisionsGetter interface {
 func (c *Client) ClusterTemplateRevisions(namespace string) ClusterTemplateRevisionInterface {
 	objectClient := objectclient.NewObjectClient(namespace, c.restClient, &ClusterTemplateRevisionResource, ClusterTemplateRevisionGroupVersionKind, clusterTemplateRevisionFactory{})
 	return &clusterTemplateRevisionClient{
+		ns:           namespace,
+		client:       c,
+		objectClient: objectClient,
+	}
+}
+
+type ClusterRandomizersGetter interface {
+	ClusterRandomizers(namespace string) ClusterRandomizerInterface
+}
+
+func (c *Client) ClusterRandomizers(namespace string) ClusterRandomizerInterface {
+	objectClient := objectclient.NewObjectClient(namespace, c.restClient, &ClusterRandomizerResource, ClusterRandomizerGroupVersionKind, clusterRandomizerFactory{})
+	return &clusterRandomizerClient{
 		ns:           namespace,
 		client:       c,
 		objectClient: objectClient,

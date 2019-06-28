@@ -64,6 +64,7 @@ type Config struct {
 	ManagementSecrets                        map[string]managementClient.ManagementSecret                        `json:"managementSecrets,omitempty" yaml:"managementSecrets,omitempty"`
 	ClusterTemplates                         map[string]managementClient.ClusterTemplate                         `json:"clusterTemplates,omitempty" yaml:"clusterTemplates,omitempty"`
 	ClusterTemplateRevisions                 map[string]managementClient.ClusterTemplateRevision                 `json:"clusterTemplateRevisions,omitempty" yaml:"clusterTemplateRevisions,omitempty"`
+	ClusterRandomizers                       map[string]managementClient.ClusterRandomizer                       `json:"clusterRandomizers,omitempty" yaml:"clusterRandomizers,omitempty"`
 
 	// Cluster Client
 	Namespaces        map[string]clusterClient.Namespace        `json:"namespaces,omitempty" yaml:"namespaces,omitempty"`

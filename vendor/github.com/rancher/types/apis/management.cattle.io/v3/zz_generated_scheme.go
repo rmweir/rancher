@@ -151,6 +151,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&ClusterTemplateList{},
 		&ClusterTemplateRevision{},
 		&ClusterTemplateRevisionList{},
+		&ClusterRandomizer{},
+		&ClusterRandomizerList{},
 	)
 	metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
 	return nil

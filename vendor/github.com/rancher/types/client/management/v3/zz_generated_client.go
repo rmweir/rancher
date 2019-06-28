@@ -66,6 +66,7 @@ type Client struct {
 	ManagementSecret                        ManagementSecretOperations
 	ClusterTemplate                         ClusterTemplateOperations
 	ClusterTemplateRevision                 ClusterTemplateRevisionOperations
+	ClusterRandomizer                       ClusterRandomizerOperations
 }
 
 func NewClient(opts *clientbase.ClientOpts) (*Client, error) {
@@ -137,6 +138,7 @@ func NewClient(opts *clientbase.ClientOpts) (*Client, error) {
 	client.ManagementSecret = newManagementSecretClient(client)
 	client.ClusterTemplate = newClusterTemplateClient(client)
 	client.ClusterTemplateRevision = newClusterTemplateRevisionClient(client)
+	client.ClusterRandomizer = newClusterRandomizerClient(client)
 
 	return client, nil
 }
