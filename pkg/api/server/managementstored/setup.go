@@ -2,7 +2,6 @@ package managementstored
 
 import (
 	"context"
-	"github.com/rancher/rancher/pkg/features"
 	"net/http"
 
 	"github.com/rancher/norman/store/crd"
@@ -174,6 +173,7 @@ func Setup(ctx context.Context, apiContext *config.ScaledContext, clusterManager
 	KontainerDriver(schemas, apiContext)
 	ClusterTemplates(schemas, apiContext)
 	ClusterScans(schemas, apiContext, clusterManager)
+	ClusterRandomizer(schemas)
 
 	if err := NodeTypes(schemas, apiContext); err != nil {
 		return err
