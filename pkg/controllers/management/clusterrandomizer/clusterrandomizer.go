@@ -6,8 +6,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/rancher/rancher/pkg/features"
-	v3 "github.com/rancher/types/apis/management.cattle.io/v3"
+	"github.com/rancher/types/apis/management.cattle.io/v3"
 	"github.com/rancher/types/config"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -25,8 +24,6 @@ func Register(apiContext context.Context, management *config.ManagementContext) 
 		management.Management.Clusters(""),
 		management.Management.ClusterRandomizers("").Controller().Lister(),
 	}
-
-	management.Management.ClusterRandomizers("").AddFeatureHandler(apiContext, features.Randomizer.Enabled, "randomizer", c.Sync)
 }
 
 func (c *Controller) Sync(key string, obj *v3.ClusterRandomizer) (runtime.Object, error) {

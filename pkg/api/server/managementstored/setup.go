@@ -2,6 +2,7 @@ package managementstored
 
 import (
 	"context"
+	"github.com/rancher/rancher/pkg/features"
 	"net/http"
 
 	"github.com/rancher/norman/store/crd"
@@ -53,13 +54,12 @@ import (
 	"github.com/rancher/rancher/pkg/auth/providers"
 	"github.com/rancher/rancher/pkg/clustermanager"
 	"github.com/rancher/rancher/pkg/controllers/management/compose/common"
-	"github.com/rancher/rancher/pkg/features"
 	"github.com/rancher/rancher/pkg/namespace"
 	"github.com/rancher/rancher/pkg/nodeconfig"
 	sourcecodeproviders "github.com/rancher/rancher/pkg/pipeline/providers"
 	managementschema "github.com/rancher/types/apis/management.cattle.io/v3/schema"
 	projectschema "github.com/rancher/types/apis/project.cattle.io/v3/schema"
-	client "github.com/rancher/types/client/management/v3"
+	"github.com/rancher/types/client/management/v3"
 	projectclient "github.com/rancher/types/client/project/v3"
 	"github.com/rancher/types/config"
 )
@@ -482,8 +482,8 @@ func Feature(schemas *types.Schemas) {
 }
 
 func ClusterRandomizer(schemas *types.Schemas) {
-	schema := schemas.Schema(&managementschema.Version, client.ClusterRandomizerType)
-	schema.Enabled = features.Randomizer.Enabled
+	// schema := schemas.Schema(&managementschema.Version, client.ClusterRandomizerType)
+
 }
 
 func LoggingTypes(schemas *types.Schemas, management *config.ScaledContext, clusterManager *clustermanager.Manager, k8sProxy http.Handler) {
@@ -649,7 +649,6 @@ func KontainerDriver(schemas *types.Schemas, management *config.ScaledContext) {
 	schema.ActionHandler = handler.ActionHandler
 	schema.Formatter = kontainerdriver.NewFormatter(management)
 	schema.Store = kontainerdriver.NewStore(management, schema.Store)
-	schema.Enabled = features.Randomizer.Enabled
 	kontainerDriverValidator := kontainerdriver.Validator{
 		KontainerDriverLister: management.Management.KontainerDrivers("").Controller().Lister(),
 	}
