@@ -101,6 +101,14 @@ func (l *projectLifecycle) sync(key string, orig *v3.Project) (runtime.Object, e
 }
 
 func (l *projectLifecycle) Create(obj *v3.Project) (runtime.Object, error) {
+	crtbs, err := l.mgr.crtbLister.List(obj.ClusterName, labels.Everything())
+	if err != nil {
+		return nil, err
+	}
+
+	for _, crtb := range crtbs {
+		l.mgr.mgmt.Management.ClusterRoleTemplateBindings("").Controller().Enqueue(crtb.Namespace, crtb.Name)
+	}
 	// no-op because the sync function will take care of it
 	return obj, nil
 }
