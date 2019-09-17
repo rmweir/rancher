@@ -136,7 +136,7 @@ func cleanup(ctx context.Context) error {
 }
 
 func run() error {
-	logrus.Infof("Rancher agent version %s is starting", VERSION)
+	logrus.Infof("Rancher agent version %s (with increased ping wait) is starting", VERSION)
 	params, err := getParams()
 	if err != nil {
 		return err
