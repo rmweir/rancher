@@ -202,6 +202,12 @@ func addData(management *config.ManagementContext, cfg Config) error {
 		return err
 	}
 
+	// old migrate logic
+	/*
+	if err := addNodeTemplateGRBs(management); err != nil {
+		return err
+	}*/
+
 	return addMachineDrivers(management)
 }
 

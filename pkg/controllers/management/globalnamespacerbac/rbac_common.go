@@ -7,9 +7,9 @@ import (
 
 	"github.com/rancher/rancher/pkg/namespace"
 	v3 "github.com/rancher/types/apis/management.cattle.io/v3"
-	rbacv1 "github.com/rancher/types/apis/rbac.authorization.k8s.io/v1"
 	"github.com/rancher/types/config"
 	k8srbacv1 "k8s.io/api/rbac/v1"
+	rbacv1 "github.com/rancher/types/apis/rbac.authorization.k8s.io/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -29,6 +29,7 @@ const (
 	CloudCredentialResource         = "secrets"
 	CreatorIDAnn                    = "field.cattle.io/creatorId"
 	RancherManagementAPIVersion     = "management.cattle.io"
+	NodeTemplateResource			= "nodetemplates"
 )
 
 var subjectWithAllUsers = k8srbacv1.Subject{
@@ -228,6 +229,8 @@ func GetRoleNameAndVerbs(roleAccess string, resourceName string, resourceType st
 		resourceName += "-ct-"
 	case ClusterTemplateRevisionResource:
 		resourceName += "-ctr-"
+	case NodeTemplateResource:
+		resourceName += "-nt-"
 	}
 	switch roleAccess {
 	case OwnerAccess:
