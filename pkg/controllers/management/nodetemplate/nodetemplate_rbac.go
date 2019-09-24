@@ -3,6 +3,7 @@ package nodetemplate
 import (
 	"context"
 	"fmt"
+	"github.com/rancher/rancher/pkg/namespace"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"strings"
 
@@ -17,7 +18,7 @@ import (
 )
 
 const (
-	creatorIDAnn = "field.cattle.io/creatorId"
+	normanIDAnno = "cattle.io/creator"
 	ctLabel      = "io.cattle.field/clusterTemplateId"
 )
 
@@ -26,6 +27,8 @@ type nodeTemplateController struct {
 	roleClient v3.GlobalRoleInterface
 	rbLister   v3.GlobalRoleBindingLister
 	rbClient   v3.GlobalRoleBindingInterface
+	ntClient   v3.NodeTemplateInterface
+	ntLister   v3.NodeTemplateLister
 	mgmtCtx    *config.ManagementContext
 }
 
@@ -35,6 +38,7 @@ func Register(ctx context.Context, mgmt *config.ManagementContext) {
 		roleClient: mgmt.Management.GlobalRoles(""),
 		rbLister:	mgmt.Management.GlobalRoleBindings("").Controller().Lister(),
 		rbClient:   mgmt.Management.GlobalRoleBindings(""),
+		ntClient:   mgmt.Management.NodeTemplates(""),
 		mgmtCtx:    mgmt,
 	}
 
@@ -47,6 +51,7 @@ func (nt *nodeTemplateController) sync(key string, nodeTemplate *v3.NodeTemplate
 	}
 
 	// migration logic
+
 	metaAccessor, err := meta.Accessor(nodeTemplate)
 	if err != nil {
 		return nodeTemplate, err
@@ -56,12 +61,33 @@ func (nt *nodeTemplateController) sync(key string, nodeTemplate *v3.NodeTemplate
 		return nodeTemplate, fmt.Errorf("clusterTemplate %v has no creatorId annotation", metaAccessor.GetName())
 	}
 
+	// Duplicate user namespace node template
+	if nodeTemplate.Namespace == creatorID && nodeTemplate.Labels[normanIDAnno] == "norman" {
+		globalNodeTemplate := nodeTemplate.DeepCopy()
+		globalNodeTemplate.ObjectMeta = metav1.ObjectMeta{
+			GenerateName: "nt-",
+			Namespace: namespace.GlobalNamespace,
+			Annotations: nodeTemplate.Annotations,
+			Labels: map[string]string{"parentNodeTemplate": string(nodeTemplate.UID)},
+		}
+
+		globalNodeTemplate, _ = nt.ntClient.Create(globalNodeTemplate)
+		/*
+		if err != nil {
+			return nil, err
+		}*/
+		nodeTemplate.Annotations["migratedToGlobal"] = "true"
+		nodeTemplate = globalNodeTemplate
+	}
+
+	// Create Role and RBs
 	if err := globalnamespacerbac.CreateRoleAndRoleBinding(globalnamespacerbac.NodeTemplateResource, nodeTemplate.Name,
 		globalnamespacerbac.RancherManagementAPIVersion, creatorID, []string{globalnamespacerbac.RancherManagementAPIVersion},
 		nodeTemplate.UID,
 		[]v3.Member{}, nt.mgmtCtx); err != nil {
 		return nil, err
 	}
+
 
 	// old migration logic
 	/*
