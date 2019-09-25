@@ -4,11 +4,14 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/rancher/norman/store/transform"
+
 	"github.com/rancher/norman/api/access"
 	"github.com/rancher/norman/httperror"
 	"github.com/rancher/norman/types"
 	"github.com/rancher/norman/types/convert"
 	"github.com/rancher/norman/types/values"
+	nt "github.com/rancher/rancher/pkg/controllers/management/nodetemplate"
 	"github.com/rancher/rancher/pkg/namespace"
 	"github.com/rancher/rancher/pkg/ref"
 	corev1 "github.com/rancher/types/apis/core/v1"
@@ -23,6 +26,25 @@ type Store struct {
 	types.Store
 	NodePoolLister        v3.NodePoolLister
 	CloudCredentialLister corev1.SecretLister
+}
+
+func Wrap(store types.Store, npLister v3.NodePoolLister, secretLister corev1.SecretLister) types.Store {
+	return &transform.Store{
+		Store: &Store{
+			Store:                 store,
+			NodePoolLister:        npLister,
+			CloudCredentialLister: secretLister,
+		},
+		Transformer: filterLegacyTemplates,
+	}
+}
+
+func filterLegacyTemplates(apiContext *types.APIContext, schema *types.Schema, data map[string]interface{}, opt *types.QueryOptions) (map[string]interface{}, error) {
+	labels, _ := data["labels"].(map[string]interface{})
+	if data["creatorId"] == data["namespaceId"] && labels[nt.NormanIDAnno] == "norman" {
+		return nil, nil
+	}
+	return data, nil
 }
 
 func (s *Store) Delete(apiContext *types.APIContext, schema *types.Schema, id string) (map[string]interface{}, error) {

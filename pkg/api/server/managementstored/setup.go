@@ -380,11 +380,8 @@ func NodeTemplates(schemas *types.Schemas, management *config.ScaledContext) {
 		NodePoolLister: npl,
 	}
 	schema.Formatter = f.Formatter
-	s := &nodeTemplateStore.Store{
-		Store:                 &globalresource.GlobalNamespaceStore{Store: schema.Store, NamespaceInterface: management.Core.Namespaces("")},
-		NodePoolLister:        npl,
-		CloudCredentialLister: management.Core.Secrets(namespace.GlobalNamespace).Controller().Lister(),
-	}
+	s := nodeTemplateStore.Wrap(&globalresource.GlobalNamespaceStore{Store: schema.Store, NamespaceInterface: management.Core.Namespaces("")}, npl, management.Core.Secrets(namespace.GlobalNamespace).Controller().Lister())
+
 	schema.Store = s
 	schema.Validator = nodetemplate.Validator
 }

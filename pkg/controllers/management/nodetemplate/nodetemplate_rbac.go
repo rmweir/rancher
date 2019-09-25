@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	normanIDAnno = "cattle.io/creator"
+	NormanIDAnno = "cattle.io/creator"
 	ctLabel      = "io.cattle.field/clusterTemplateId"
 )
 
@@ -69,24 +69,26 @@ func (nt *nodeTemplateController) sync(key string, nodeTemplate *v3.NodeTemplate
 	}
 
 	// Duplicate user namespace node template
-	if nodeTemplate.Namespace == creatorID && nodeTemplate.Labels[normanIDAnno] == "norman" {
-		migratedNTName := "nt-" + nodeTemplate.Namespace + nodeTemplate.Name
-		globalNodeTemplate := nodeTemplate.DeepCopy()
-		globalNodeTemplate.ObjectMeta = metav1.ObjectMeta{
-			Name: migratedNTName,
-			Namespace: namespace.GlobalNamespace,
-			Annotations: nodeTemplate.Annotations,
-			Labels: map[string]string{"parentNodeTemplate": string(nodeTemplate.UID)},
-		}
-
+	if nodeTemplate.Namespace == creatorID && nodeTemplate.Labels[NormanIDAnno] == "norman" {
 		if nodeTemplate.Annotations["migrated"] != "true" {
-			_, err := nt.ntLister.Get("cattle-global-data", migratedNTName)
+			migratedNTName := fmt.Sprintf("nt-%s-%s", nodeTemplate.Namespace, nodeTemplate.Name)
+
+			globalNodeTemplate, err := nt.ntLister.Get("cattle-global-data", migratedNTName)
 			if err != nil {
+				// legacy template has not been created yet, create it
 				if !strings.Contains(err.Error(), "not found") {
 					return nil, err
 				}
 
-				globalNodeTemplate, _ = nt.ntClient.Create(globalNodeTemplate)
+				globalNodeTemplate = nodeTemplate.DeepCopy()
+				globalNodeTemplate.ObjectMeta = metav1.ObjectMeta{
+					Name: migratedNTName,
+					Namespace: namespace.GlobalNamespace,
+					Annotations: nodeTemplate.Annotations,
+					Labels: map[string]string{"parentNodeTemplate": string(nodeTemplate.UID)},
+				}
+
+				globalNodeTemplate, err = nt.ntClient.Create(globalNodeTemplate)
 				if err != nil {
 					return nil, err
 				}
