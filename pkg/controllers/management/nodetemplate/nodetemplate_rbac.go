@@ -95,17 +95,39 @@ func (nt *nodeTemplateController) sync(key string, nodeTemplate *v3.NodeTemplate
 			}
 
 			npList, err := nt.npLister.List("", labels.Everything())
+			if err != nil {
+				return nil, err
+			}
 			for _, np := range npList {
-				if np.Spec.NodeTemplateName == nodeTemplate.Name {
+				if np.Spec.NodeTemplateName == fmt.Sprintf("%s:%s", nodeTemplate.Namespace, nodeTemplate.Name) {
 					npCopy := np.DeepCopy()
 					npCopy.Spec.NodeTemplateName = globalNodeTemplate.Name
 
-					_, err := nt.npClient.Create(npCopy)
+					_, err := nt.npClient.Update(npCopy)
 					if err != nil {
 						return nil, err
 					}
 				}
 			}
+
+			nodeList, err := nt.mgmtCtx.Management.Nodes("").Controller().Lister().List("", labels.Everything())
+			if err != nil {
+				return nil, err
+			}
+			for _, node := range nodeList {
+				if node.Spec.NodeTemplateName == fmt.Sprintf("%s:%s", nodeTemplate.Namespace, nodeTemplate.Name) {
+					nodeCopy := node.DeepCopy()
+					nodeCopy.Spec.NodeTemplateName = globalNodeTemplate.Name
+
+					_, err := nt.mgmtCtx.Management.Nodes("").Create(nodeCopy)
+					if err != nil {
+						return nil, err
+					}
+				}
+			}
+
+
+
 
 			nodeTemplate.Annotations["migratedToGlobal"] = "true"
 			_, err = nt.ntClient.Update(nodeTemplate)
