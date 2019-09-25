@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/rancher/rancher/pkg/namespace"
 	"k8s.io/apimachinery/pkg/api/meta"
+	"k8s.io/apimachinery/pkg/labels"
 	"strings"
 
 	"github.com/rancher/rancher/pkg/controllers/management/globalnamespacerbac"
@@ -29,6 +30,8 @@ type nodeTemplateController struct {
 	rbClient   v3.GlobalRoleBindingInterface
 	ntClient   v3.NodeTemplateInterface
 	ntLister   v3.NodeTemplateLister
+	npLister   v3.NodePoolLister
+	npClient   v3.NodePoolInterface
 	mgmtCtx    *config.ManagementContext
 }
 
@@ -39,6 +42,9 @@ func Register(ctx context.Context, mgmt *config.ManagementContext) {
 		rbLister:	mgmt.Management.GlobalRoleBindings("").Controller().Lister(),
 		rbClient:   mgmt.Management.GlobalRoleBindings(""),
 		ntClient:   mgmt.Management.NodeTemplates(""),
+		ntLister:   mgmt.Management.NodeTemplates("").Controller().Lister(),
+		npLister:   mgmt.Management.NodePools("").Controller().Lister(),
+		npClient:   mgmt.Management.NodePools(""),
 		mgmtCtx:    mgmt,
 	}
 
@@ -56,6 +62,7 @@ func (nt *nodeTemplateController) sync(key string, nodeTemplate *v3.NodeTemplate
 	if err != nil {
 		return nodeTemplate, err
 	}
+
 	creatorID, ok := metaAccessor.GetAnnotations()[globalnamespacerbac.CreatorIDAnn]
 	if !ok {
 		return nodeTemplate, fmt.Errorf("clusterTemplate %v has no creatorId annotation", metaAccessor.GetName())
@@ -63,21 +70,49 @@ func (nt *nodeTemplateController) sync(key string, nodeTemplate *v3.NodeTemplate
 
 	// Duplicate user namespace node template
 	if nodeTemplate.Namespace == creatorID && nodeTemplate.Labels[normanIDAnno] == "norman" {
+		migratedNTName := "nt-" + nodeTemplate.Namespace + nodeTemplate.Name
 		globalNodeTemplate := nodeTemplate.DeepCopy()
 		globalNodeTemplate.ObjectMeta = metav1.ObjectMeta{
-			GenerateName: "nt-",
+			Name: migratedNTName,
 			Namespace: namespace.GlobalNamespace,
 			Annotations: nodeTemplate.Annotations,
 			Labels: map[string]string{"parentNodeTemplate": string(nodeTemplate.UID)},
 		}
 
-		globalNodeTemplate, _ = nt.ntClient.Create(globalNodeTemplate)
-		/*
-		if err != nil {
-			return nil, err
-		}*/
-		nodeTemplate.Annotations["migratedToGlobal"] = "true"
-		nodeTemplate = globalNodeTemplate
+		if nodeTemplate.Annotations["migrated"] != "true" {
+			_, err := nt.ntLister.Get("cattle-global-data", migratedNTName)
+			if err != nil {
+				if !strings.Contains(err.Error(), "not found") {
+					return nil, err
+				}
+
+				globalNodeTemplate, _ = nt.ntClient.Create(globalNodeTemplate)
+				if err != nil {
+					return nil, err
+				}
+			}
+
+			npList, err := nt.npLister.List("", labels.Everything())
+			for _, np := range npList {
+				if np.Spec.NodeTemplateName == nodeTemplate.Name {
+					npCopy := np.DeepCopy()
+					npCopy.Spec.NodeTemplateName = globalNodeTemplate.Name
+
+					_, err := nt.npClient.Create(npCopy)
+					if err != nil {
+						return nil, err
+					}
+				}
+			}
+
+			nodeTemplate.Annotations["migratedToGlobal"] = "true"
+			_, err = nt.ntClient.Update(nodeTemplate)
+			if err != nil {
+				return nil, err
+			}
+
+			nodeTemplate = globalNodeTemplate
+		}
 	}
 
 	// Create Role and RBs
@@ -88,26 +123,6 @@ func (nt *nodeTemplateController) sync(key string, nodeTemplate *v3.NodeTemplate
 		return nil, err
 	}
 
-
-	// old migration logic
-	/*
-	user := nodeTemplate.Annotations[globalnamespacerbac.CreatorIDAnn]
-
-	ownerReference := metav1.OwnerReference{
-		APIVersion: globalnamespacerbac.RancherManagementAPIVersion,
-		Kind:       "nodetemplates",
-		Name:       nodeTemplate.Name,
-		UID:        nodeTemplate.UID,
-	}
-	ntRole, err := nt.createRole(nodeTemplate, ownerReference)
-	if err != nil {
-		return nil, err
-	}
-
-	_, err = nt.createGRB(user, ntRole.Name)
-	if err != nil {
-		return nil, err
-	}*/
 	return nodeTemplate, nil
 }
 

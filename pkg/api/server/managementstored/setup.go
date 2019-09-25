@@ -381,7 +381,7 @@ func NodeTemplates(schemas *types.Schemas, management *config.ScaledContext) {
 	}
 	schema.Formatter = f.Formatter
 	s := &nodeTemplateStore.Store{
-		Store:                 userscope.NewStore(management.Core.Namespaces(""), schema.Store),
+		Store:                 &globalresource.GlobalNamespaceStore{Store: schema.Store, NamespaceInterface: management.Core.Namespaces("")},
 		NodePoolLister:        npl,
 		CloudCredentialLister: management.Core.Secrets(namespace.GlobalNamespace).Controller().Lister(),
 	}
