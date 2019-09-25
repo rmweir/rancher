@@ -94,6 +94,7 @@ func (nt *nodeTemplateController) sync(key string, nodeTemplate *v3.NodeTemplate
 				}
 			}
 
+			fullGlobalNTName := fmt.Sprintf("cattle-global-data:%s", globalNodeTemplate.Name)
 			npList, err := nt.npLister.List("", labels.Everything())
 			if err != nil {
 				return nil, err
@@ -101,7 +102,7 @@ func (nt *nodeTemplateController) sync(key string, nodeTemplate *v3.NodeTemplate
 			for _, np := range npList {
 				if np.Spec.NodeTemplateName == fmt.Sprintf("%s:%s", nodeTemplate.Namespace, nodeTemplate.Name) {
 					npCopy := np.DeepCopy()
-					npCopy.Spec.NodeTemplateName = globalNodeTemplate.Name
+					npCopy.Spec.NodeTemplateName = fullGlobalNTName
 
 					_, err := nt.npClient.Update(npCopy)
 					if err != nil {
@@ -117,17 +118,14 @@ func (nt *nodeTemplateController) sync(key string, nodeTemplate *v3.NodeTemplate
 			for _, node := range nodeList {
 				if node.Spec.NodeTemplateName == fmt.Sprintf("%s:%s", nodeTemplate.Namespace, nodeTemplate.Name) {
 					nodeCopy := node.DeepCopy()
-					nodeCopy.Spec.NodeTemplateName = globalNodeTemplate.Name
+					nodeCopy.Spec.NodeTemplateName = fullGlobalNTName
 
-					_, err := nt.mgmtCtx.Management.Nodes("").Create(nodeCopy)
+					_, err := nt.mgmtCtx.Management.Nodes("").Update(nodeCopy)
 					if err != nil {
 						return nil, err
 					}
 				}
 			}
-
-
-
 
 			nodeTemplate.Annotations["migratedToGlobal"] = "true"
 			_, err = nt.ntClient.Update(nodeTemplate)
