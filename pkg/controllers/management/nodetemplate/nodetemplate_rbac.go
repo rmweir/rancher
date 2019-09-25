@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/rancher/rancher/pkg/namespace"
+	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/labels"
 	"strings"
@@ -71,6 +72,7 @@ func (nt *nodeTemplateController) sync(key string, nodeTemplate *v3.NodeTemplate
 	// Duplicate user namespace node template
 	if nodeTemplate.Namespace == creatorID && nodeTemplate.Labels[NormanIDAnno] == "norman" {
 		if nodeTemplate.Annotations["migrated"] != "true" {
+			logrus.Infof("migrating node template [%s]", nodeTemplate.Spec.DisplayName)
 			migratedNTName := fmt.Sprintf("nt-%s-%s", nodeTemplate.Namespace, nodeTemplate.Name)
 
 			globalNodeTemplate, err := nt.ntLister.Get("cattle-global-data", migratedNTName)
@@ -85,7 +87,6 @@ func (nt *nodeTemplateController) sync(key string, nodeTemplate *v3.NodeTemplate
 					Name: migratedNTName,
 					Namespace: namespace.GlobalNamespace,
 					Annotations: nodeTemplate.Annotations,
-					Labels: map[string]string{"parentNodeTemplate": string(nodeTemplate.UID)},
 				}
 
 				globalNodeTemplate, err = nt.ntClient.Create(globalNodeTemplate)
@@ -127,13 +128,14 @@ func (nt *nodeTemplateController) sync(key string, nodeTemplate *v3.NodeTemplate
 				}
 			}
 
-			nodeTemplate.Annotations["migratedToGlobal"] = "true"
+			nodeTemplate.Annotations["migrated"] = "true"
 			_, err = nt.ntClient.Update(nodeTemplate)
 			if err != nil {
 				return nil, err
 			}
 
 			nodeTemplate = globalNodeTemplate
+			logrus.Infof("successfully migrated node template [%s]", nodeTemplate.Spec.DisplayName)
 		}
 	}
 
