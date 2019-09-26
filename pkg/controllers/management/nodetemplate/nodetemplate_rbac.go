@@ -3,22 +3,21 @@ package nodetemplate
 import (
 	"context"
 	"fmt"
-	"github.com/rancher/rancher/pkg/namespace"
-	"github.com/sirupsen/logrus"
-	"k8s.io/apimachinery/pkg/api/meta"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/client-go/dynamic"
 	"strings"
 
-	"github.com/rancher/rancher/pkg/controllers/management/globalnamespacerbac"
-	"github.com/rancher/types/apis/management.cattle.io/v3"
-	"github.com/rancher/types/config"
 	k8srbacv1 "k8s.io/api/rbac/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
+	"k8s.io/apimachinery/pkg/api/meta"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
+
+	"github.com/rancher/rancher/pkg/controllers/management/globalnamespacerbac"
+	"github.com/rancher/rancher/pkg/namespace"
+	v3 "github.com/rancher/types/apis/management.cattle.io/v3"
+	"github.com/rancher/types/config"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -42,7 +41,7 @@ func Register(ctx context.Context, mgmt *config.ManagementContext) {
 	nt := nodeTemplateController{
 		roleLister: mgmt.Management.GlobalRoles("").Controller().Lister(),
 		roleClient: mgmt.Management.GlobalRoles(""),
-		rbLister:	mgmt.Management.GlobalRoleBindings("").Controller().Lister(),
+		rbLister:   mgmt.Management.GlobalRoleBindings("").Controller().Lister(),
 		rbClient:   mgmt.Management.GlobalRoleBindings(""),
 		ntClient:   mgmt.Management.NodeTemplates(""),
 		ntLister:   mgmt.Management.NodeTemplates("").Controller().Lister(),
@@ -51,7 +50,7 @@ func Register(ctx context.Context, mgmt *config.ManagementContext) {
 		mgmtCtx:    mgmt,
 	}
 
-	mgmt.Management.NodeTemplates("").Controller().AddHandler(ctx,"nt-grb-handler", nt.sync)
+	mgmt.Management.NodeTemplates("").Controller().AddHandler(ctx, "nt-grb-handler", nt.sync)
 }
 
 func (nt *nodeTemplateController) sync(key string, nodeTemplate *v3.NodeTemplate) (runtime.Object, error) {
@@ -89,7 +88,7 @@ func (nt *nodeTemplateController) sync(key string, nodeTemplate *v3.NodeTemplate
 				Resource: "nodetemplates",
 			}
 
-			dynamicNodeTemplate, err :=  dynamicClient.Resource(s).Namespace(nodeTemplate.Namespace).Get(nodeTemplate.Name, metav1.GetOptions{})
+			dynamicNodeTemplate, err := dynamicClient.Resource(s).Namespace(nodeTemplate.Namespace).Get(nodeTemplate.Name, metav1.GetOptions{})
 			if err != nil {
 				return nil, err
 			}
@@ -103,10 +102,10 @@ func (nt *nodeTemplateController) sync(key string, nodeTemplate *v3.NodeTemplate
 
 				globalNodeTemplate = dynamicNodeTemplate.DeepCopy()
 				globalNodeTemplate.Object["metadata"] = map[string]interface{}{
-						"name": migratedNTName,
-						"namespace": namespace.GlobalNamespace,
-						"annotations": nodeTemplate.Annotations,
-					}
+					"name":        migratedNTName,
+					"namespace":   namespace.GlobalNamespace,
+					"annotations": nodeTemplate.Annotations,
+				}
 
 				globalNodeTemplate, err = dynamicClient.Resource(s).Namespace("cattle-global-data").Create(globalNodeTemplate, metav1.CreateOptions{})
 				if err != nil {
