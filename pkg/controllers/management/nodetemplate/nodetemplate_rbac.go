@@ -3,10 +3,9 @@ package nodetemplate
 import (
 	"context"
 	"fmt"
-	"strings"
-
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -14,7 +13,7 @@ import (
 
 	"github.com/rancher/rancher/pkg/controllers/management/globalnamespacerbac"
 	"github.com/rancher/rancher/pkg/namespace"
-	v3 "github.com/rancher/types/apis/management.cattle.io/v3"
+	"github.com/rancher/types/apis/management.cattle.io/v3"
 	"github.com/rancher/types/config"
 	"github.com/sirupsen/logrus"
 )
@@ -68,13 +67,16 @@ func (nt *nodeTemplateController) sync(key string, nodeTemplate *v3.NodeTemplate
 		return nodeTemplate, fmt.Errorf("clusterTemplate %v has no creatorId annotation", metaAccessor.GetName())
 	}
 
-	// Duplicate user namespace node template
 	if nodeTemplate.Namespace == creatorID && nodeTemplate.Labels[NormanIDAnno] == "norman" {
 		if nodeTemplate.Annotations["migrated"] != "true" {
+			// node template has not been migrated - duplicate user namespace node template in cattle-global-data namespace
 			logrus.Infof("migrating node template [%s]", nodeTemplate.Spec.DisplayName)
-			migratedNTName := fmt.Sprintf("nt-%s-%s", nodeTemplate.Namespace, nodeTemplate.Name)
 
+			migratedNTName := fmt.Sprintf("nt-%s-%s", nodeTemplate.Namespace, nodeTemplate.Name)
+			fullLegacyNTName := fmt.Sprintf("%s:%s", nodeTemplate.Namespace, nodeTemplate.Name)
+			fullGlobalNTName := fmt.Sprintf("cattle-global-data:%s", migratedNTName)
 			restConfig := nt.mgmtCtx.RESTConfig
+
 			dynamicClient, err := dynamic.NewForConfig(&restConfig)
 			if err != nil {
 				return nil, err
@@ -86,151 +88,134 @@ func (nt *nodeTemplateController) sync(key string, nodeTemplate *v3.NodeTemplate
 				Resource: "nodetemplates",
 			}
 
-			dynamicNodeTemplate, err := dynamicClient.Resource(s).Namespace(nodeTemplate.Namespace).Get(nodeTemplate.Name, metav1.GetOptions{})
+			ntDynamicClient := dynamicClient.Resource(s)
+
+			dynamicNodeTemplate, err := ntDynamicClient.Namespace(nodeTemplate.Namespace).Get(nodeTemplate.Name, metav1.GetOptions{})
 			if err != nil {
 				return nil, err
 			}
-			globalNodeTemplate, err := dynamicClient.Resource(s).Namespace("cattle-global-data").Get(migratedNTName, metav1.GetOptions{})
-			if err != nil {
 
-				// legacy template has not been created yet, create it
-				if !strings.Contains(err.Error(), "not found") {
-					return nil, err
-				}
-
-				globalNodeTemplate = dynamicNodeTemplate.DeepCopy()
-				globalNodeTemplate.Object["metadata"] = map[string]interface{}{
-					"name":        migratedNTName,
-					"namespace":   namespace.GlobalNamespace,
-					"annotations": nodeTemplate.Annotations,
-				}
-
-				globalNodeTemplate, err = dynamicClient.Resource(s).Namespace("cattle-global-data").Create(globalNodeTemplate, metav1.CreateOptions{})
-				if err != nil {
-					return nil, err
-				}
-			}
-
-			metadata, ok := globalNodeTemplate.Object["metadata"].(map[string]interface{})
-			if !ok {
-				return nil, fmt.Errorf("error fetching node template [%s:%s] metadata", nodeTemplate.Namespace, nodeTemplate.Name)
-			}
-
-			fullGlobalNTName := fmt.Sprintf("cattle-global-data:%s", metadata["name"])
-			npList, err := nt.npLister.List("", labels.Everything())
+			_, err = createGlobalNodeTemplateClone(nodeTemplate.Name, migratedNTName, dynamicNodeTemplate, ntDynamicClient)
 			if err != nil {
 				return nil, err
 			}
-			for _, np := range npList {
-				if np.Spec.NodeTemplateName == fmt.Sprintf("%s:%s", nodeTemplate.Namespace, nodeTemplate.Name) {
-					npCopy := np.DeepCopy()
-					npCopy.Spec.NodeTemplateName = fullGlobalNTName
 
-					_, err := nt.npClient.Update(npCopy)
-					if err != nil {
-						return nil, err
-					}
-				}
+			if err := nt.reviseNodePoolNodeTemplate(fullGlobalNTName, fullLegacyNTName); err != nil {
+				return nil, err
 			}
 
-			nodeList, err := nt.mgmtCtx.Management.Nodes("").Controller().Lister().List("", labels.Everything())
+			if err := nt.reviseNodes(fullGlobalNTName, fullLegacyNTName); err != nil {
+				return nil, err
+			}
+
+			legacyAnnotations, err := getDynamicAnnotations(dynamicNodeTemplate, fullLegacyNTName)
 			if err != nil {
 				return nil, err
 			}
-			for _, node := range nodeList {
-				if node.Spec.NodeTemplateName == fmt.Sprintf("%s:%s", nodeTemplate.Namespace, nodeTemplate.Name) {
-					nodeCopy := node.DeepCopy()
-					nodeCopy.Spec.NodeTemplateName = fullGlobalNTName
 
-					_, err := nt.mgmtCtx.Management.Nodes("").Update(nodeCopy)
-					if err != nil {
-						return nil, err
-					}
-				}
-			}
+			legacyAnnotations["migrated"] = "true"
+			dynamicNodeTemplate.Object["annotations"] = legacyAnnotations
 
-			legacyMetadata, ok := dynamicNodeTemplate.Object["metadata"].(map[string]interface{})
-			if !ok {
-				return nil, fmt.Errorf("error fetching node template [%s:%s] metadata", nodeTemplate.Namespace, nodeTemplate.Name)
-			}
-
-			annotations, ok := legacyMetadata["annotations"].(map[string]interface{})
-			if !ok {
-				annotations = make(map[string]interface{})
-			}
-
-			annotations["migrated"] = "true"
-			dynamicNodeTemplate.Object["annotations"] = annotations
-			globalNodeTemplate, err = dynamicClient.Resource(s).Namespace(nodeTemplate.Namespace).Update(dynamicNodeTemplate, metav1.UpdateOptions{})
+			_, err = dynamicClient.Resource(s).Namespace(nodeTemplate.Namespace).Update(dynamicNodeTemplate, metav1.UpdateOptions{})
 			if err != nil {
 				return nil, err
 			}
 
 			// the annotation has been updated via the dynamic client, so the update node template should be fetch and returned
-			nodeTemplate, err := nt.ntClient.Controller().Lister().Get(nodeTemplate.Namespace, nodeTemplate.Name)
+			nodeTemplate, err = nt.ntClient.Controller().Lister().Get(nodeTemplate.Namespace, nodeTemplate.Name)
 			if err != nil {
 				return nil, err
 			}
+
 			logrus.Infof("successfully migrated node template [%s]", nodeTemplate.Spec.DisplayName)
 		}
-	}
-
-	// Create Role and RBs
-	if err := globalnamespacerbac.CreateRoleAndRoleBinding(globalnamespacerbac.NodeTemplateResource, nodeTemplate.Name,
-		globalnamespacerbac.RancherManagementAPIVersion, creatorID, []string{globalnamespacerbac.RancherManagementAPIVersion},
-		nodeTemplate.UID,
-		[]v3.Member{}, nt.mgmtCtx); err != nil {
-		return nil, err
+	} else {
+		// Create Role and RBs
+		if err := globalnamespacerbac.CreateRoleAndRoleBinding(globalnamespacerbac.NodeTemplateResource, nodeTemplate.Name,
+			globalnamespacerbac.RancherManagementAPIVersion, creatorID, []string{globalnamespacerbac.RancherManagementAPIVersion},
+			nodeTemplate.UID,
+			[]v3.Member{}, nt.mgmtCtx); err != nil {
+			return nil, err
+		}
 	}
 
 	// intentionally returning nil, as node template should be retrieved via dynamic client
 	return nodeTemplate, nil
 }
 
-/*
-func (nt *nodeTemplateController) createRole(nodeTemplate *v3.NodeTemplate, ownerRef metav1.OwnerReference) (*v3.GlobalRole, error) {
-	roleName := "grb-nt-" + nodeTemplate.Name + "-" + nodeTemplate.Annotations[globalnamespacerbac.CreatorIDAnn]
-	ntRole, err := nt.roleLister.Get("", roleName)
+func (nt *nodeTemplateController) reviseNodePoolNodeTemplate(fullGlobalNTName, fullLegacyNTName string) error {
+	npList, err := nt.npLister.List("", labels.Everything())
 	if err != nil {
-		if !strings.Contains(err.Error(), "not found") {
-			return nil, err
-		}
-		newRole := &v3.GlobalRole{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:            roleName,
-				OwnerReferences: []metav1.OwnerReference{ownerRef},
-			},
-			Rules: []k8srbacv1.PolicyRule{
-				{
-					APIGroups:     []string{globalnamespacerbac.RancherManagementAPIVersion},
-					Resources:     []string{"nodetemplates"},
-					ResourceNames: []string{nodeTemplate.Name},
-					Verbs:         []string{"*"},
-				},
-			},
-		}
-		return nt.roleClient.Create(newRole)
+		return err
 	}
-	return ntRole, nil
+	for _, np := range npList {
+		if np.Spec.NodeTemplateName == fullLegacyNTName {
+			npCopy := np.DeepCopy()
+			npCopy.Spec.NodeTemplateName = fullGlobalNTName
+
+			_, err := nt.npClient.Update(npCopy)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
-func (nt *nodeTemplateController) createGRB(user, roleName string) (*v3.GlobalRoleBinding, error) {
-	name := "grb-nt-" + roleName + "-" + "usr"
-	ntGRB := &v3.GlobalRoleBinding{
-		ObjectMeta: v1.ObjectMeta{
-			Name: name,
-		},
-		UserName:       user,
-		GlobalRoleName: roleName,
+func (nt *nodeTemplateController) reviseNodes(fullGlobalNTName, fullLegacyNTName string) error {
+	nodeList, err := nt.mgmtCtx.Management.Nodes("").Controller().Lister().List("", labels.Everything())
+	if err != nil {
+		return err
+	}
+	for _, node := range nodeList {
+		if node.Spec.NodeTemplateName == fullLegacyNTName {
+			nodeCopy := node.DeepCopy()
+			nodeCopy.Spec.NodeTemplateName = fullGlobalNTName
+
+			_, err := nt.mgmtCtx.Management.Nodes("").Update(nodeCopy)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func getDynamicAnnotations(dynamicNodeTemplate *unstructured.Unstructured, nodeTemplateName string) (map[string]interface{}, error) {
+	legacyMetadata, ok := dynamicNodeTemplate.Object["metadata"].(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("error fetching node template [%s] metadata", nodeTemplateName)
 	}
 
-	grb, err := nt.rbLister.Get("", ntGRB.Name)
-	if err != nil {
-		if !strings.Contains(err.Error(), "not found") {
-			return nil, err
-		}
-		return nt.rbClient.Create(ntGRB)
+	annotations, ok := legacyMetadata["annotations"].(map[string]interface{})
+	if !ok {
+		annotations = make(map[string]interface{})
 	}
-	return grb, nil
+
+	return annotations, nil
 }
-*/
+
+// createGlobalNodeTemplateClone returns the global clone of the given legacy node templates. If one does not exist
+// it will be created
+func createGlobalNodeTemplateClone(legacyName, cloneName string, dynamicNodeTemplate *unstructured.Unstructured, client dynamic.NamespaceableResourceInterface) (*unstructured.Unstructured, error) {
+	globalNodeTemplate := dynamicNodeTemplate.DeepCopy()
+
+	annotations, err := getDynamicAnnotations(dynamicNodeTemplate, legacyName)
+	if err != nil {
+		return nil, err
+	}
+
+	globalNodeTemplate.Object["metadata"] = map[string]interface{}{
+		"name":        cloneName,
+		"namespace":   namespace.GlobalNamespace,
+		"annotations": annotations,
+	}
+
+	globalNodeTemplate, err = client.Namespace("cattle-global-data").Create(globalNodeTemplate, metav1.CreateOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	return globalNodeTemplate, nil
+}
+
