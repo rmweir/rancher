@@ -7,14 +7,16 @@ import (
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
 	"strings"
 
 	"github.com/rancher/rancher/pkg/controllers/management/globalnamespacerbac"
-	v3 "github.com/rancher/types/apis/management.cattle.io/v3"
+	"github.com/rancher/types/apis/management.cattle.io/v3"
 	"github.com/rancher/types/config"
 	k8srbacv1 "k8s.io/api/rbac/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"k8s.io/apimachinery/pkg/runtime"
 )
@@ -75,27 +77,44 @@ func (nt *nodeTemplateController) sync(key string, nodeTemplate *v3.NodeTemplate
 			logrus.Infof("migrating node template [%s]", nodeTemplate.Spec.DisplayName)
 			migratedNTName := fmt.Sprintf("nt-%s-%s", nodeTemplate.Namespace, nodeTemplate.Name)
 
-			globalNodeTemplate, err := nt.ntLister.Get("cattle-global-data", migratedNTName)
+			restConfig := nt.mgmtCtx.RESTConfig
+			dynamicClient, err := dynamic.NewForConfig(&restConfig)
 			if err != nil {
+				return nil, err
+			}
+
+			s := schema.GroupVersionResource{
+				Group:    "management.cattle.io",
+				Version:  "v3",
+				Resource: "nodetemplates",
+			}
+
+			dynamicNodeTemplate, err :=  dynamicClient.Resource(s).Namespace(nodeTemplate.Namespace).Get(nodeTemplate.Name, metav1.GetOptions{})
+			if err != nil {
+				return nil, err
+			}
+			globalNodeTemplate, err := dynamicClient.Resource(s).Namespace("cattle-global-data").Get(migratedNTName, metav1.GetOptions{})
+			if err != nil {
+
 				// legacy template has not been created yet, create it
 				if !strings.Contains(err.Error(), "not found") {
 					return nil, err
 				}
 
-				globalNodeTemplate = nodeTemplate.DeepCopy()
-				globalNodeTemplate.ObjectMeta = metav1.ObjectMeta{
-					Name: migratedNTName,
-					Namespace: namespace.GlobalNamespace,
-					Annotations: nodeTemplate.Annotations,
-				}
+				globalNodeTemplate = dynamicNodeTemplate.DeepCopy()
+				globalNodeTemplate.Object["metadata"] = map[string]interface{}{
+						"name": migratedNTName,
+						"namespace": namespace.GlobalNamespace,
+						"annotations": nodeTemplate.Annotations,
+					}
 
-				globalNodeTemplate, err = nt.ntClient.Create(globalNodeTemplate)
+				globalNodeTemplate, err = dynamicClient.Resource(s).Namespace("cattle-global-data").Create(globalNodeTemplate, metav1.CreateOptions{})
 				if err != nil {
 					return nil, err
 				}
 			}
 
-			fullGlobalNTName := fmt.Sprintf("cattle-global-data:%s", globalNodeTemplate.Name)
+			fullGlobalNTName := fmt.Sprintf("cattle-global-data:%s", globalNodeTemplate.Object["name"])
 			npList, err := nt.npLister.List("", labels.Everything())
 			if err != nil {
 				return nil, err
@@ -128,13 +147,24 @@ func (nt *nodeTemplateController) sync(key string, nodeTemplate *v3.NodeTemplate
 				}
 			}
 
-			nodeTemplate.Annotations["migrated"] = "true"
+			annotations, _ := dynamicNodeTemplate.Object["annotations"].(map[string]interface{})
+			annotations["migrated"] = "true"
+			dynamicNodeTemplate.Object["annotations"] = annotations
+			globalNodeTemplate, err = dynamicClient.Resource(s).Namespace(nodeTemplate.Namespace).Create(dynamicNodeTemplate, metav1.CreateOptions{})
+			if err != nil {
+				return nil, err
+			}
+
 			_, err = nt.ntClient.Update(nodeTemplate)
 			if err != nil {
 				return nil, err
 			}
 
-			nodeTemplate = globalNodeTemplate
+			// the annotation has been updated via the dynamic client, so the update node template should be fetch and returned
+			nodeTemplate, err := nt.ntClient.Controller().Lister().Get(nodeTemplate.Namespace, nodeTemplate.Name)
+			if err != nil {
+				return nil, err
+			}
 			logrus.Infof("successfully migrated node template [%s]", nodeTemplate.Spec.DisplayName)
 		}
 	}
@@ -147,6 +177,7 @@ func (nt *nodeTemplateController) sync(key string, nodeTemplate *v3.NodeTemplate
 		return nil, err
 	}
 
+	// intentionally returning nil, as node template should be retrieved via dynamic client
 	return nodeTemplate, nil
 }
 
