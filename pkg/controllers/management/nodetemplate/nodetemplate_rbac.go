@@ -5,9 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	k8srbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -145,15 +144,19 @@ func (nt *nodeTemplateController) sync(key string, nodeTemplate *v3.NodeTemplate
 				}
 			}
 
-			annotations, _ := dynamicNodeTemplate.Object["annotations"].(map[string]interface{})
-			annotations["migrated"] = "true"
-			dynamicNodeTemplate.Object["annotations"] = annotations
-			globalNodeTemplate, err = dynamicClient.Resource(s).Namespace(nodeTemplate.Namespace).Create(dynamicNodeTemplate, metav1.CreateOptions{})
-			if err != nil {
-				return nil, err
+			metadata, ok := dynamicNodeTemplate.Object["metadata"].(map[string]interface{})
+			if !ok {
+				return nil, fmt.Errorf("error fetching node template [%s:%s] metadata", nodeTemplate.Namespace, nodeTemplate.Name)
 			}
 
-			_, err = nt.ntClient.Update(nodeTemplate)
+			annotations, ok := metadata["annotations"].(map[string]interface{})
+			if !ok {
+				annotations = make(map[string]interface{})
+			}
+
+			annotations["migrated"] = "true"
+			dynamicNodeTemplate.Object["annotations"] = annotations
+			globalNodeTemplate, err = dynamicClient.Resource(s).Namespace(nodeTemplate.Namespace).Update(dynamicNodeTemplate, metav1.UpdateOptions{})
 			if err != nil {
 				return nil, err
 			}
