@@ -111,7 +111,12 @@ func (nt *nodeTemplateController) sync(key string, nodeTemplate *v3.NodeTemplate
 				}
 			}
 
-			fullGlobalNTName := fmt.Sprintf("cattle-global-data:%s", globalNodeTemplate.Object["name"])
+			metadata, ok := globalNodeTemplate.Object["metadata"].(map[string]interface{})
+			if !ok {
+				return nil, fmt.Errorf("error fetching node template [%s:%s] metadata", nodeTemplate.Namespace, nodeTemplate.Name)
+			}
+
+			fullGlobalNTName := fmt.Sprintf("cattle-global-data:%s", metadata["name"])
 			npList, err := nt.npLister.List("", labels.Everything())
 			if err != nil {
 				return nil, err
@@ -144,12 +149,12 @@ func (nt *nodeTemplateController) sync(key string, nodeTemplate *v3.NodeTemplate
 				}
 			}
 
-			metadata, ok := dynamicNodeTemplate.Object["metadata"].(map[string]interface{})
+			legacyMetadata, ok := dynamicNodeTemplate.Object["metadata"].(map[string]interface{})
 			if !ok {
 				return nil, fmt.Errorf("error fetching node template [%s:%s] metadata", nodeTemplate.Namespace, nodeTemplate.Name)
 			}
 
-			annotations, ok := metadata["annotations"].(map[string]interface{})
+			annotations, ok := legacyMetadata["annotations"].(map[string]interface{})
 			if !ok {
 				annotations = make(map[string]interface{})
 			}
