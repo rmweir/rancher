@@ -22,7 +22,6 @@ import (
 
 const (
 	NormanIDAnno = "cattle.io/creator"
-	ctLabel      = "io.cattle.field/clusterTemplateId"
 )
 
 type nodeTemplateController struct {
@@ -180,6 +179,7 @@ func (nt *nodeTemplateController) sync(key string, nodeTemplate *v3.NodeTemplate
 	return nodeTemplate, nil
 }
 
+/*
 func (nt *nodeTemplateController) createRole(nodeTemplate *v3.NodeTemplate, ownerRef metav1.OwnerReference) (*v3.GlobalRole, error) {
 	roleName := "grb-nt-" + nodeTemplate.Name + "-" + nodeTemplate.Annotations[globalnamespacerbac.CreatorIDAnn]
 	ntRole, err := nt.roleLister.Get("", roleName)
@@ -225,3 +225,4 @@ func (nt *nodeTemplateController) createGRB(user, roleName string) (*v3.GlobalRo
 	}
 	return grb, nil
 }
+*/
