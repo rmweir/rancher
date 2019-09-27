@@ -82,7 +82,7 @@ func (nt *nodeTemplateController) sync(key string, nodeTemplate *v3.NodeTemplate
 
 	ntDynamicClient := dynamicClient.Resource(s)
 	migratedNTName := fmt.Sprintf("nt-%s-%s", nodeTemplate.Namespace, nodeTemplate.Name)
-	if nodeTemplate.Namespace == creatorID && nodeTemplate.Labels[NormanIDAnno] == "norman" {
+	if nodeTemplate.Namespace != "cattle-global-data" {
 		if nodeTemplate.Annotations["migrated"] != "true" {
 			// node template has not been fully migrated - duplicate user namespace node template in cattle-global-data namespace
 			logrus.Infof("migrating node template [%s]", nodeTemplate.Spec.DisplayName)
