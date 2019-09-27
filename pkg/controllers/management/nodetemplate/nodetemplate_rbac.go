@@ -107,13 +107,19 @@ func (nt *nodeTemplateController) sync(key string, nodeTemplate *v3.NodeTemplate
 				return nil, err
 			}
 
+			/*
 			legacyAnnotations, err := getDynamicAnnotations(dynamicNodeTemplate, fullLegacyNTName)
 			if err != nil {
 				return nil, err
 			}
 
 			legacyAnnotations["migrated"] = "true"
-			dynamicNodeTemplate.Object["annotations"] = legacyAnnotations
+			dynamicNodeTemplate.Object["annotations"] = legacyAnnotations*/
+
+			dynamicNodeTemplate, err = writeDynamimcAnnotations(dynamicNodeTemplate, nodeTemplate.Name, "migrated", "true")
+			if err != nil {
+				return nil, err
+			}
 
 			_, err = dynamicClient.Resource(s).Namespace(nodeTemplate.Namespace).Update(dynamicNodeTemplate, metav1.UpdateOptions{})
 			if err != nil {
@@ -153,7 +159,7 @@ func (nt *nodeTemplateController) sync(key string, nodeTemplate *v3.NodeTemplate
 				return nil, err
 			}
 
-			if _, err := ntDynamicClient.Namespace(nodeTemplate.Namespace).Create(dynamicNodeTemplate, metav1.CreateOptions{}); err != nil {
+			if _, err := ntDynamicClient.Namespace(nodeTemplate.Namespace).Update(dynamicNodeTemplate, metav1.UpdateOptions{}); err != nil {
 				return nil, err
 			}
 
