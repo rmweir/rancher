@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"time"
 
-	v1 "k8s.io/api/core/v1"
+	"k8s.io/api/core/v1"
 )
 
 const (
@@ -103,6 +103,15 @@ func IsNamespaceConditionSet(namespace *v1.Namespace, conditionType string, cond
 		}
 	}
 	return false, nil
+}
+
+func GetResourceGlobalNamespace(resource string) string {
+	switch resource{
+	case "nodetemplates":
+		return "cattle-global-nt"
+	default:
+		return GlobalNamespace
+	}
 }
 
 type status struct {

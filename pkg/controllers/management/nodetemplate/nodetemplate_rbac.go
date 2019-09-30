@@ -3,6 +3,9 @@ package nodetemplate
 import (
 	"context"
 	"fmt"
+	"strings"
+
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -10,17 +13,17 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
-	"strings"
 
 	"github.com/rancher/rancher/pkg/controllers/management/globalnamespacerbac"
-	"github.com/rancher/rancher/pkg/namespace"
+	"github.com/rancher/types/apis/core/v1"
 	"github.com/rancher/types/apis/management.cattle.io/v3"
 	"github.com/rancher/types/config"
 	"github.com/sirupsen/logrus"
 )
 
 const (
-	NormanIDAnno = "cattle.io/creator"
+	NormanIDAnno          = "cattle.io/creator"
+	NodeTemplateNamespace = "cattle-global-nt"
 )
 
 type nodeTemplateController struct {
@@ -32,6 +35,8 @@ type nodeTemplateController struct {
 	ntLister   v3.NodeTemplateLister
 	npLister   v3.NodePoolLister
 	npClient   v3.NodePoolInterface
+	nsLister   v1.NamespaceLister
+	nsClient   v1.NamespaceInterface
 	mgmtCtx    *config.ManagementContext
 }
 
@@ -45,6 +50,8 @@ func Register(ctx context.Context, mgmt *config.ManagementContext) {
 		ntLister:   mgmt.Management.NodeTemplates("").Controller().Lister(),
 		npLister:   mgmt.Management.NodePools("").Controller().Lister(),
 		npClient:   mgmt.Management.NodePools(""),
+		nsLister:   mgmt.Core.Namespaces("").Controller().Lister(),
+		nsClient:   mgmt.Core.Namespaces(""),
 		mgmtCtx:    mgmt,
 	}
 
@@ -82,32 +89,31 @@ func (nt *nodeTemplateController) sync(key string, nodeTemplate *v3.NodeTemplate
 
 	ntDynamicClient := dynamicClient.Resource(s)
 	migratedNTName := fmt.Sprintf("nt-%s-%s", nodeTemplate.Namespace, nodeTemplate.Name)
-	if nodeTemplate.Namespace != "cattle-global-data" {
-		if nodeTemplate.Annotations["migrated"] != "true" {
-			// node template has not been fully migrated - duplicate user namespace node template in cattle-global-data namespace
-			logrus.Infof("migrating node template [%s]", nodeTemplate.Spec.DisplayName)
+	if nodeTemplate.Namespace != NodeTemplateNamespace {
+		// node template has not been fully migrated - duplicate user namespace node template in cattle-global-data namespace
+		logrus.Infof("migrating node template [%s]", nodeTemplate.Spec.DisplayName)
 
-			fullLegacyNTName := fmt.Sprintf("%s:%s", nodeTemplate.Namespace, nodeTemplate.Name)
-			fullGlobalNTName := fmt.Sprintf("cattle-global-data:%s", migratedNTName)
+		fullLegacyNTName := fmt.Sprintf("%s:%s", nodeTemplate.Namespace, nodeTemplate.Name)
+		fullGlobalNTName := fmt.Sprintf("%s:%s", NodeTemplateNamespace, migratedNTName)
 
-			dynamicNodeTemplate, err := ntDynamicClient.Namespace(nodeTemplate.Namespace).Get(nodeTemplate.Name, metav1.GetOptions{})
-			if err != nil {
-				return nil, err
-			}
+		dynamicNodeTemplate, err := ntDynamicClient.Namespace(nodeTemplate.Namespace).Get(nodeTemplate.Name, metav1.GetOptions{})
+		if err != nil {
+			return nil, err
+		}
 
-			if err := nt.createGlobalNodeTemplateClone(nodeTemplate.Name, migratedNTName, dynamicNodeTemplate, ntDynamicClient); err != nil {
-				return nil, err
-			}
+		if err := nt.createGlobalNodeTemplateClone(nodeTemplate.Name, migratedNTName, dynamicNodeTemplate, ntDynamicClient); err != nil {
+			return nil, err
+		}
 
-			if err := nt.reviseNodePoolNodeTemplate(fullGlobalNTName, fullLegacyNTName); err != nil {
-				return nil, err
-			}
+		if err := nt.reviseNodePoolNodeTemplate(fullGlobalNTName, fullLegacyNTName); err != nil {
+			return nil, err
+		}
 
-			if err := nt.reviseNodes(fullGlobalNTName, fullLegacyNTName); err != nil {
-				return nil, err
-			}
+		if err := nt.reviseNodes(fullGlobalNTName, fullLegacyNTName); err != nil {
+			return nil, err
+		}
 
-			/*
+		/*
 			legacyAnnotations, err := getDynamicAnnotations(dynamicNodeTemplate, fullLegacyNTName)
 			if err != nil {
 				return nil, err
@@ -116,24 +122,30 @@ func (nt *nodeTemplateController) sync(key string, nodeTemplate *v3.NodeTemplate
 			legacyAnnotations["migrated"] = "true"
 			dynamicNodeTemplate.Object["annotations"] = legacyAnnotations*/
 
-			dynamicNodeTemplate, err = writeDynamimcAnnotations(dynamicNodeTemplate, nodeTemplate.Name, "migrated", "true")
-			if err != nil {
-				return nil, err
-			}
-
-			_, err = dynamicClient.Resource(s).Namespace(nodeTemplate.Namespace).Update(dynamicNodeTemplate, metav1.UpdateOptions{})
-			if err != nil {
-				return nil, err
-			}
-
-			// the annotation has been updated via the dynamic client, so the update node template should be fetch and returned
-			nodeTemplate, err = nt.ntClient.Controller().Lister().Get(nodeTemplate.Namespace, nodeTemplate.Name)
-			if err != nil {
-				return nil, err
-			}
-
-			logrus.Infof("successfully migrated node template [%s]", nodeTemplate.Spec.DisplayName)
+		dynamicNodeTemplate, err = writeDynamimcAnnotations(dynamicNodeTemplate, nodeTemplate.Name, "migrated", "true")
+		if err != nil {
+			return nil, err
 		}
+
+		_, err = dynamicClient.Resource(s).Namespace(nodeTemplate.Namespace).Update(dynamicNodeTemplate, metav1.UpdateOptions{})
+		if err != nil {
+			return nil, err
+		}
+
+		// the annotation has been updated via the dynamic client, so the update node template should be fetch and returned
+		nodeTemplate, err = nt.ntClient.Controller().Lister().Get(nodeTemplate.Namespace, nodeTemplate.Name)
+		if err != nil {
+			return nil, err
+		}
+
+		if err := nt.ntClient.Delete(nodeTemplate.Name, &metav1.DeleteOptions{}); err != nil {
+			return nil, err
+		}
+
+		nodeTemplate = nil
+
+		logrus.Infof("successfully migrated node template [%s]", nodeTemplate.Spec.DisplayName)
+
 	} else {
 		dynamicNodeTemplate, err := ntDynamicClient.Namespace(nodeTemplate.Namespace).Get(nodeTemplate.Name, metav1.GetOptions{})
 		if err != nil {
@@ -247,9 +259,22 @@ func writeDynamimcAnnotations(dynamicNodeTemplate *unstructured.Unstructured, no
 
 // createGlobalNodeTemplateClone returns the global clone of the given legacy node templates. If one does not exist
 // it will be created
-func (nt *nodeTemplateController) createGlobalNodeTemplateClone(legacyName, cloneName string, dynamicNodeTemplate *unstructured.Unstructured, client dynamic.NamespaceableResourceInterface) (error) {
-	_, err := nt.ntLister.Get("cattle-global-data", cloneName)
-	if err != nil {
+func (nt *nodeTemplateController) createGlobalNodeTemplateClone(legacyName, cloneName string, dynamicNodeTemplate *unstructured.Unstructured, client dynamic.NamespaceableResourceInterface) error {
+	if _, err := nt.nsLister.Get("", NodeTemplateNamespace); err != nil {
+		if !strings.Contains(err.Error(), "not found") {
+			return err
+		}
+		ntGlobalNamespace := &corev1.Namespace{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: NodeTemplateNamespace,
+			},
+		}
+		if _, err := nt.nsClient.Create(ntGlobalNamespace); err != nil {
+			return err
+		}
+	}
+
+	if _, err := nt.ntLister.Get(NodeTemplateNamespace, cloneName); err != nil {
 		if !strings.Contains(err.Error(), "not found") {
 			return err
 		}
@@ -263,11 +288,11 @@ func (nt *nodeTemplateController) createGlobalNodeTemplateClone(legacyName, clon
 
 		globalNodeTemplate.Object["metadata"] = map[string]interface{}{
 			"name":        cloneName,
-			"namespace":   namespace.GlobalNamespace,
+			"namespace":   NodeTemplateNamespace,
 			"annotations": annotations,
 		}
 
-		globalNodeTemplate, err = client.Namespace("cattle-global-data").Create(globalNodeTemplate, metav1.CreateOptions{})
+		globalNodeTemplate, err = client.Namespace(NodeTemplateNamespace).Create(globalNodeTemplate, metav1.CreateOptions{})
 		if err != nil {
 			return err
 		}
@@ -275,4 +300,3 @@ func (nt *nodeTemplateController) createGlobalNodeTemplateClone(legacyName, clon
 
 	return nil
 }
-

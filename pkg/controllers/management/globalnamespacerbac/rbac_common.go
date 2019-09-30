@@ -6,10 +6,10 @@ import (
 	"sort"
 
 	"github.com/rancher/rancher/pkg/namespace"
-	v3 "github.com/rancher/types/apis/management.cattle.io/v3"
+	"github.com/rancher/types/apis/management.cattle.io/v3"
+	rbacv1 "github.com/rancher/types/apis/rbac.authorization.k8s.io/v1"
 	"github.com/rancher/types/config"
 	k8srbacv1 "k8s.io/api/rbac/v1"
-	rbacv1 "github.com/rancher/types/apis/rbac.authorization.k8s.io/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -32,11 +32,13 @@ const (
 	NodeTemplateResource			= "nodetemplates"
 )
 
+
 var subjectWithAllUsers = k8srbacv1.Subject{
-	Kind:     "Group",
-	Name:     user.AllAuthenticated,
-	APIGroup: rbacv1.GroupName,
-}
+		Kind:     "Group",
+		Name:     user.AllAuthenticated,
+		APIGroup: rbacv1.GroupName,
+	}
+
 
 func CreateRoleAndRoleBinding(resource, name, apiVersion, creatorID string, apiGroup []string, UID types.UID, members []v3.Member,
 	mgmt *config.ManagementContext) error {
@@ -190,6 +192,7 @@ func createRoleBinding(resourceType, resourceName, roleName, apiVersion string, 
 		},
 		Subjects: subjects,
 	}
+
 	roleBinding, err := mgmt.RBAC.RoleBindings("").Controller().Lister().Get(namespace.GlobalNamespace, roleName)
 	if err != nil {
 		if apierrors.IsNotFound(err) {

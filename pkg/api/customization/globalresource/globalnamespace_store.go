@@ -28,6 +28,7 @@ func (s *GlobalNamespaceStore) Create(apiContext *types.APIContext, schema *type
 		if err != nil {
 			return nil, err
 		}
+
 		data[client.PreferenceFieldNamespaceId] = namespace.GlobalNamespace
 	}
 
