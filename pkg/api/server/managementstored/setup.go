@@ -384,6 +384,7 @@ func NodeTemplates(schemas *types.Schemas, management *config.ScaledContext) {
 		Store:                 userscope.NewStore(management.Core.Namespaces(""), schema.Store),
 		NodePoolLister:        npl,
 		CloudCredentialLister: management.Core.Secrets(namespace.GlobalNamespace).Controller().Lister(),
+		SecretClient:          management.Core.Secrets(namespace.GlobalNamespace),
 	}
 	schema.Store = s
 	schema.Validator = nodetemplate.Validator

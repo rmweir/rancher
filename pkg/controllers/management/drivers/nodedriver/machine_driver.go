@@ -109,7 +109,7 @@ func (m *Lifecycle) download(obj *v3.NodeDriver) (*v3.NodeDriver, error) {
 		if err != nil {
 			logrus.Errorf("error getting schema %v", err)
 		}
-		pubCredFields, privateCredFields, passwordFields, defaults := getCredFields(obj.Annotations)
+		pubCredFields, privateCredFields, passwordFields, defaults:= getCredFields(obj.Annotations)
 		for name, field := range existingSchema.Spec.ResourceFields {
 			if SSHKeyFields[name] || passwordFields[name] || privateCredFields[name] {
 				if field.Type != "password" {

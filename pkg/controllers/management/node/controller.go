@@ -41,6 +41,7 @@ import (
 const (
 	defaultEngineInstallURL = "https://releases.rancher.com/install-docker/17.03.2.sh"
 	amazonec2               = "amazonec2"
+	sshKeyContents          = "sshKeyContents"
 )
 
 var (
@@ -79,7 +80,7 @@ func Register(ctx context.Context, management *config.ManagementContext) {
 		configMapGetter:           management.K8sClient.CoreV1(),
 		clusterLister:             management.Management.Clusters("").Controller().Lister(),
 		schemaLister:              management.Management.DynamicSchemas("").Controller().Lister(),
-		credLister:                management.Core.Secrets("").Controller().Lister(),
+		secretLister:              management.Core.Secrets("").Controller().Lister(),
 		devMode:                   os.Getenv("CATTLE_DEV_MODE") != "",
 	}
 
@@ -96,7 +97,7 @@ type Lifecycle struct {
 	configMapGetter           typedv1.ConfigMapsGetter
 	clusterLister             v3.ClusterLister
 	schemaLister              v3.DynamicSchemaLister
-	credLister                corev1.SecretLister
+	secretLister              corev1.SecretLister
 	devMode                   bool
 }
 
@@ -277,6 +278,7 @@ func (m *Lifecycle) provision(driverConfig, nodeDir string, obj *v3.Node) (*v3.N
 		return obj, err
 	}
 
+	err = m.retrieveSSHContent(configRawMap)
 	err = aliasToPath(obj.Status.NodeTemplateSpec.Driver, configRawMap, obj.Namespace)
 	if err != nil {
 		return obj, err
@@ -313,6 +315,20 @@ func (m *Lifecycle) provision(driverConfig, nodeDir string, obj *v3.Node) (*v3.N
 
 	logrus.Infof("Provisioning node %s done", obj.Spec.RequestedHostname)
 	return obj, nil
+}
+
+func (m *Lifecycle) retrieveSSHContent(config map[string]interface{}) error {
+	sshKey, _ := config[sshKeyContents].(string)
+	if sshKey == "" {
+		return nil
+	}
+	secret, err := m.secretLister.Get(namespace.GlobalNamespace, sshKey)
+	if err != nil {
+		return err
+	}
+	values.PutValue(config, string(secret.Data[sshKeyContents]), sshKeyContents)
+
+	return nil
 }
 
 func aliasToPath(driver string, config map[string]interface{}, ns string) error {
@@ -623,7 +639,7 @@ func (m *Lifecycle) setCredFields(data interface{}, fields map[string]v3.Field, 
 	if len(splitID) != 2 {
 		return fmt.Errorf("invalid credential id %s", credID)
 	}
-	cred, err := m.credLister.Get(namespace.GlobalNamespace, splitID[1])
+	cred, err := m.secretLister.Get(namespace.GlobalNamespace, splitID[1])
 	if err != nil {
 		return err
 	}
