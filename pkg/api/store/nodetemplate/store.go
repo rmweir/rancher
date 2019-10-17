@@ -16,13 +16,21 @@ import (
 	managementschema "github.com/rancher/types/apis/management.cattle.io/v3/schema"
 	client "github.com/rancher/types/client/management/v3"
 	"github.com/sirupsen/logrus"
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+)
+
+const (
+	ec2Config = "amazonec2Config"
+	sshContents = "sshKeyContents"
 )
 
 type Store struct {
 	types.Store
 	NodePoolLister        v3.NodePoolLister
 	CloudCredentialLister corev1.SecretLister
+	SecretClient          corev1.SecretInterface
 }
 
 func (s *Store) Delete(apiContext *types.APIContext, schema *types.Schema, id string) (map[string]interface{}, error) {
@@ -40,6 +48,9 @@ func (s *Store) Delete(apiContext *types.APIContext, schema *types.Schema, id st
 
 func (s *Store) Create(apiContext *types.APIContext, schema *types.Schema, data map[string]interface{}) (map[string]interface{}, error) {
 	if err := s.replaceCloudCredFields(apiContext, data); err != nil {
+		return data, err
+	}
+	if err := s.replaceSSHContents(apiContext, data); err != nil {
 		return data, err
 	}
 	return s.Store.Create(apiContext, schema, data)
@@ -102,5 +113,26 @@ func (s *Store) replaceCloudCredFields(apiContext *types.APIContext, data map[st
 		}
 	}
 	logrus.Debugf("replaceCloudCredFields: %v for credID %s", fields, credID)
+	return nil
+}
+
+func (s *Store) replaceSSHContents(apiContext *types.APIContext, data map[string]interface{}) error {
+	fmt.Println(data)
+	rawSSHKey, _ := values.GetValue(data, ec2Config, sshContents)
+	sshKey, _ := rawSSHKey.(string)
+
+	sshSecret := &v1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			GenerateName: "s-nt-ssh-",
+			Namespace:    namespace.GlobalNamespace,
+		},
+		StringData: map[string]string{sshContents: sshKey},
+	}
+	sshSecret, err := s.SecretClient.Create(sshSecret)
+	if err != nil {
+		return err
+	}
+
+	values.PutValue(data, sshSecret.Name, ec2Config, sshContents)
 	return nil
 }
