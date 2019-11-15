@@ -682,11 +682,12 @@ func ProjectRoleTemplateBinding(schemas *types.Schemas, management *config.Scale
 
 func GlobalRole(schemas *types.Schemas, management *config.ScaledContext) {
 	schema := schemas.Schema(&managementschema.Version, client.GlobalRoleType)
-	grLister := management.Management.GlobalRoles("").Controller().Lister()
+	grClient := management.Management.GlobalRoles("")
+	grLister := grClient.Controller().Lister()
 	schema.Store = globalRoleStore.Wrap(schema.Store, grLister)
 	schema.Formatter = globalrole.Formatter
 	w := globalrole.Wrapper{
-		GlobalRoleLister: grLister,
+		GlobalRoleClient: grClient,
 	}
 	schema.Validator = w.Validator
 }

@@ -50,7 +50,11 @@ func (gr *globalRoleLifecycle) Remove(obj *v3.GlobalRole) (runtime.Object, error
 func (gr *globalRoleLifecycle) reconcileGlobalRole(globalRole *v3.GlobalRole) error {
 	crName := getCRName(globalRole)
 
-	clusterRole, _ := gr.crLister.Get("", crName)
+	clusterRole, err := gr.crLister.Get("", crName)
+	if err != nil {
+		return err
+	}
+
 	if clusterRole != nil {
 		if !reflect.DeepEqual(globalRole.Rules, clusterRole.Rules) {
 			clusterRole.Rules = globalRole.Rules
@@ -63,7 +67,7 @@ func (gr *globalRoleLifecycle) reconcileGlobalRole(globalRole *v3.GlobalRole) er
 	}
 
 	logrus.Infof("[%v] Creating clusterRole %v for corresponding GlobalRole", grController, crName)
-	_, err := gr.crClient.Create(&v1.ClusterRole{
+	_, err = gr.crClient.Create(&v1.ClusterRole{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: crName,
 			OwnerReferences: []metav1.OwnerReference{

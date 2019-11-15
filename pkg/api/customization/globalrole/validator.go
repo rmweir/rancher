@@ -1,6 +1,7 @@
 package globalrole
 
 import (
+	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"net/http"
 
 	"github.com/rancher/norman/types"
@@ -8,7 +9,7 @@ import (
 )
 
 type Wrapper struct {
-	GlobalRoleLister v3.GlobalRoleLister
+	GlobalRoleClient v3.GlobalRoleInterface
 }
 
 func (w Wrapper) Validator(request *types.APIContext, schema *types.Schema, data map[string]interface{}) error {
@@ -16,7 +17,7 @@ func (w Wrapper) Validator(request *types.APIContext, schema *types.Schema, data
 		return nil
 	}
 
-	gr, err := w.GlobalRoleLister.Get("", request.ID)
+	gr, err := w.GlobalRoleClient.Get(request.ID, v1.GetOptions{})
 	if err != nil {
 		return err
 	}
