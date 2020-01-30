@@ -11,7 +11,7 @@ pipeline {
 	}
 	stage('Terraform') {
             steps {
-		sh 'cd /rancher2-test/control-plane'
+		sh 'cd /rancher2-scaling/control-plane'
                 sh 'ls'
             }
         }
