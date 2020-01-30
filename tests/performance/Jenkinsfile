@@ -11,7 +11,8 @@ pipeline {
 	}
 	stage('Terraform') {
             steps {
-                echo "hello"
+		cd /rancher2-test/control-plane
+                ls
             }
         }
     }
