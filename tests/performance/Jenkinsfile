@@ -6,10 +6,7 @@ pipeline {
     stages {
 	stage('Cleanup') {
 	    steps {
-		sh 'ls'
-                // when plugin is updated, this should be replaced with WsCleanup()
-		step([$class: 'WsCleanup'])
-		sh 'ls'
+		deleteDir()
             }
 	}
         stage('Setup Test Framework') {
@@ -19,8 +16,6 @@ pipeline {
 	}
 	stage('Terraform') {
             steps {
-		sh 'ls'
-		sh 'pwd'
 		// use dir("") {} instead
 		sh 'cd control-plane'
 		sh 'pwd'
