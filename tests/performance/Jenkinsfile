@@ -14,8 +14,8 @@ pipeline {
 		sh 'ls'
 		sh 'cd control-plane'
                 sh 'ls'
-		sh 'curl https://releases.hashicorp.com/terraform/0.12.20/terraform_0.12.20_linux_amd64.zip'
-		sh 'unzip terraform_0.12.20_linux_amd64.zip'
+		sh 'curl https://releases.hashicorp.com/terraform/0.12.20/terraform_0.12.20_linux_amd64.zip --output terraform.zip'
+		sh 'unzip terraform.zip'
 		sh 'terraform init'
             }
         }
