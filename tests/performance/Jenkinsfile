@@ -6,7 +6,7 @@ pipeline {
     stages {
 	stage('Cleanup') {
 	    steps {
-                wsCleanup()
+                step([$class: 'WsCleanup'])
             }
 	}
         stage('Setup Test Framework') {
