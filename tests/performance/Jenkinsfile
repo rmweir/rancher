@@ -13,6 +13,7 @@ pipeline {
             steps {
 		sh 'ls'
 		sh 'pwd'
+		// use dir("") {} instead
 		sh 'cd control-plane'
 		sh 'pwd'
                 sh 'ls'
