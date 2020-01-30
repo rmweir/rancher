@@ -4,6 +4,9 @@ pipeline {
         SOMETHING = ''
     }
     stages {
+	stage('Cleanup') {
+		wsCleanup()
+	}
         stage('Setup Test Framework') {
             steps {
                 git changelog: false, poll: false, url: 'https://github.com/rancher/rancher2-scaling'
