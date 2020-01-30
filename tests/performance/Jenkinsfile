@@ -5,7 +5,9 @@ pipeline {
     }
     stages {
 	stage('Cleanup') {
-		wsCleanup()
+	    steps {
+                wsCleanup()
+            }
 	}
         stage('Setup Test Framework') {
             steps {
