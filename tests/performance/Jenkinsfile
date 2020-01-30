@@ -6,7 +6,7 @@ pipeline {
     stages {
         stage('Setup Test Framework') {
             steps {
-                git clone https://github.com/rancher/rancher2-scaling
+                git changelog: false, poll: false, url: 'https://github.com/rancher/rancher2-scaling'
             }
 	}
 	stage('Terraform') {
