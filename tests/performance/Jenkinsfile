@@ -26,6 +26,7 @@ pipeline {
 		sh 'ls'
 		sh 'mv terraform /usr/local/bin'
 		sh 'terraform init'
+		sh 'terraform apply -input=false -auto-approve'
             }
         }
     }
