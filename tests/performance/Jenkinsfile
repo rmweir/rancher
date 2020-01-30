@@ -17,7 +17,7 @@ pipeline {
 	stage('Terraform') {
             steps {
 		// use dir("") {} instead
-		dir("control-plan") {
+		dir("control-plane") {
 			sh 'pwd'
 			sh 'ls'
 			sh 'curl https://releases.hashicorp.com/terraform/0.12.20/terraform_0.12.20_linux_amd64.zip --output terraform.zip'
