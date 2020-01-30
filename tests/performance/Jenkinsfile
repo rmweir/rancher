@@ -1,0 +1,18 @@
+pipeline {
+    agent any
+    environment {
+        SOMETHING = ''
+    }
+    stages {
+        stage('Setup Test Framework') {
+            steps {
+                git clone https://github.com/rancher/rancher2-scaling
+            }
+	}
+	stage('Terraform') {
+            steps {
+                echo "hello"
+            }
+        }
+    }
+}
