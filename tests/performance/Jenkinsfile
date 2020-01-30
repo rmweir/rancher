@@ -6,7 +6,9 @@ pipeline {
     stages {
 	stage('Cleanup') {
 	    steps {
-                step([$class: 'WsCleanup'])
+                // when Jenkins is updated, this should be replaced with WsCleanup()
+		wsCleanup
+		// step([$class: 'WsCleanup'])
             }
 	}
         stage('Setup Test Framework') {
