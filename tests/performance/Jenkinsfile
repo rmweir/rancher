@@ -12,7 +12,7 @@ pipeline {
 	stage('Terraform') {
             steps {
 		sh 'ls'
-		sh 'cd /control-plane'
+		sh 'cd control-plane'
                 sh 'ls'
             }
         }
