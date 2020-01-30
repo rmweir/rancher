@@ -12,7 +12,7 @@ pipeline {
 	stage('Terraform') {
             steps {
 		cd /rancher2-test/control-plane
-                ls
+                sh 'ls'
             }
         }
     }
