@@ -12,8 +12,13 @@ pipeline {
         stage('Setup Test Framework') {
             steps {
                 git changelog: false, poll: false, url: 'https://github.com/rancher/rancher2-scaling'
+		dir("testing") {
+			sh 'sudo apt-get install python3.6'
+			python 
+		}
             }
 	}
+	/*
 	stage('Terraform') {
             steps {
 		// use dir("") {} instead
@@ -31,6 +36,6 @@ pipeline {
 			// sh 'terraform destroy -input=false -auto-approve'
 		}
             }
-        }
+        } */
     }
 }
