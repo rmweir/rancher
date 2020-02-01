@@ -14,6 +14,8 @@ pipeline {
                 git changelog: false, poll: false, url: 'https://github.com/rancher/rancher2-scaling'
 		dir("testing") {
 			sh 'sudo apt-get install python3'
+			sh 'curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py'
+			sh 'python get-pip.py'
 			sh 'pip install --upgrade pip'
 			sh 'pip install -r requirements.txt'
 			sh 'python testbench.py'
