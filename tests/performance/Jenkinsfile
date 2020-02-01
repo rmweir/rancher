@@ -15,7 +15,8 @@ pipeline {
 		dir("testing") {
 			sh 'sudo apt-get install python3'
 			sh 'curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py'
-			sh 'which python'
+			sh 'python --version'
+			sh 'pip --version'
 			sh 'python get-pip.py'
 			sh 'pip install --upgrade pip'
 			sh 'pip install -r requirements.txt'
