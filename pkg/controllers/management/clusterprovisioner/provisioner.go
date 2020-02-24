@@ -31,6 +31,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/util/flowcontrol"
 )
 
@@ -969,6 +970,24 @@ func k3sClusterConfig(cluster *v3.Cluster) error {
 
 	if strings.Contains(cluster.Status.Version.String(), "k3s") {
 		cluster.Status.Driver = v3.ClusterDriverK3s
+		// TODO set better defaults
+		cluster.Spec.K3sConfig = &v3.K3sConfig{
+			Version: &version.Info{
+				Major:        "",
+				Minor:        "",
+				GitVersion:   "",
+				GitCommit:    "",
+				GitTreeState: "",
+				BuildDate:    "",
+				GoVersion:    "",
+				Compiler:     "",
+				Platform:     "",
+			},
+			K3sUpgradeStrategy: v3.K3sUpgradeStrategy{
+				ServerConcurrency: 1,
+				WorkerConcurrency: 1,
+			},
+		}
 	}
 	return nil
 }
