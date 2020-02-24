@@ -1,4 +1,4 @@
-package k3sUpgrade
+package k3supgrade
 
 import (
 	"context"
