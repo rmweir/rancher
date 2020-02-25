@@ -21,7 +21,7 @@ import (
 )
 
 const (
-	SystemLibraryURL            = "https://git.rancher.io/system-charts"
+	SystemLibraryURL            = "https://github.com/rmweir/system-charts"
 	SystemCatalogName           = "system-library"
 	embededSystemCatalogSetting = "system-catalog"
 )
