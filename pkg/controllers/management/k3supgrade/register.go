@@ -58,7 +58,6 @@ func (h *handler) deployPlans(cluster *v3.Cluster) error {
 	clusterCtx, err := h.manager.UserContext(cluster.Name)
 	if err != nil {
 		return err
-
 	}
 
 	// create a client for GETing Plans in the downstream cluster
