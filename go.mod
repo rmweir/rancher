@@ -1,6 +1,6 @@
 module github.com/rancher/rancher
 
-go 1.13
+go 1.14
 
 replace (
 	git.apache.org/thrift.git => github.com/apache/thrift v0.12.0
@@ -9,6 +9,8 @@ replace (
 	github.com/knative/pkg => github.com/rancher/pkg v0.0.0-20190514055449-b30ab9de040e
 	github.com/matryer/moq => github.com/rancher/moq v0.0.0-20190404221404-ee5226d43009
 	github.com/prometheus/client_golang => github.com/prometheus/client_golang v0.9.3
+
+	github.com/rancher/types => github.com/rancher/types v0.0.0-20200226182350-1081692befdf
 
 	k8s.io/api => k8s.io/api v0.17.2
 	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.17.2
