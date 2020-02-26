@@ -14,6 +14,8 @@ import (
 	v3 "github.com/rancher/types/apis/management.cattle.io/v3"
 	projectv3 "github.com/rancher/types/apis/project.cattle.io/v3"
 	"github.com/rancher/types/config"
+	"github.com/sirupsen/logrus"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -34,7 +36,7 @@ const upgradeDisableLabelKey = "plan.upgrade.cattle.io/disable"
 
 func Register(ctx context.Context, wContext *wrangler.Context, mgmtCtx *config.ManagementContext, manager *clustermanager.Manager) error {
 	h := &handler{
-		systemUpgradeNamespace: "system-upgrade",
+		systemUpgradeNamespace: systemUpgradeNS,
 		newVersion:             "1.17.2+k3s",
 		clusterCache:           wContext.Mgmt.Cluster().Cache(),
 		apps:                   mgmtCtx.Project.Apps(metav1.NamespaceAll),
@@ -56,6 +58,7 @@ func (h *handler) deployPlans(cluster *v3.Cluster) error {
 	clusterCtx, err := h.manager.UserContext(cluster.Name)
 	if err != nil {
 		return err
+
 	}
 
 	// create a client for GETing Plans in the downstream cluster
