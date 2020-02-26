@@ -72,10 +72,7 @@ func UpgradeControlPlaneNodes(ctx context.Context, kubeClient *kubernetes.Client
 		drainHelper = getDrainHelper(kubeClient, *upgradeStrategy)
 		log.Infof(ctx, "[%s] Parameters provided to drain command: %#v", ControlRole, fmt.Sprintf("Force: %v, IgnoreAllDaemonSets: %v, DeleteLocalData: %v, Timeout: %v, GracePeriodSeconds: %v", drainHelper.Force, drainHelper.IgnoreAllDaemonSets, drainHelper.DeleteLocalData, drainHelper.Timeout, drainHelper.GracePeriodSeconds))
 	}
-	maxUnavailable, err := resetMaxUnavailable(maxUnavailable, len(inactiveHosts), ControlRole)
-	if err != nil {
-		return errMsgMaxUnavailableNotFailed, err
-	}
+	maxUnavailable = resetMaxUnavailable(maxUnavailable, len(inactiveHosts))
 	hostsFailedToUpgrade, err := processControlPlaneForUpgrade(ctx, kubeClient, controlHosts, localConnDialerFactory, prsMap, cpNodePlanMap, updateWorkersOnly, alpineImage, certMap,
 		upgradeStrategy, newHosts, inactiveHosts, maxUnavailable, drainHelper)
 	if err != nil {

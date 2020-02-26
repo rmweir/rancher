@@ -104,21 +104,18 @@ func CalculateMaxUnavailable(maxUnavailableVal string, numHosts int) (int, error
 	return maxUnavailable, nil
 }
 
-func resetMaxUnavailable(maxUnavailable, lenInactiveHosts int, component string) (int, error) {
+func resetMaxUnavailable(maxUnavailable, lenInactiveHosts int) int {
 	if maxUnavailable > WorkerThreads {
 		/* upgrading a large number of nodes in parallel leads to a large number of goroutines, which has led to errors regarding too many open sockets
 		Because of this RKE switched to using workerpools. 50 workerthreads has been sufficient to optimize rke up, upgrading at most 50 nodes in parallel.
 		So the user configurable maxUnavailable will be respected only as long as it's less than 50 and capped at 50 */
 		maxUnavailable = WorkerThreads
-		logrus.Infof("Resetting %s to 50, to avoid issues related to upgrading large number of nodes in parallel", "max_unavailable_"+component)
+		logrus.Info("Resetting maxUnavailable to 50, to avoid issues related to upgrading large number of nodes in parallel")
 	}
 
 	if lenInactiveHosts > 0 {
-		if maxUnavailable == lenInactiveHosts {
-			return 0, fmt.Errorf("cannot proceed with upgrade of %s since %v host(s) are found to be inactive prior to upgrade", component, lenInactiveHosts)
-		}
 		maxUnavailable -= lenInactiveHosts
-		logrus.Infof("Resetting %s to %v since %v host(s) are found to be inactive prior to upgrade", "max_unavailable_"+component, maxUnavailable, lenInactiveHosts)
+		logrus.Infof("Resetting maxUnavailable to %v since %v host(s) are found to be inactive/unavailable prior to upgrade", maxUnavailable, lenInactiveHosts)
 	}
-	return maxUnavailable, nil
+	return maxUnavailable
 }

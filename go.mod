@@ -1,6 +1,6 @@
 module github.com/rancher/rancher
 
-go 1.13
+go 1.14
 
 replace (
 	git.apache.org/thrift.git => github.com/apache/thrift v0.12.0
@@ -9,6 +9,8 @@ replace (
 	github.com/knative/pkg => github.com/rancher/pkg v0.0.0-20190514055449-b30ab9de040e
 	github.com/matryer/moq => github.com/rancher/moq v0.0.0-20190404221404-ee5226d43009
 	github.com/prometheus/client_golang => github.com/prometheus/client_golang v0.9.3
+
+	github.com/rancher/types => github.com/rancher/types v0.0.0-20200226215232-12620b5bd7ff
 
 	k8s.io/api => k8s.io/api v0.17.2
 	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.17.2
@@ -39,13 +41,12 @@ require (
 	github.com/Azure/go-autorest/autorest v0.9.3-0.20191028180845-3492b2aff503
 	github.com/Azure/go-autorest/autorest/adal v0.8.1-0.20191028180845-3492b2aff503
 	github.com/DataDog/zstd v1.4.1 // indirect
-	github.com/Microsoft/go-winio v0.4.14 // indirect
 	github.com/aws/aws-sdk-go v1.25.48
 	github.com/beevik/etree v0.0.0-20171015221209-af219c0c7ea1 // indirect
 	github.com/bep/debounce v1.2.0
 	github.com/blang/semver v3.5.1+incompatible
-	github.com/containerd/containerd v1.3.0 // indirect
 	github.com/coreos/etcd v3.3.15+incompatible
+	github.com/coreos/go-semver v0.3.0
 	github.com/coreos/prometheus-operator v0.36.0
 	github.com/crewjam/saml v0.0.0-20190521120225-344d075952c9
 	github.com/davecgh/go-spew v1.1.1
@@ -68,7 +69,6 @@ require (
 	github.com/mcuadros/go-version v0.0.0-20180611085657-6d5863ca60fa
 	github.com/minio/minio-go v0.0.0-20190523192347-c6c2912aa552
 	github.com/mitchellh/mapstructure v1.1.2
-	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/mrjones/oauth v0.0.0-20180629183705-f4e24b6d100c
 	github.com/pborman/uuid v1.2.0
 	github.com/pierrec/lz4 v2.2.6+incompatible // indirect
@@ -82,9 +82,10 @@ require (
 	github.com/rancher/norman v0.0.0-20200226193007-69ad517cedee
 	github.com/rancher/rdns-server v0.0.0-20180802070304-bf662911db6a
 	github.com/rancher/remotedialer v0.2.5
-	github.com/rancher/rke v1.1.0-rc8.0.20200228224621-81d025987b86
+	github.com/rancher/rke v1.1.0-rc8
 	github.com/rancher/security-scan v0.1.5
-	github.com/rancher/steve v0.0.0-20200301160008-283790802c5d
+	github.com/rancher/steve v0.0.0-20200228163025-68ed46723183
+	github.com/rancher/system-upgrade-controller v0.2.0
 	github.com/rancher/types v0.0.0-20200226215232-12620b5bd7ff
 	github.com/rancher/wrangler v0.4.2-0.20200215064225-8abf292acf7b
 	github.com/rancher/wrangler-api v0.4.1
@@ -118,6 +119,7 @@ require (
 	k8s.io/apiserver v0.17.2
 	k8s.io/cli-runtime v0.17.2
 	k8s.io/client-go v12.0.0+incompatible
+	k8s.io/kubectl v0.17.2
 	k8s.io/kubernetes v1.17.2
 	k8s.io/utils v0.0.0-20191114200735-6ca3b61696b6
 )
