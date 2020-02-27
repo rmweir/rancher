@@ -65,7 +65,6 @@ var genericPlan = planv1.Plan{
 	},
 	Spec: planv1.PlanSpec{
 		Concurrency:        0,
-		NodeSelector:       nil,
 		ServiceAccountName: systemUpgradeServiceAccount,
 		Channel:            "",
 		Version:            "",
@@ -88,11 +87,15 @@ func generateMasterPlan(version string, concurrency int) (planv1.Plan, error) {
 	masterPlan.Spec.Version = version
 	masterPlan.Spec.Concurrency = int64(concurrency)
 	// only select master nodes
-	masterPlan.Spec.NodeSelector.MatchExpressions = []metav1.LabelSelectorRequirement{{
-		Key:      describe.LabelNodeRolePrefix + "master",
-		Operator: metav1.LabelSelectorOpIn,
-		Values:   []string{"true"},
-	}}
+
+	masterPlan.Spec.NodeSelector = &metav1.LabelSelector{
+		MatchExpressions: []metav1.LabelSelectorRequirement{{
+
+			Key:      describe.LabelNodeRolePrefix + "master",
+			Operator: metav1.LabelSelectorOpIn,
+			Values:   []string{"true"},
+		}},
+	}
 
 	return masterPlan, nil
 }
