@@ -97,7 +97,7 @@ func (h *handler) deployK3sUpgradeController(clusterName string) error {
 	_, systemProjectName := ref.Parse(systemProjectID)
 
 	nsClient := userCtx.Core.Namespaces("")
-	appProjectName, err := utils2.EnsureAppProjectName(nsClient, systemProjectName, clusterName, "system-upgrade", creator.Name)
+	appProjectName, err := utils2.EnsureAppProjectName(nsClient, systemProjectName, clusterName, systemUpgradeNS, creator.Name)
 	if err != nil {
 		return err
 	}
@@ -125,7 +125,7 @@ func (h *handler) deployK3sUpgradeController(clusterName string) error {
 				Description:     "Upgrade controller for k3s clusters",
 				ExternalID:      latestVersionID,
 				ProjectName:     appProjectName,
-				TargetNamespace: "system-upgrade",
+				TargetNamespace: systemUpgradeNS,
 			},
 		}
 

@@ -30,7 +30,7 @@ type handler struct {
 	manager                *clustermanager.Manager
 }
 
-const systemUpgradeNS = "system-upgrade"
+const systemUpgradeNS = "cattle-system"
 const rancherManagedPlan = "rancher-managed"
 const upgradeDisableLabelKey = "plan.upgrade.cattle.io/disable"
 
@@ -68,7 +68,7 @@ func (h *handler) deployPlans(cluster *v3.Cluster) error {
 	}
 	planClient := planConfig.Plans(metav1.NamespaceAll)
 
-	planList, err := planClient.List(metav1.ListOptions{})
+	_, err = planClient.List(metav1.ListOptions{})
 	if err != nil {
 		// may need to handle this error, if there is no Plan CRD what should we do?
 		if errors.IsNotFound(err) {
@@ -106,7 +106,7 @@ func (h *handler) deployPlans(cluster *v3.Cluster) error {
 				workerPlan = plan
 			}
 		}
-	}
+	}*/
 
 	// if rancher plans exist, do we need to update?
 	if masterPlan.Name != "" || workerPlan.Name != "" {
