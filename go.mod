@@ -46,7 +46,6 @@ require (
 	github.com/beevik/etree v0.0.0-20171015221209-af219c0c7ea1 // indirect
 	github.com/bep/debounce v1.2.0
 	github.com/blang/semver v3.5.1+incompatible
-	github.com/containerd/containerd v1.3.0 // indirect
 	github.com/coreos/etcd v3.3.15+incompatible
 	github.com/coreos/prometheus-operator v0.36.0
 	github.com/crewjam/saml v0.0.0-20190521120225-344d075952c9
@@ -70,7 +69,6 @@ require (
 	github.com/mcuadros/go-version v0.0.0-20180611085657-6d5863ca60fa
 	github.com/minio/minio-go v0.0.0-20190523192347-c6c2912aa552
 	github.com/mitchellh/mapstructure v1.1.2
-	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/mrjones/oauth v0.0.0-20180629183705-f4e24b6d100c
 	github.com/pborman/uuid v1.2.0
 	github.com/pierrec/lz4 v2.2.6+incompatible // indirect
@@ -87,6 +85,7 @@ require (
 	github.com/rancher/rke v1.1.0-rc6.0.20200224180657-6664be5e3b1c
 	github.com/rancher/security-scan v0.1.5
 	github.com/rancher/steve v0.0.0-20200226042400-e2e87cda5338
+	github.com/rancher/system-upgrade-controller v0.2.0
 	github.com/rancher/types v0.0.0-20200225170923-7f43506cf432
 	github.com/rancher/wrangler v0.4.2-0.20200215064225-8abf292acf7b
 	github.com/rancher/wrangler-api v0.4.1
