@@ -30,7 +30,7 @@ type handler struct {
 	manager                *clustermanager.Manager
 }
 
-const systemUpgradeNS = "system-upgrade"
+const systemUpgradeNS = "cattle-system"
 const rancherManagedPlan = "rancher-managed"
 const upgradeDisableLabelKey = "plan.upgrade.cattle.io/disable"
 
