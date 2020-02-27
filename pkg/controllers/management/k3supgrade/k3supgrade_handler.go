@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"k8s.io/apimachinery/pkg/labels"
-
 	"github.com/coreos/go-semver/semver"
 	utils2 "github.com/rancher/rancher/pkg/app/utils"
 	"github.com/rancher/rancher/pkg/catalog/utils"
@@ -85,7 +83,7 @@ func (h *handler) deployK3sUpgradeController(clusterName string) error {
 		return err
 	}
 
-	templateVersion, err := utils.LatestAvailableTemplateVersion(template)
+	latestTemplateVersion, err := utils.LatestAvailableTemplateVersion(template)
 	if err != nil {
 		return err
 	}
@@ -103,44 +101,45 @@ func (h *handler) deployK3sUpgradeController(clusterName string) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println("106")
-	desiredApp := &v32.App{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "rancher-k3s-upgrader",
-			Namespace: systemProjectName,
-			Annotations: map[string]string{
-				"field.cattle.io/creatorId": creator.Name,
-			},
-		},
-		Spec: v32.AppSpec{
-			Description:     "Upgrade controller for k3s clusters",
-			ExternalID:      templateVersion.ExternalID,
-			ProjectName:     appProjectName,
-			TargetNamespace: "system-upgrade",
-		},
-	}
 
 	appLister := userCtx.Management.Project.Apps("").Controller().Lister()
 	appClient := userCtx.Management.Project.Apps("")
 
-	l, err := appLister.List("", labels.Everything())
-	fmt.Println(l)
-	app, err := appLister.Get(systemProjectName, "rancher-k3s-upgrader")
+	latestVersionID := latestTemplateVersion.ExternalID
 
+	app, err := appLister.Get(systemProjectName, "rancher-k3s-upgrader")
 	if err != nil {
 		if !errors.IsNotFound(err) {
 			return err
 		}
+
+		desiredApp := &v32.App{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "rancher-k3s-upgrader",
+				Namespace: systemProjectName,
+				Annotations: map[string]string{
+					"field.cattle.io/creatorId": creator.Name,
+				},
+			},
+			Spec: v32.AppSpec{
+				Description:     "Upgrade controller for k3s clusters",
+				ExternalID:      latestVersionID,
+				ProjectName:     appProjectName,
+				TargetNamespace: "system-upgrade",
+			},
+		}
+
 		// k3s upgrader doesn't exist yet, so it will need to be created
 		if _, err = appClient.Create(desiredApp); err != nil {
 			return err
 		}
 	} else {
-		if app.Spec.ExternalID == desiredApp.Spec.ExternalID {
+		if app.Spec.ExternalID == latestVersionID {
 			// app is up to date, no action needed
 			return nil
 		}
-
+		desiredApp := app.DeepCopy()
+		desiredApp.Spec.ExternalID = latestVersionID
 		// new version of k3s upgrade available, update app
 		if _, err = appClient.Update(desiredApp); err != nil {
 			return err
