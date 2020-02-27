@@ -78,12 +78,13 @@ func (h *handler) deployPlans(cluster v3.Cluster) error {
 	for _, plan := range planList.Items {
 		if _, ok := plan.Labels[rancherManagedPlan]; !ok {
 			// inverse selection is used here, we select a non-existent label
-			plan.Spec.NodeSelector.MatchExpressions = []metav1.LabelSelectorRequirement{{
-				Key:      upgradeDisableLabelKey,
-				Operator: metav1.LabelSelectorOpExists,
-			}}
+			plan.Spec.NodeSelector = &metav1.LabelSelector{
+				MatchExpressions: []metav1.LabelSelectorRequirement{{
+					Key:      upgradeDisableLabelKey,
+					Operator: metav1.LabelSelectorOpExists,
+				}}}
 
-			_, err := planClient.Update(&plan)
+			_, err = planClient.Update(&plan)
 			if err != nil {
 				return err
 			}
