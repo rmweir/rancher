@@ -321,9 +321,6 @@ func NewCallbackCDecl(fn interface{}) uintptr {
 // Process Status API (PSAPI)
 //sys	EnumProcesses(processIds []uint32, bytesReturned *uint32) (err error) = psapi.EnumProcesses
 
-// Process Status API (PSAPI)
-//sys	EnumProcesses(processIds []uint32, bytesReturned *uint32) (err error) = psapi.EnumProcesses
-
 // syscall interface implementation for other packages
 
 // GetCurrentProcess returns the handle for the current process.

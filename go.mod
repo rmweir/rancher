@@ -46,6 +46,7 @@ require (
 	github.com/bep/debounce v1.2.0
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/coreos/etcd v3.3.15+incompatible
+	github.com/coreos/go-semver v0.3.0
 	github.com/coreos/prometheus-operator v0.36.0
 	github.com/crewjam/saml v0.0.0-20190521120225-344d075952c9
 	github.com/davecgh/go-spew v1.1.1
@@ -84,9 +85,9 @@ require (
 	github.com/rancher/rke v1.1.0-rc6.0.20200224180657-6664be5e3b1c
 	github.com/rancher/security-scan v0.1.5
 	github.com/rancher/steve v0.0.0-20200226042400-e2e87cda5338
-	github.com/rancher/system-upgrade-controller v0.2.0
+	github.com/rancher/system-upgrade-controller v0.3.0-rc1
 	github.com/rancher/types v0.0.0-20200225170923-7f43506cf432
-	github.com/rancher/wrangler v0.4.2-0.20200215064225-8abf292acf7b
+	github.com/rancher/wrangler v0.4.2-0.20200225192203-e5307acd8846
 	github.com/rancher/wrangler-api v0.4.1
 	github.com/robfig/cron v1.1.0
 	github.com/russellhaering/goxmldsig v0.0.0-20180122054445-a348271703b2 // indirect
@@ -118,6 +119,7 @@ require (
 	k8s.io/apiserver v0.17.2
 	k8s.io/cli-runtime v0.17.2
 	k8s.io/client-go v12.0.0+incompatible
+	k8s.io/kubectl v0.17.2
 	k8s.io/kubernetes v1.17.2
 	k8s.io/utils v0.0.0-20191114200735-6ca3b61696b6
 )
