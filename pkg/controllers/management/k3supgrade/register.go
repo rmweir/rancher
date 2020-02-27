@@ -28,7 +28,7 @@ type handler struct {
 	manager                *clustermanager.Manager
 }
 
-const systemUpgradeNS = "system-upgrade"
+const systemUpgradeNS = "cattle-system"
 const rancherManagedPlan = "rancher-managed"
 const upgradeDisableLabelKey = "plan.upgrade.cattle.io/disable"
 
@@ -66,7 +66,7 @@ func (h *handler) deployPlans(cluster v3.Cluster) error {
 	}
 	planClient := planConfig.Plans(h.systemUpgradeNamespace)
 
-	planList, err := planClient.List(metav1.ListOptions{})
+	_, err = planClient.List(metav1.ListOptions{})
 	if err != nil {
 		// may need to handle this error, if there is no Plan CRD what should we do?
 		if errors.IsNotFound(err) {
@@ -75,7 +75,7 @@ func (h *handler) deployPlans(cluster v3.Cluster) error {
 		}
 		return err
 	}
-
+	/*
 	// deactivate all existing plans that are not managed by Rancher
 	for _, plan := range planList.Items {
 		if _, ok := plan.Labels[rancherManagedPlan]; !ok {
@@ -90,7 +90,7 @@ func (h *handler) deployPlans(cluster v3.Cluster) error {
 				return err
 			}
 		}
-	}
+	}*/
 
 	// apply master and worker plans
 	// TODO: what if they already exist?
