@@ -2,8 +2,9 @@ package k3supgrade
 
 import (
 	"fmt"
-	"k8s.io/apimachinery/pkg/labels"
 	"strings"
+
+	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/coreos/go-semver/semver"
 	utils2 "github.com/rancher/rancher/pkg/app/utils"
@@ -51,7 +52,13 @@ func (h *handler) onClusterChange(key string, cluster *v3.Cluster) (*v3.Cluster,
 	}
 
 	// create or update k3supgradecontroller if necessary
-	if err := h.deployK3sUpgradeController(cluster.Name); err != nil {
+	if err = h.deployK3sUpgradeController(cluster.Name); err != nil {
+		return cluster, err
+	}
+
+	// deploy plans into downstream cluster
+	// TODO: Refactor to not use the entire cluster obj
+	if err = h.deployPlans(*cluster); err != nil {
 		return cluster, err
 	}
 
