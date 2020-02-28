@@ -57,8 +57,8 @@ func (h *handler) onClusterChange(key string, cluster *v3.Cluster) (*v3.Cluster,
 	}
 
 	// deploy plans into downstream cluster
-	// TODO: Refactor to not use the entire cluster obj
-	if err = h.deployPlans(*cluster); err != nil {
+	// TODO: We need the cluster object in order to set
+	if err = h.deployPlans(cluster); err != nil {
 		return cluster, err
 	}
 
@@ -94,7 +94,7 @@ func (h *handler) deployK3sUpgradeController(clusterName string) error {
 	if err != nil {
 		return err
 	}
-
+	fmt.Println("here 1")
 	systemProjectID := ref.Ref(systemProject)
 	_, systemProjectName := ref.Parse(systemProjectID)
 
@@ -103,7 +103,7 @@ func (h *handler) deployK3sUpgradeController(clusterName string) error {
 	if err != nil {
 		return err
 	}
-
+	fmt.Println("106")
 	desiredApp := &v32.App{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "rancher-k3s-upgrader",
