@@ -115,3 +115,35 @@ func generateWorkerPlan(version string, concurrency int) (planv1.Plan, error) {
 
 	return workerPlan, nil
 }
+
+func configureMasterPlan(plan planv1.Plan, version string, concurrency int) (planv1.Plan, error) {
+	plan.Name = k3sMasterPlanName
+	plan.Spec.Version = version
+	plan.Spec.Concurrency = int64(concurrency)
+
+	// only select master nodes
+	plan.Spec.NodeSelector = &metav1.LabelSelector{
+		MatchExpressions: []metav1.LabelSelectorRequirement{{
+
+			Key:      describe.LabelNodeRolePrefix + "master",
+			Operator: metav1.LabelSelectorOpIn,
+			Values:   []string{"true"},
+		}},
+	}
+	return plan, nil
+}
+
+func configureWorkerPlan(plan planv1.Plan, version string, concurrency int) (planv1.Plan, error) {
+	plan.Name = k3sWorkerPlanName
+	plan.Spec.Version = version
+	plan.Spec.Concurrency = int64(concurrency)
+
+	// worker plans wait for master plans to complete
+	plan.Spec.Prepare = &planv1.ContainerSpec{
+		Image:   upgradeImage,
+		Command: []string{"prepare", k3sMasterPlanName},
+		Args:    nil,
+	}
+
+	return plan, nil
+}
