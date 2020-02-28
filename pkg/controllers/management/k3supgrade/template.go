@@ -52,7 +52,7 @@ spec:
 const k3sMasterPlanName = "k3s-master-plan"
 const k3sWorkerPlanName = "k3s-worker-plan"
 const systemUpgradeServiceAccount = "system-upgrade"
-const upgradeImage = "rancher/k3s-upgrade:latest"
+const upgradeImage = "rancher/k3s-upgrade"
 
 var genericPlan = planv1.Plan{
 	TypeMeta: metav1.TypeMeta{
@@ -112,17 +112,24 @@ func generateWorkerPlan(version string, concurrency int) (planv1.Plan, error) {
 		Command: []string{"prepare", k3sMasterPlanName},
 		Args:    nil,
 	}
+	// select all nodes that are not master
+	workerPlan.Spec.NodeSelector = &metav1.LabelSelector{
+		MatchExpressions: []metav1.LabelSelectorRequirement{{
+			Key:      describe.LabelNodeRolePrefix + "master",
+			Operator: metav1.LabelSelectorOpDoesNotExist,
+		}},
+	}
 
 	return workerPlan, nil
 }
 
-func configureMasterPlan(plan planv1.Plan, version string, concurrency int) (planv1.Plan, error) {
-	plan.Name = k3sMasterPlanName
-	plan.Spec.Version = version
-	plan.Spec.Concurrency = int64(concurrency)
+func configureMasterPlan(masterPlan planv1.Plan, version string, concurrency int) (planv1.Plan, error) {
+	masterPlan.Name = k3sMasterPlanName
+	masterPlan.Spec.Version = version
+	masterPlan.Spec.Concurrency = int64(concurrency)
 
 	// only select master nodes
-	plan.Spec.NodeSelector = &metav1.LabelSelector{
+	masterPlan.Spec.NodeSelector = &metav1.LabelSelector{
 		MatchExpressions: []metav1.LabelSelectorRequirement{{
 
 			Key:      describe.LabelNodeRolePrefix + "master",
@@ -130,20 +137,27 @@ func configureMasterPlan(plan planv1.Plan, version string, concurrency int) (pla
 			Values:   []string{"true"},
 		}},
 	}
-	return plan, nil
+	return masterPlan, nil
 }
 
-func configureWorkerPlan(plan planv1.Plan, version string, concurrency int) (planv1.Plan, error) {
-	plan.Name = k3sWorkerPlanName
-	plan.Spec.Version = version
-	plan.Spec.Concurrency = int64(concurrency)
+func configureWorkerPlan(workerPlan planv1.Plan, version string, concurrency int) (planv1.Plan, error) {
+	workerPlan.Name = k3sWorkerPlanName
+	workerPlan.Spec.Version = version
+	workerPlan.Spec.Concurrency = int64(concurrency)
 
 	// worker plans wait for master plans to complete
-	plan.Spec.Prepare = &planv1.ContainerSpec{
+	workerPlan.Spec.Prepare = &planv1.ContainerSpec{
 		Image:   upgradeImage,
 		Command: []string{"prepare", k3sMasterPlanName},
 		Args:    nil,
 	}
 
-	return plan, nil
+	workerPlan.Spec.NodeSelector = &metav1.LabelSelector{
+		MatchExpressions: []metav1.LabelSelectorRequirement{{
+			Key:      describe.LabelNodeRolePrefix + "master",
+			Operator: metav1.LabelSelectorOpDoesNotExist,
+		}},
+	}
+
+	return workerPlan, nil
 }
