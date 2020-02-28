@@ -129,7 +129,7 @@ func walkthroughMap(inputMap map[interface{}]interface{}, walkFunc func(map[inte
 	}
 }
 
-func GetImages(systemChartPath string, imagesFromArgs []string, rkeSystemImages map[string]v3.RKESystemImages, osType OSType) ([]string, error) {
+func GetImages(systemChartPath string, k3sUpgradeImages, imagesFromArgs []string, rkeSystemImages map[string]v3.RKESystemImages, osType OSType) ([]string, error) {
 	var images []string
 
 	// fetch images from charts

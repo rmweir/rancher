@@ -60,7 +60,7 @@ func run(systemChartPath string, imagesFromArgs []string) error {
 	}
 
 	// already downloaded in dapper
-	b, err := ioutil.ReadFile("/root/data.json")
+	b, err := ioutil.ReadFile("data.json")
 	if err != nil {
 		return err
 	}
@@ -76,6 +76,12 @@ func run(systemChartPath string, imagesFromArgs []string) error {
 		data.K8sVersionWindowsServiceOptions,
 		data.K8sVersionInfo,
 	)
+
+	k3sImages := data.K3S
+	k3sVersions, _ := data.K3S["channels"].(map[string]interface{})
+	for _, version := range k3sVersions {
+
+	}
 
 	targetImages, err := img.GetImages(systemChartPath, imagesFromArgs, linuxInfo.RKESystemImages, img.Linux)
 	if err != nil {
@@ -216,6 +222,20 @@ func getWindowsAgentImage() string {
 		return ""
 	}
 	return fmt.Sprintf("%s/rancher-agent:%s", repo, tag)
+}
+
+func getK3sUpgradeImages(k3sData map[string]interface{}) []string {
+	k3sImages := make([]string, 0)
+	imageFormat := "rancher/k3s-upgrade:%s"
+	channels, _ := k3sData["channels"].([]interface{})
+	for _, channel := range channels {
+		channelMap := channel.(map[string]string)
+		if version := channelMap["latest"]; version != "" {
+			version = strings.Replace(version, "+", "-", -1)
+			k3sImages = append(k3sImages, fmt.Sprintf(imageFormat, version))
+		}
+	}
+	return k3sImages
 }
 
 func getScript(arch, fileType string) string {
