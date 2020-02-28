@@ -146,9 +146,8 @@ func configureWorkerPlan(workerPlan planv1.Plan, version string, concurrency int
 
 	// worker plans wait for master plans to complete
 	workerPlan.Spec.Prepare = &planv1.ContainerSpec{
-		Image:   upgradeImage,
-		Command: []string{"prepare", k3sMasterPlanName},
-		Args:    nil,
+		Image: upgradeImage,
+		Args:  []string{"prepare", k3sMasterPlanName},
 	}
 
 	workerPlan.Spec.NodeSelector = &metav1.LabelSelector{
