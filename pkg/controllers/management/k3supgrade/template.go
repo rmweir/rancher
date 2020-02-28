@@ -108,9 +108,8 @@ func generateWorkerPlan(version string, concurrency int) (planv1.Plan, error) {
 
 	// worker plans wait for master plans to complete
 	workerPlan.Spec.Prepare = &planv1.ContainerSpec{
-		Image:   upgradeImage,
-		Command: []string{"prepare", k3sMasterPlanName},
-		Args:    nil,
+		Image: upgradeImage,
+		Args:  []string{"prepare", k3sMasterPlanName},
 	}
 	// select all nodes that are not master
 	workerPlan.Spec.NodeSelector = &metav1.LabelSelector{
