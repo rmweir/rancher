@@ -116,6 +116,7 @@ func (h *handler) deployPlans(cluster *v3.Cluster) error {
 				return err
 			}
 			if !cmp(masterPlan, newMaster) {
+				planClient = planConfig.Plans(systemUpgradeNS)
 				_, err = planClient.Update(&newMaster)
 				if err != nil {
 					return err
@@ -135,6 +136,7 @@ func (h *handler) deployPlans(cluster *v3.Cluster) error {
 				return err
 			}
 			if !cmp(workerPlan, newWorker) {
+				planClient = planConfig.Plans(systemUpgradeNS)
 				_, err = planClient.Update(&newWorker)
 				if err != nil {
 					return nil
@@ -149,6 +151,7 @@ func (h *handler) deployPlans(cluster *v3.Cluster) error {
 		}
 
 	} else { // create the plans
+		planClient = planConfig.Plans(systemUpgradeNS)
 		masterPlan, err = generateMasterPlan(cluster.Spec.K3sConfig.Version.String(),
 			cluster.Spec.K3sConfig.ServerConcurrency)
 		_, err = planClient.Create(&masterPlan)
