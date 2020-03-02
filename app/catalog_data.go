@@ -23,9 +23,8 @@ const (
 	libraryBranch = "master"
 	libraryName   = "library"
 
-	// TODO: system-charts should be merged and original values should be restored for url and branch
-	systemLibraryURL    = "https://github.com/rmweir/system-charts"
-	systemLibraryBranch = "system-upgrade-controller"
+	systemLibraryURL    = "https://git.rancher.io/system-charts"
+	systemLibraryBranch = "master"
 	systemLibraryName   = "system-library"
 	defSystemChartVer   = "management.cattle.io/default-system-chart-version"
 )
@@ -134,8 +133,7 @@ func syncCatalogs(management *config.ManagementContext) error {
 			desiredDefaultURL := systemLibraryURL
 			desiredDefaultBranch := ""
 			if devMode := os.Getenv("CATTLE_DEV_MODE"); devMode != "" {
-				// TODO: revert this back to "dev" branch before merge
-				desiredDefaultBranch = "system-upgrade-controller"
+				desiredDefaultBranch = "dev"
 			}
 
 			if fromEnvURL := os.Getenv("CATTLE_SYSTEM_CHART_DEFAULT_URL"); fromEnvURL != "" {

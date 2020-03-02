@@ -77,7 +77,7 @@ func (h *handler) deployK3sUpgradeController(clusterName string) error {
 		return err
 	}
 
-	templateID := "system-library-rancher-k3s-upgrader"
+	templateID := k3sUpgraderCatalogName
 	template, err := h.templateLister.Get(namespace.GlobalNamespace, templateID)
 	if err != nil {
 		return err

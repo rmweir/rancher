@@ -31,9 +31,12 @@ type handler struct {
 	manager                *clustermanager.Manager
 }
 
-const systemUpgradeNS = "cattle-system"
-const rancherManagedPlan = "rancher-managed"
-const upgradeDisableLabelKey = "plan.upgrade.cattle.io/disable"
+const (
+	systemUpgradeNS        = "cattle-system"
+	rancherManagedPlan     = "rancher-managed"
+	upgradeDisableLabelKey = "plan.upgrade.cattle.io/disable"
+	k3sUpgraderCatalogName = "system-library-rancher-k3s-upgrader"
+)
 
 func Register(ctx context.Context, wContext *wrangler.Context, mgmtCtx *config.ManagementContext, manager *clustermanager.Manager) error {
 	h := &handler{
