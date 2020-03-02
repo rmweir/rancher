@@ -30,15 +30,15 @@ func (h *handler) onClusterChange(key string, cluster *v3.Cluster) (*v3.Cluster,
 	if cluster.Spec.K3sConfig == nil {
 		version := *cluster.Status.Version
 		cluster.Spec.K3sConfig = &v3.K3sConfig{
-			Version: &version,
+			Version: version.String(),
 		}
 	}
 
-	if cluster.Spec.K3sConfig.Version == nil {
-		cluster.Spec.K3sConfig.Version = cluster.Status.Version
+	if cluster.Spec.K3sConfig.Version == "" {
+		cluster.Spec.K3sConfig.Version = cluster.Status.Version.String()
 	}
 
-	isNewer, err := IsNewerVersion(cluster.Status.Version.GitVersion, cluster.Spec.K3sConfig.Version.GitVersion)
+	isNewer, err := IsNewerVersion(cluster.Status.Version.GitVersion, cluster.Spec.K3sConfig.Version)
 	if err != nil {
 		return cluster, err
 	}

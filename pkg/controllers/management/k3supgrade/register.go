@@ -23,6 +23,7 @@ type handler struct {
 	systemUpgradeNamespace string
 	newVersion             string //TODO make this info.Version
 	clusterCache           wranglerv3.ClusterCache
+	clusterClient          wranglerv3.ClusterClient
 	apps                   projectv3.AppInterface
 	appLister              projectv3.AppLister
 	templateLister         v3.CatalogTemplateLister
@@ -39,6 +40,7 @@ func Register(ctx context.Context, wContext *wrangler.Context, mgmtCtx *config.M
 		systemUpgradeNamespace: systemUpgradeNS,
 		newVersion:             "1.17.2+k3s",
 		clusterCache:           wContext.Mgmt.Cluster().Cache(),
+		clusterClient:          wContext.Mgmt.Cluster(),
 		apps:                   mgmtCtx.Project.Apps(metav1.NamespaceAll),
 		appLister:              mgmtCtx.Project.Apps("").Controller().Lister(),
 		templateLister:         mgmtCtx.Management.CatalogTemplates("").Controller().Lister(),
@@ -96,7 +98,20 @@ func (h *handler) deployPlans(cluster *v3.Cluster) error {
 		} else {
 			// if any of the rancher plans are currently applying, set updating status on cluster
 			if len(plan.Status.Applying) > 0 {
-				v3.ClusterConditionUpdated.True(cluster)
+				v3.ClusterConditionUpdated.Unknown(cluster)
+				cluster, err = h.clusterClient.Update(cluster)
+				if err != nil {
+					return err
+				}
+			} else {
+				//set it back if not
+				if v3.ClusterConditionUpdated.IsUnknown(cluster) {
+					v3.ClusterConditionUpdated.True(cluster)
+					cluster, err = h.clusterClient.Update(cluster)
+					if err != nil {
+						return err
+					}
+				}
 			}
 
 			switch name := plan.Name; name {
@@ -111,7 +126,7 @@ func (h *handler) deployPlans(cluster *v3.Cluster) error {
 	// if rancher plans exist, do we need to update?
 	if masterPlan.Name != "" || workerPlan.Name != "" {
 		if masterPlan.Name != "" {
-			newMaster, err := configureMasterPlan(masterPlan, cluster.Spec.K3sConfig.Version.String(), cluster.Spec.K3sConfig.ServerConcurrency)
+			newMaster, err := configureMasterPlan(masterPlan, cluster.Spec.K3sConfig.Version, cluster.Spec.K3sConfig.ServerConcurrency)
 			if err != nil {
 				return err
 			}
@@ -123,15 +138,11 @@ func (h *handler) deployPlans(cluster *v3.Cluster) error {
 				}
 			} else {
 				fmt.Println("master plan is the same, not updating")
-				// if we were in an updating state, flip back
-				if v3.ClusterConditionUpdated.IsTrue(cluster) {
-					v3.ClusterConditionUpdated.False(cluster)
-				}
 			}
 		}
 
 		if workerPlan.Name != "" {
-			newWorker, err := configureWorkerPlan(workerPlan, cluster.Spec.K3sConfig.Version.String(), cluster.Spec.K3sConfig.WorkerConcurrency)
+			newWorker, err := configureWorkerPlan(workerPlan, cluster.Spec.K3sConfig.Version, cluster.Spec.K3sConfig.WorkerConcurrency)
 			if err != nil {
 				return err
 			}
@@ -143,22 +154,18 @@ func (h *handler) deployPlans(cluster *v3.Cluster) error {
 				}
 			} else {
 				fmt.Println("worker plan is the same, not updating")
-				// if we were in an updating state, flip back
-				if v3.ClusterConditionUpdated.IsTrue(cluster) {
-					v3.ClusterConditionUpdated.False(cluster)
-				}
 			}
 		}
 
 	} else { // create the plans
 		planClient = planConfig.Plans(systemUpgradeNS)
-		masterPlan, err = generateMasterPlan(cluster.Spec.K3sConfig.Version.String(),
+		masterPlan, err = generateMasterPlan(cluster.Spec.K3sConfig.Version,
 			cluster.Spec.K3sConfig.ServerConcurrency)
 		_, err = planClient.Create(&masterPlan)
 		if err != nil {
 			return err
 		}
-		workerPlan, err = generateWorkerPlan(cluster.Spec.K3sConfig.Version.String(),
+		workerPlan, err = generateWorkerPlan(cluster.Spec.K3sConfig.Version,
 			cluster.Spec.K3sConfig.WorkerConcurrency)
 		_, err = planClient.Create(&workerPlan)
 		if err != nil {

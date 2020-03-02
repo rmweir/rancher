@@ -108,7 +108,8 @@ func generateWorkerPlan(version string, concurrency int) (planv1.Plan, error) {
 
 	// worker plans wait for master plans to complete
 	workerPlan.Spec.Prepare = &planv1.ContainerSpec{
-		Image: upgradeImage,
+		// TODO: the image version doesn't matter here, needs something recent
+		Image: upgradeImage + ":" + "v1.17.3-k3s1",
 		Args:  []string{"prepare", k3sMasterPlanName},
 	}
 	// select all nodes that are not master
@@ -146,7 +147,8 @@ func configureWorkerPlan(workerPlan planv1.Plan, version string, concurrency int
 
 	// worker plans wait for master plans to complete
 	workerPlan.Spec.Prepare = &planv1.ContainerSpec{
-		Image: upgradeImage,
+		// TODO need a recent valid image tag here...
+		Image: upgradeImage + ":" + "v1.17.3-k3s1",
 		Args:  []string{"prepare", k3sMasterPlanName},
 	}
 

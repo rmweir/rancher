@@ -140,7 +140,7 @@ func (v *Validator) validateK3sVersionUpgrade(request *types.APIContext, spec *v
 	}
 
 	// must wait for original spec version to be set
-	if spec.K3sConfig.Version == nil {
+	if spec.K3sConfig.Version == "" {
 		return upgradeNotReadyErr
 	}
 
@@ -155,7 +155,7 @@ func (v *Validator) validateK3sVersionUpgrade(request *types.APIContext, spec *v
 	}
 
 	prevVersion := cluster.Status.Version.GitVersion
-	updateVersion := spec.K3sConfig.Version.GitVersion
+	updateVersion := spec.K3sConfig.Version
 
 	if prevVersion == updateVersion {
 		// no op
