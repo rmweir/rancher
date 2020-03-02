@@ -1,6 +1,6 @@
 module github.com/rancher/rancher
 
-go 1.14
+go 1.13
 
 replace (
 	git.apache.org/thrift.git => github.com/apache/thrift v0.12.0
@@ -10,7 +10,7 @@ replace (
 	github.com/matryer/moq => github.com/rancher/moq v0.0.0-20190404221404-ee5226d43009
 	github.com/prometheus/client_golang => github.com/prometheus/client_golang v0.9.3
 
-	github.com/rancher/types => github.com/rancher/types v0.0.0-20200226215232-12620b5bd7ff
+	github.com/rancher/types => github.com/daxmc99/types v0.0.0-20200229013729-711984f3d87b
 
 	k8s.io/api => k8s.io/api v0.17.2
 	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.17.2
@@ -82,9 +82,9 @@ require (
 	github.com/rancher/norman v0.0.0-20200226193007-69ad517cedee
 	github.com/rancher/rdns-server v0.0.0-20180802070304-bf662911db6a
 	github.com/rancher/remotedialer v0.2.5
-	github.com/rancher/rke v1.1.0-rc8
+	github.com/rancher/rke v1.1.0-rc8.0.20200228224621-81d025987b86
 	github.com/rancher/security-scan v0.1.5
-	github.com/rancher/steve v0.0.0-20200228163025-68ed46723183
+	github.com/rancher/steve v0.0.0-20200301160008-283790802c5d
 	github.com/rancher/system-upgrade-controller v0.2.0
 	github.com/rancher/types v0.0.0-20200226215232-12620b5bd7ff
 	github.com/rancher/wrangler v0.4.2-0.20200215064225-8abf292acf7b
