@@ -1,14 +1,9 @@
 pipeline {
     agent any
     stages {
-	stage('Cleanup') {
-	    steps {
-		deleteDir()
-            }
-	}
         stage('Setup Test Framework') {
             steps {
-                git poll: false, url: 'https://github.com/rancher/rancher2-scaling'
+                git poll: false, branch: 'cleanup', url: 'https://github.com/rancher/rancher2-scaling'
 		dir("testing") {
 			sh 'sudo apt-get install python3'
 			sh 'curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py'
@@ -16,7 +11,7 @@ pipeline {
 			sh 'pip --version'
 			sh 'python3 get-pip.py'
 			sh 'pip install --upgrade pip'
-			sh 'pip install -r requirements.txt'
+			sh 'ls'
 			sh 'python3 run.py'
                         sh 'ls'
 		}
