@@ -90,7 +90,7 @@ require (
 	github.com/rancher/system-upgrade-controller v0.4.1-0.20200326220202-4655d4a551bd
 	github.com/rancher/types v0.0.0-20200407154953-bd140b76a4df
 	github.com/rancher/wrangler v0.6.1-0.20200415091649-4921f2d5a397
-	github.com/rancher/wrangler-api v0.5.1-0.20200326194427-c13310506d04
+	github.com/rancher/wrangler-api v0.6.1-0.20200415091914-8b0b4666ec02
 	github.com/robfig/cron v1.1.0
 	github.com/russellhaering/goxmldsig v0.0.0-20180122054445-a348271703b2 // indirect
 	github.com/satori/go.uuid v1.2.0
