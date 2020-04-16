@@ -363,6 +363,13 @@ github.com/rancher/kontainer-engine/service
 github.com/rancher/kontainer-engine/store
 github.com/rancher/kontainer-engine/types
 github.com/rancher/kontainer-engine/utils
+# github.com/rancher/lasso v0.0.0-20200415091408-6cfd718cfeee
+github.com/rancher/lasso/pkg/cache
+github.com/rancher/lasso/pkg/client
+github.com/rancher/lasso/pkg/controller
+github.com/rancher/lasso/pkg/log
+github.com/rancher/lasso/pkg/mapper
+github.com/rancher/lasso/pkg/scheme
 # github.com/rancher/machine v0.15.0-rancher25
 github.com/rancher/machine/libmachine/drivers
 github.com/rancher/machine/libmachine/drivers/plugin/localbinary
@@ -528,7 +535,7 @@ github.com/rancher/types/mapper
 github.com/rancher/types/peermanager
 github.com/rancher/types/status
 github.com/rancher/types/user
-# github.com/rancher/wrangler v0.5.4-0.20200326191509-4054411d9736
+# github.com/rancher/wrangler v0.6.1-0.20200415091649-4921f2d5a397
 github.com/rancher/wrangler/pkg/apply
 github.com/rancher/wrangler/pkg/apply/injectors
 github.com/rancher/wrangler/pkg/broadcast
@@ -976,6 +983,7 @@ k8s.io/cli-runtime/pkg/resource
 # k8s.io/client-go v12.0.0+incompatible => github.com/rancher/client-go v1.18.0-rancher.1
 k8s.io/client-go/discovery
 k8s.io/client-go/discovery/cached/disk
+k8s.io/client-go/discovery/cached/memory
 k8s.io/client-go/discovery/fake
 k8s.io/client-go/dynamic
 k8s.io/client-go/informers
