@@ -2,6 +2,8 @@ package management
 
 import (
 	"context"
+	"github.com/rancher/rancher/pkg/controllers/management/clusterapi"
+	"github.com/rancher/rancher/pkg/controllers/management/clusterapiprovisioner"
 
 	"github.com/rancher/rancher/pkg/clustermanager"
 	"github.com/rancher/rancher/pkg/controllers/management/k3supgrade"
@@ -13,5 +15,7 @@ func RegisterWrangler(ctx context.Context, wranglerContext *wrangler.Context, ma
 	// Add controllers to register here
 
 	k3supgrade.Register(ctx, wranglerContext, management, manager)
+	clusterapi.Register(ctx, wranglerContext, management, manager)
+	clusterapiprovisioner.Register(ctx, wranglerContext, management, manager)
 
 }

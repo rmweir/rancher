@@ -2,6 +2,8 @@ package wrangler
 
 import (
 	"context"
+	"github.com/rancher/rancher/pkg/wrangler/generated/controllers/cluster.x-k8s.io"
+	"github.com/rancher/rancher/pkg/wrangler/generated/controllers/cluster.x-k8s.io/v1alpha3"
 
 	"github.com/rancher/rancher/pkg/features"
 	"github.com/rancher/steve/pkg/accesscontrol"
@@ -20,6 +22,7 @@ type Context struct {
 
 	Apply        apply.Apply
 	Mgmt         managementv3.Interface
+	V1alpha3    v1alpha3.Interface
 	TunnelServer *remotedialer.Server
 
 	ASL      accesscontrol.AccessSetLookup
@@ -49,16 +52,23 @@ func NewContext(ctx context.Context, restConfig *rest.Config, tunnelServer *remo
 		return nil, err
 	}
 
+	v1alpha3, err := cluster.NewFactoryFromConfig(restConfig)
+	if err != nil {
+		return nil, err
+	}
+
 	asl := accesscontrol.NewAccessStore(ctx, features.Steve.Enabled(), steveControllers.RBAC)
 
 	return &Context{
 		Controllers:  steveControllers,
 		Apply:        apply,
 		Mgmt:         mgmt.Management().V3(),
+		V1alpha3:	  v1alpha3.Cluster().V1alpha3(),
 		TunnelServer: tunnelServer,
 		ASL:          asl,
 		starters: []start.Starter{
 			mgmt,
+			v1alpha3,
 		},
 	}, nil
 }
