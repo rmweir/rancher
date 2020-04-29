@@ -661,6 +661,14 @@ func (d *Driver) Create(ctx context.Context, options *types.DriverOptions, _ *ty
 
 	logrus.Infof("Creating worker nodes")
 
+	a, err := eksService.CreateNodegroup(&eks.CreateNodegroupInput{
+		AmiType: aws.String(eks.AMITypesAl2X8664),
+		ClusterName: aws.String(state.DisplayName),
+		NodeRole: aws.String(roleARN),
+		NodegroupName: aws.String(fmt.Sprintf("%s-ng", state.ClusterName)),
+		Subnets: subnetIds,
+	})
+	fmt.Println(a)
 	var amiID string
 	if state.AMI != "" {
 		amiID = state.AMI
