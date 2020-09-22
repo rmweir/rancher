@@ -3,7 +3,6 @@ package cluster
 import (
 	"fmt"
 	"net/http"
-	"reflect"
 	"strings"
 	"time"
 
@@ -19,7 +18,6 @@ import (
 	"github.com/rancher/rancher/pkg/controllers/management/k3sbasedupgrade"
 	"github.com/rancher/rancher/pkg/controllers/managementuser/cis"
 	v3 "github.com/rancher/rancher/pkg/generated/norman/management.cattle.io/v3"
-	"github.com/rancher/rancher/pkg/kontainer-engine/service"
 	"github.com/rancher/rancher/pkg/namespace"
 	mgmtSchema "github.com/rancher/rancher/pkg/schemas/management.cattle.io/v3"
 	"github.com/rancher/rancher/pkg/settings"
@@ -65,10 +63,6 @@ func (v *Validator) Validator(request *types.APIContext, schema *types.Schema, d
 	}
 
 	if err := v.validateScheduledClusterScan(&clientClusterSpec); err != nil {
-		return err
-	}
-
-	if err := v.validateGenericEngineConfig(request, &clusterSpec); err != nil {
 		return err
 	}
 
@@ -308,31 +302,6 @@ func (v *Validator) accessTemplate(request *types.APIContext, spec *mgmtclient.C
 	return nil
 }
 
-// validateGenericEngineConfig allows for additional validation of clusters that depend on Kontainer Engine or Rancher Machine driver
-func (v *Validator) validateGenericEngineConfig(request *types.APIContext, spec *v32.ClusterSpec) error {
-
-	if request.Method == http.MethodPost {
-		return nil
-	}
-
-	if spec.AmazonElasticContainerServiceConfig != nil {
-		// compare with current cluster
-		clusterName := request.ID
-		prevCluster, err := v.ClusterLister.Get("", clusterName)
-		if err != nil {
-			return err
-		}
-
-		err = validateEKS(*prevCluster.Spec.GenericEngineConfig, *spec.AmazonElasticContainerServiceConfig)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-
-}
-
 func (v *Validator) validateEKSConfig(request *types.APIContext, cluster map[string]interface{}, clusterSpec *v32.ClusterSpec) error {
 	eksConfig, ok := cluster["eksConfig"].(map[string]interface{})
 	if !ok {
@@ -509,25 +478,6 @@ func validateEKSNodegroups(spec *v32.ClusterSpec) error {
 
 	if len(errors) != 0 {
 		return httperror.NewAPIError(httperror.InvalidBodyContent, fmt.Sprintf(strings.Join(errors, ";")))
-	}
-	return nil
-}
-
-func validateEKS(prevCluster, newCluster map[string]interface{}) error {
-	// check config is for EKS clusters
-	if driver, ok := prevCluster["driverName"]; ok {
-		if driver != service.AmazonElasticContainerServiceDriverName {
-			return nil
-		}
-	}
-
-	// don't allow for updating subnets
-	if prev, ok := prevCluster["subnets"]; ok {
-		if new, ok := newCluster["subnets"]; ok {
-			if !reflect.DeepEqual(prev, new) {
-				return httperror.NewAPIError(httperror.InvalidBodyContent, "cannot modify EKS subnets after creation")
-			}
-		}
 	}
 	return nil
 }

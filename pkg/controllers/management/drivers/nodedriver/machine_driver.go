@@ -231,6 +231,8 @@ func (m *Lifecycle) download(obj *v3.NodeDriver) (*v3.NodeDriver, error) {
 	dynamicSchema.Labels = map[string]string{}
 	dynamicSchema.Labels[driverNameLabel] = obj.Spec.DisplayName
 
+	if obj.Spec.DisplayName == "amazonelasticcontainerdriver" {
+	}
 	_, err = m.schemaClient.Create(dynamicSchema)
 	if err != nil {
 		if !errors.IsAlreadyExists(err) {

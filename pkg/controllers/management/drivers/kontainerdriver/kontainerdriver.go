@@ -117,9 +117,11 @@ func (l *Lifecycle) createDynamicSchema(obj *v3.KontainerDriver) error {
 		return err
 	}
 
+	name := getDynamicTypeName(obj)
+	customizeEKSFields(name, resourceFields)
 	dynamicSchema := &v3.DynamicSchema{
 		Spec: v32.DynamicSchemaSpec{
-			SchemaName:     getDynamicTypeName(obj),
+			SchemaName:     name,
 			ResourceFields: resourceFields,
 		},
 	}
@@ -135,6 +137,7 @@ func (l *Lifecycle) createDynamicSchema(obj *v3.KontainerDriver) error {
 	dynamicSchema.Labels = map[string]string{}
 	dynamicSchema.Labels[obj.Name] = obj.Status.DisplayName
 	dynamicSchema.Labels[driverNameLabel] = obj.Status.DisplayName
+
 	_, err = l.dynamicSchemas.Create(dynamicSchema)
 	if err != nil && !errors.IsAlreadyExists(err) {
 		return errorsutil.WithMessage(err, "error creating dynamic schema")
@@ -163,6 +166,8 @@ func (l *Lifecycle) updateDynamicSchema(dynamicSchema *v3.DynamicSchema, obj *v3
 	if err != nil {
 		return err
 	}
+
+	fields = customizeEKSFields(dynamicSchema.Name, fields)
 
 	dynamicSchema.Spec.ResourceFields = fields
 
@@ -490,4 +495,17 @@ func (l *Lifecycle) DynamicSchemaExists(obj *v3.KontainerDriver) bool {
 
 	_, err := l.dynamicSchemasLister.Get("", strings.ToLower(getDynamicTypeName(obj)))
 	return err == nil
+}
+
+func customizeEKSFields(name string, fields map[string]v32.Field) map[string]v32.Field {
+	if name == "amazonelasticcontainerserviceconfig" {
+		for key, field := range fields {
+			if key != "subnets" {
+				continue
+			}
+			field.Update = false
+			fields[key] = field
+		}
+	}
+	return fields
 }
