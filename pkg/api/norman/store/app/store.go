@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/rancher/norman/api/access"
 	"github.com/rancher/norman/httperror"
@@ -23,6 +24,7 @@ type Store struct {
 	types.Store
 	Apps                  pv3.AppLister
 	TemplateVersionLister v3.CatalogTemplateVersionLister
+	ClusterLister         v3.ClusterLister
 }
 
 func (s *Store) Create(apiContext *types.APIContext, schema *types.Schema, data map[string]interface{}) (map[string]interface{}, error) {
@@ -34,7 +36,12 @@ func (s *Store) Create(apiContext *types.APIContext, schema *types.Schema, data 
 		return nil, err
 	}
 
-	if err := s.validateRancherVersion(data); err != nil {
+	clusterName, err := s.parseClusterName(apiContext.Request.URL.Path)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := s.validateChartCompatibility(clusterName, data); err != nil {
 		return nil, err
 	}
 
@@ -57,11 +64,16 @@ func (s *Store) Update(apiContext *types.APIContext, schema *types.Schema, data 
 		return nil, err
 	}
 
-	if err := s.validateRancherVersion(data); err != nil {
+	if err := s.validateForMultiClusterApp(id, "update"); err != nil {
 		return nil, err
 	}
 
-	if err := s.validateForMultiClusterApp(id, "update"); err != nil {
+	clusterName, err := s.parseClusterName(apiContext.Request.URL.Path)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := s.validateChartCompatibility(clusterName, data); err != nil {
 		return nil, err
 	}
 
@@ -86,7 +98,7 @@ func (s *Store) validateForMultiClusterApp(id string, msg string) error {
 	return nil
 }
 
-func (s *Store) validateRancherVersion(data map[string]interface{}) error {
+func (s *Store) validateChartCompatibility(clusterName string, data map[string]interface{}) error {
 	externalID := convert.ToString(data["externalId"])
 	if externalID == "" {
 		return nil
@@ -102,7 +114,7 @@ func (s *Store) validateRancherVersion(data map[string]interface{}) error {
 		return err
 	}
 
-	return catUtil.ValidateRancherVersion(template)
+	return catUtil.ValidateChartCompatibility(template, s.ClusterLister, clusterName)
 }
 
 func (s *Store) checkAccessToTemplateVersion(apiContext *types.APIContext, data map[string]interface{}) error {
@@ -174,4 +186,21 @@ func (s *Store) parseAppExternalID(data map[string]interface{}) (string, string,
 		return "", "", err
 	}
 	return templateVersionID, ns, nil
+}
+
+func (s *Store) parseClusterName(url string) (string, error) {
+	url = strings.TrimPrefix(url, "/v3/project/")
+	url = strings.TrimPrefix(url, "/v3/projects/")
+	parts := strings.Split(url, ":")
+	if !(len(parts) > 1) {
+		return "", httperror.NewAPIError(httperror.InvalidBodyContent, "cannot determine target cluster")
+	}
+	if _, err := s.ClusterLister.Get("", parts[0]); err != nil {
+		if errors.IsNotFound(err) {
+			return "", httperror.NewAPIError(httperror.NotFound, fmt.Sprintf("cannot find target cluster [%s]: %v", parts[0], err))
+		}
+		return "", httperror.NewAPIError(httperror.ServerError, fmt.Sprintf("error getting target custer [%s]: %v", parts[0], err))
+
+	}
+	return parts[0], nil
 }

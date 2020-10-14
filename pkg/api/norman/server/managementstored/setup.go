@@ -257,8 +257,10 @@ func Clusters(schemas *types.Schemas, managementContext *config.ScaledContext, c
 	handler := ccluster.ActionHandler{
 		NodepoolGetter:                managementContext.Management,
 		ClusterClient:                 managementContext.Management.Clusters(""),
+		ClusterLister:                 managementContext.Management.Clusters("").Controller().Lister(),
 		UserMgr:                       managementContext.UserManager,
 		ClusterManager:                clusterManager,
+		CatalogTemplateVersionLister:  managementContext.Management.CatalogTemplateVersions("").Controller().Lister(),
 		NodeTemplateGetter:            managementContext.Management,
 		BackupClient:                  managementContext.Management.EtcdBackups(""),
 		ClusterScanClient:             managementContext.Management.ClusterScans(""),
@@ -518,10 +520,12 @@ func App(schemas *types.Schemas, management *config.ScaledContext, kubeConfigGet
 		Store:                 schema.Store,
 		Apps:                  management.Project.Apps("").Controller().Lister(),
 		TemplateVersionLister: management.Management.CatalogTemplateVersions("").Controller().Lister(),
+		ClusterLister:         management.Management.Clusters("").Controller().Lister(),
 	}
 	schema.Store = store
 	wrapper := app.Wrapper{
 		Clusters:              management.Management.Clusters(""),
+		ClusterLister:         management.Management.Clusters("").Controller().Lister(),
 		TemplateVersionClient: management.Management.CatalogTemplateVersions(""),
 		TemplateVersionLister: management.Management.CatalogTemplateVersions("").Controller().Lister(),
 		KubeConfigGetter:      kubeConfigGetter,

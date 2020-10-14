@@ -200,7 +200,7 @@ func TestLatestAvailableTemplateVersion(t *testing.T) {
 func testLatestAvailableTemplateVersion(t *testing.T, serverVersion, expectedCatalogVersion string, template *v3.CatalogTemplate) {
 	err := settings.ServerVersion.Set(serverVersion)
 	assert.Nil(t, err)
-	templateVertion, err := LatestAvailableTemplateVersion(template)
+	templateVersion, err := LatestAvailableTemplateVersion(template, nil, "")
 	assert.Nil(t, err)
-	assert.Equal(t, expectedCatalogVersion, templateVertion.Version)
+	assert.Equal(t, expectedCatalogVersion, templateVersion.Version)
 }

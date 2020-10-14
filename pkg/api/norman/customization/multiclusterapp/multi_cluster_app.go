@@ -77,10 +77,11 @@ func (w Wrapper) ActionHandler(actionName string, action *types.Action, apiConte
 		if obj.Status.RevisionName == revision.Name {
 			return nil
 		}
-		err = w.validateRancherVersion(revision.TemplateVersionName)
-		if err != nil {
+
+		if err := w.validateChartCompatibility(revision.TemplateVersionName, obj.Spec.Targets); err != nil {
 			return err
 		}
+
 		toUpdate := obj.DeepCopy()
 		toUpdate.Spec.TemplateVersionName = revision.TemplateVersionName
 		toUpdate.Spec.Answers = revision.Answers
@@ -276,7 +277,7 @@ func (w Wrapper) modifyProjects(request *types.APIContext, actionName string) ([
 	return inputProjects, inputAnswers, nil
 }
 
-func (w Wrapper) validateRancherVersion(tempVersion string) error {
+func (w Wrapper) validateChartCompatibility(tempVersion string, targets []v32.Target) error {
 	parts := strings.Split(tempVersion, ":")
 	if len(parts) != 2 {
 		return httperror.NewAPIError(httperror.InvalidBodyContent, "invalid templateVersionId")
@@ -287,5 +288,14 @@ func (w Wrapper) validateRancherVersion(tempVersion string) error {
 		return err
 	}
 
-	return catUtil.ValidateRancherVersion(template)
+	if err := catUtil.ValidateRancherVersion(template); err != nil {
+		return err
+	}
+
+	for _, target := range targets {
+		if err := catUtil.ValidateKubeVersion(template, w.ClusterLister, target.ObjClusterName()); err != nil {
+			return err
+		}
+	}
+	return nil
 }

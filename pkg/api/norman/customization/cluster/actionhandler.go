@@ -19,9 +19,11 @@ import (
 type ActionHandler struct {
 	NodepoolGetter                v3.NodePoolsGetter
 	ClusterClient                 v3.ClusterInterface
+	ClusterLister                 v3.ClusterLister
 	NodeTemplateGetter            v3.NodeTemplatesGetter
 	UserMgr                       user.Manager
 	ClusterManager                *clustermanager.Manager
+	CatalogTemplateVersionLister  v3.CatalogTemplateVersionLister
 	BackupClient                  v3.EtcdBackupInterface
 	ClusterScanClient             v3.ClusterScanInterface
 	ClusterTemplateClient         v3.ClusterTemplateInterface
