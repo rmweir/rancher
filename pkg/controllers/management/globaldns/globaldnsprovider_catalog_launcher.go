@@ -3,6 +3,7 @@ package globaldns
 import (
 	"context"
 	"fmt"
+	"github.com/rancher/rancher/pkg/catalog/catalogmanager"
 	"strings"
 
 	v32 "github.com/rancher/rancher/pkg/apis/project.cattle.io/v3"
@@ -10,7 +11,6 @@ import (
 	"github.com/rancher/norman/types/convert"
 	passwordutil "github.com/rancher/rancher/pkg/api/norman/store/password"
 	cutils "github.com/rancher/rancher/pkg/catalog/utils"
-	versionutil "github.com/rancher/rancher/pkg/catalog/utils"
 	"github.com/rancher/rancher/pkg/controllers/management/rbac"
 	v1 "github.com/rancher/rancher/pkg/generated/norman/core/v1"
 	v3 "github.com/rancher/rancher/pkg/generated/norman/management.cattle.io/v3"
@@ -44,6 +44,7 @@ type ProviderCatalogLauncher struct {
 	secrets           v1.SecretInterface
 	templateLister    v3.CatalogTemplateLister
 	clusterLister     v3.ClusterLister
+	catalogManager    catalogmanager.CatalogManager
 }
 
 func newGlobalDNSProviderCatalogLauncher(ctx context.Context, mgmt *config.ManagementContext) *ProviderCatalogLauncher {
@@ -289,7 +290,7 @@ func (n *ProviderCatalogLauncher) getSystemProjectID() (string, error) {
 
 func (n *ProviderCatalogLauncher) getExternalDNSCatalogID(clusterName string) (string, error) {
 	templateVersionID := n.getRancherExternalDNSTemplateID()
-	return versionutil.GetSystemAppCatalogID(templateVersionID, n.templateLister, n.clusterLister, clusterName)
+	return n.catalogManager.GetSystemAppCatalogID(templateVersionID, clusterName)
 }
 
 func (n *ProviderCatalogLauncher) getRancherExternalDNSTemplateID() string {

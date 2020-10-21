@@ -2,6 +2,7 @@ package deployer
 
 import (
 	"fmt"
+	"github.com/rancher/rancher/pkg/catalog/catalogmanager"
 	"reflect"
 	"time"
 
@@ -10,7 +11,6 @@ import (
 	"github.com/rancher/norman/controller"
 	"github.com/rancher/norman/types/slice"
 	v32 "github.com/rancher/rancher/pkg/apis/management.cattle.io/v3"
-	versionutil "github.com/rancher/rancher/pkg/catalog/utils"
 	alertutil "github.com/rancher/rancher/pkg/controllers/managementuser/alert/common"
 	"github.com/rancher/rancher/pkg/controllers/managementuser/alert/manager"
 	appsv1 "github.com/rancher/rancher/pkg/generated/norman/apps/v1"
@@ -59,6 +59,7 @@ type Deployer struct {
 type appDeployer struct {
 	appsGetter           projectv3.AppsGetter
 	appsLister           projectv3.AppLister
+	catalogManager       catalogmanager.CatalogManager
 	namespaces           v1.NamespaceInterface
 	secrets              v1.SecretInterface
 	templateLister       mgmtv3.CatalogTemplateLister
@@ -336,7 +337,7 @@ func (d *appDeployer) deploy(appName, appTargetNamespace, systemProjectID string
 	if err != nil {
 		return false, fmt.Errorf("get template %s:%s failed, %v", namespace.GlobalNamespace, monitorutil.RancherMonitoringTemplateName, err)
 	}
-	templateVersion, err := versionutil.LatestAvailableTemplateVersion(template, clusterLister, clusterName)
+	templateVersion, err := d.catalogManager.LatestAvailableTemplateVersion(template, clusterName)
 	if err != nil {
 		return false, err
 	}

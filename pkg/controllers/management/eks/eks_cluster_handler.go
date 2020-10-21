@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"github.com/rancher/rancher/pkg/catalog/catalogmanager"
 	"reflect"
 	"strings"
 	"time"
@@ -17,7 +18,6 @@ import (
 	apimgmtv3 "github.com/rancher/rancher/pkg/apis/management.cattle.io/v3"
 	apiprojv3 "github.com/rancher/rancher/pkg/apis/project.cattle.io/v3"
 	utils2 "github.com/rancher/rancher/pkg/app"
-	"github.com/rancher/rancher/pkg/catalog/utils"
 	"github.com/rancher/rancher/pkg/controllers/management/eksupstreamrefresh"
 	"github.com/rancher/rancher/pkg/controllers/management/rbac"
 	v3 "github.com/rancher/rancher/pkg/generated/controllers/management.cattle.io/v3"
@@ -67,6 +67,7 @@ type eksOperatorController struct {
 	nsClient             corev1.NamespaceInterface
 	clusterClient        v3.ClusterClient
 	clusterLister        mgmtv3.ClusterLister
+	catalogManager       catalogmanager.CatalogManager
 	systemAccountManager *systemaccount.Manager
 	dynamicClient        dynamic.NamespaceableResourceInterface
 }
@@ -483,7 +484,7 @@ func (e *eksOperatorController) deployEKSOperator() error {
 		return err
 	}
 
-	latestTemplateVersion, err := utils.LatestAvailableTemplateVersion(template, e.clusterLister, "local")
+	latestTemplateVersion, err := e.catalogManager.LatestAvailableTemplateVersion(template, "local")
 	if err != nil {
 		return err
 	}

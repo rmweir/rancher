@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"github.com/rancher/rancher/pkg/catalog/catalogmanager"
 	"strings"
 
 	"github.com/rancher/norman/api/access"
@@ -9,7 +10,6 @@ import (
 	"github.com/rancher/norman/types"
 	"github.com/rancher/norman/types/convert"
 	pv3app "github.com/rancher/rancher/pkg/api/norman/customization/app"
-	catUtil "github.com/rancher/rancher/pkg/catalog/utils"
 	client "github.com/rancher/rancher/pkg/client/generated/management/v3"
 	hcommon "github.com/rancher/rancher/pkg/controllers/managementuser/helm/common"
 	v3 "github.com/rancher/rancher/pkg/generated/norman/management.cattle.io/v3"
@@ -24,6 +24,7 @@ type Store struct {
 	types.Store
 	Apps                  pv3.AppLister
 	TemplateVersionLister v3.CatalogTemplateVersionLister
+	CatalogManager        catalogmanager.CatalogManager
 	ClusterLister         v3.ClusterLister
 }
 
@@ -114,7 +115,7 @@ func (s *Store) validateChartCompatibility(clusterName string, data map[string]i
 		return err
 	}
 
-	return catUtil.ValidateChartCompatibility(template, s.ClusterLister, clusterName)
+	return s.CatalogManager.ValidateChartCompatibility(template, clusterName)
 }
 
 func (s *Store) checkAccessToTemplateVersion(apiContext *types.APIContext, data map[string]interface{}) error {

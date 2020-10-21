@@ -2,6 +2,7 @@ package k3sbasedupgrade
 
 import (
 	"context"
+	"github.com/rancher/rancher/pkg/catalog/catalogmanager"
 	"time"
 
 	"github.com/rancher/rancher/pkg/clustermanager"
@@ -19,6 +20,7 @@ type handler struct {
 	clusterCache           wranglerv3.ClusterCache
 	clusterClient          wranglerv3.ClusterClient
 	clusterLister          v3.ClusterLister
+	catalogManager         catalogmanager.CatalogManager
 	apps                   projectv3.AppInterface
 	appLister              projectv3.AppLister
 	templateLister         v3.CatalogTemplateLister

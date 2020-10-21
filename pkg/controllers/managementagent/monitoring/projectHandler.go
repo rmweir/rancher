@@ -2,6 +2,7 @@ package monitoring
 
 import (
 	"fmt"
+	"github.com/rancher/rancher/pkg/catalog/catalogmanager"
 	"reflect"
 	"time"
 
@@ -30,6 +31,7 @@ const (
 type projectHandler struct {
 	clusterName         string
 	clusterLister       mgmtv3.ClusterLister
+	catalogManager      catalogmanager.CatalogManager
 	cattleProjectClient mgmtv3.ProjectInterface
 	prtbClient          mgmtv3.ProjectRoleTemplateBindingInterface
 	prtbIndexer         cache.Indexer
@@ -197,7 +199,7 @@ func (ph *projectHandler) deployApp(appName, appTargetNamespace string, appProje
 		"prometheus.cluster.alertManagerNamespace": clusterAlertManagerSvcNamespaces,
 	}
 
-	appAnswers, appCatalogID, err := monitoring.OverwriteAppAnswersAndCatalogID(optionalAppAnswers, project.Annotations, ph.app.catalogTemplateLister, ph.clusterLister, ph.clusterName)
+	appAnswers, appCatalogID, err := monitoring.OverwriteAppAnswersAndCatalogID(optionalAppAnswers, project.Annotations, ph.app.catalogTemplateLister, ph.catalogManager, ph.clusterName)
 	if err != nil {
 		return err
 	}

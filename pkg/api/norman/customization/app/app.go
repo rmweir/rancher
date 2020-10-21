@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"github.com/rancher/rancher/pkg/catalog/catalogmanager"
 	"net/http"
 	"reflect"
 
@@ -13,7 +14,6 @@ import (
 	"github.com/rancher/norman/types"
 	"github.com/rancher/norman/types/convert"
 	"github.com/rancher/norman/types/values"
-	catUtil "github.com/rancher/rancher/pkg/catalog/utils"
 	clusterv3 "github.com/rancher/rancher/pkg/client/generated/cluster/v3"
 	projectv3 "github.com/rancher/rancher/pkg/client/generated/project/v3"
 	"github.com/rancher/rancher/pkg/controllers/management/compose/common"
@@ -31,6 +31,7 @@ import (
 type Wrapper struct {
 	Clusters              v3.ClusterInterface
 	ClusterLister         v3.ClusterLister
+	CatalogManager        catalogmanager.CatalogManager
 	TemplateVersionClient v3.CatalogTemplateVersionInterface
 	TemplateVersionLister v3.CatalogTemplateVersionLister
 	KubeConfigGetter      common.KubeConfigGetter
@@ -257,5 +258,5 @@ func (w Wrapper) validateChartCompatibility(externalID, clusterName string) erro
 	if err != nil {
 		return err
 	}
-	return catUtil.ValidateChartCompatibility(template, w.ClusterLister, clusterName)
+	return w.CatalogManager.ValidateChartCompatibility(template, clusterName)
 }

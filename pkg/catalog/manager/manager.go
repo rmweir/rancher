@@ -2,9 +2,17 @@ package manager
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
+	"github.com/blang/semver"
+	mVersion "github.com/mcuadros/go-version"
+	"github.com/rancher/norman/httperror"
+	v32 "github.com/rancher/rancher/pkg/apis/management.cattle.io/v3"
+	"github.com/rancher/rancher/pkg/catalog/utils"
+
+	"github.com/pkg/errors"
 	helmlib "github.com/rancher/rancher/pkg/catalog/helm"
 	"github.com/rancher/rancher/pkg/controllers/managementuser/helm/common"
 	v3 "github.com/rancher/rancher/pkg/generated/norman/management.cattle.io/v3"
@@ -20,6 +28,7 @@ import (
 type Manager struct {
 	catalogClient         v3.CatalogInterface
 	CatalogLister         v3.CatalogLister
+	clusterLister         v3.ClusterLister
 	templateClient        v3.CatalogTemplateInterface
 	templateContentClient v3.TemplateContentInterface
 	templateVersionClient v3.CatalogTemplateVersionInterface
@@ -42,6 +51,7 @@ func New(management *config.ManagementContext) *Manager {
 	return &Manager{
 		catalogClient:         management.Management.Catalogs(""),
 		CatalogLister:         management.Management.Catalogs("").Controller().Lister(),
+		clusterLister:         management.Management.Clusters("").Controller().Lister(),
 		templateClient:        management.Management.CatalogTemplates(""),
 		templateContentClient: management.Management.TemplateContents(""),
 		templateVersionClient: management.Management.CatalogTemplateVersions(""),
@@ -183,4 +193,109 @@ func (m *Manager) deleteBadCatalogTemplates() []error {
 	}
 
 	return errs
+}
+
+func (m *Manager) ValidateChartCompatibility(template *v3.CatalogTemplateVersion, clusterName string) error {
+	if err := m.ValidateRancherVersion(template); err != nil {
+		return err
+	}
+	if err := m.ValidateKubeVersion(template, clusterName); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (m *Manager) ValidateKubeVersion(template *v3.CatalogTemplateVersion, clusterName string) error {
+	if template.Spec.KubeVersion == "" {
+		return nil
+	}
+	constraint, err := semver.ParseRange(template.Spec.KubeVersion)
+	if err != nil {
+		logrus.Errorf("failed to parse constraint for kubeversion %s: %v", template.Spec.KubeVersion, err)
+		return nil
+	}
+
+	cluster, err := m.clusterLister.Get("", clusterName)
+	if err != nil {
+		return err
+	}
+
+	k8sVersion, err := semver.Parse(strings.TrimPrefix(cluster.Status.Version.String(), "v"))
+	if err != nil {
+		return err
+	}
+	if !constraint(k8sVersion) {
+		return httperror.NewAPIError(httperror.InvalidBodyContent, fmt.Sprintf("incompatible kubernetes version [%s] for template [%s]", k8sVersion.String(), template.Name))
+	}
+	return nil
+}
+
+func (m *Manager) ValidateRancherVersion(template *v3.CatalogTemplateVersion) error {
+	rancherMin := template.Spec.RancherMinVersion
+	rancherMax := template.Spec.RancherMaxVersion
+
+	serverVersion := settings.ServerVersion.Get()
+
+	// don't compare if we are running as dev or in the build env
+	if !utils.ReleaseServerVersion(serverVersion) {
+		return nil
+	}
+
+	if rancherMin != "" && !mVersion.Compare(serverVersion, rancherMin, ">=") {
+		return httperror.NewAPIError(httperror.InvalidBodyContent, "rancher min version not met")
+	}
+
+	if rancherMax != "" && !mVersion.Compare(serverVersion, rancherMax, "<=") {
+		return httperror.NewAPIError(httperror.InvalidBodyContent, "rancher max version exceeded")
+	}
+
+	return nil
+}
+
+func (m *Manager) LatestAvailableTemplateVersion(template *v3.CatalogTemplate, clusterName string) (*v32.TemplateVersionSpec, error) {
+	versions := template.DeepCopy().Spec.Versions
+	if len(versions) == 0 {
+		return nil, errors.New("empty catalog template version list")
+	}
+
+	sort.Slice(versions, func(i, j int) bool {
+		val1, err := semver.ParseTolerant(versions[i].Version)
+		if err != nil {
+			return false
+		}
+
+		val2, err := semver.ParseTolerant(versions[j].Version)
+		if err != nil {
+			return false
+		}
+
+		return val2.LT(val1)
+	})
+
+	for _, templateVersion := range versions {
+		catalogTemplateVersion := &v3.CatalogTemplateVersion{
+			TemplateVersion: v3.TemplateVersion{
+				Spec: templateVersion,
+			},
+		}
+
+		if err := m.ValidateChartCompatibility(catalogTemplateVersion, clusterName); err == nil {
+			return &templateVersion, nil
+		}
+	}
+
+	return nil, errors.Errorf("template %s allowed rancher version not match current server", template.Name)
+}
+
+func (m *Manager) GetSystemAppCatalogID(templateVersionID, clusterName string) (string, error) {
+	template, err := m.templateLister.Get(namespace.GlobalNamespace, templateVersionID)
+	if err != nil {
+		return "", errors.Wrapf(err, "failed to find template by ID %s", templateVersionID)
+	}
+
+	templateVersion, err := m.LatestAvailableTemplateVersion(template, clusterName)
+	if err != nil {
+		return "", err
+	}
+	return templateVersion.ExternalID, nil
 }

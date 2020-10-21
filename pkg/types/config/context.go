@@ -2,6 +2,7 @@ package config
 
 import (
 	"context"
+	"github.com/rancher/rancher/pkg/catalog/catalogmanager"
 	"time"
 
 	"github.com/rancher/lasso/pkg/controller"
@@ -61,6 +62,7 @@ type ScaledContext struct {
 	Dialer            dialer.Factory
 	UserManager       user.Manager
 	PeerManager       peermanager.PeerManager
+	CatalogManager    catalogmanager.CatalogManager
 
 	Management managementv3.Interface
 	Project    projectv3.Interface
@@ -179,6 +181,7 @@ type ManagementContext struct {
 	Scheme            *runtime.Scheme
 	Dialer            dialer.Factory
 	UserManager       user.Manager
+	CatalogManager    catalogmanager.CatalogManager
 
 	Management managementv3.Interface
 	Project    projectv3.Interface

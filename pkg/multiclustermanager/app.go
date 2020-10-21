@@ -2,6 +2,7 @@ package multiclustermanager
 
 import (
 	"context"
+	"github.com/rancher/rancher/pkg/catalog/manager"
 	"net/http"
 	"os"
 
@@ -77,6 +78,7 @@ func buildScaledContext(ctx context.Context, wranglerContext *wrangler.Context, 
 	scaledContext.RunContext = ctx
 
 	manager := clustermanager.NewManager(cfg.HTTPSListenPort, scaledContext, wranglerContext.RBAC, wranglerContext.ASL)
+
 	scaledContext.AccessControl = manager
 	scaledContext.ClientGetter = manager
 
@@ -145,6 +147,8 @@ func (m *mcm) Start(ctx context.Context) error {
 			if err != nil {
 				return errors.Wrap(err, "failed to create management context")
 			}
+
+			management.CatalogManager = manager.New(management)
 
 			if err := managementdata.Add(m.wranglerContext, management, m.localClusterEnabled, m.removeLocalCluster, m.embedded); err != nil {
 				return errors.Wrap(err, "failed to add management data")

@@ -3,6 +3,7 @@ package multiclusterapp
 import (
 	"context"
 	"fmt"
+	"github.com/rancher/rancher/pkg/catalog/catalogmanager"
 	"strings"
 
 	"github.com/rancher/norman/httperror"
@@ -12,7 +13,6 @@ import (
 	"github.com/rancher/norman/types/values"
 	"github.com/rancher/rancher/pkg/auth/providers"
 	"github.com/rancher/rancher/pkg/auth/requests"
-	catUtil "github.com/rancher/rancher/pkg/catalog/utils"
 	client "github.com/rancher/rancher/pkg/client/generated/management/v3"
 	"github.com/rancher/rancher/pkg/clusterrouter"
 	v3 "github.com/rancher/rancher/pkg/generated/norman/management.cattle.io/v3"
@@ -66,6 +66,7 @@ func SetMemberStore(ctx context.Context, schema *types.Schema, mgmt *config.Scal
 		users:                 mgmt.Management.Users(""),
 		rtLister:              mgmt.Management.RoleTemplates("").Controller().Lister(),
 		clusterLister:         mgmt.Management.Clusters("").Controller().Lister(),
+		catalogManager:        mgmt.CatalogManager,
 	}
 
 	schema.Store = s
@@ -82,6 +83,7 @@ type Store struct {
 	users                 v3.UserInterface
 	rtLister              v3.RoleTemplateLister
 	clusterLister         v3.ClusterLister
+	catalogManager        catalogmanager.CatalogManager
 }
 
 func (s *Store) Create(apiContext *types.APIContext, schema *types.Schema, data map[string]interface{}) (map[string]interface{}, error) {
@@ -185,7 +187,7 @@ func (s *Store) validateChartCompatibility(data map[string]interface{}) error {
 		return err
 	}
 
-	if err := catUtil.ValidateRancherVersion(template); err != nil {
+	if err := s.catalogManager.ValidateRancherVersion(template); err != nil {
 		return err
 	}
 
@@ -199,7 +201,7 @@ func (s *Store) validateChartCompatibility(data map[string]interface{}) error {
 		if len(parts) != 2 {
 			continue
 		}
-		if err := catUtil.ValidateKubeVersion(template, s.clusterLister, parts[0]); err != nil {
+		if err := s.catalogManager.ValidateKubeVersion(template, parts[0]); err != nil {
 			return err
 		}
 	}

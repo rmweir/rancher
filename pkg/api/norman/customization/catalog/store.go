@@ -3,6 +3,7 @@ package catalog
 import (
 	"context"
 	"fmt"
+	"github.com/rancher/rancher/pkg/catalog/catalogmanager"
 	"strconv"
 
 	"github.com/rancher/norman/store/proxy"
@@ -20,6 +21,7 @@ import (
 type templateStore struct {
 	types.Store
 	CatalogTemplateVersionLister v3.CatalogTemplateVersionLister
+	CatalogManager               catalogmanager.CatalogManager
 }
 
 func GetTemplateStore(ctx context.Context, managementContext *config.ScaledContext) types.Store {
@@ -89,7 +91,7 @@ func (t *templateStore) templateVersionForRancherVersion(apiContext *types.APICo
 		return true
 	}
 
-	err = catUtil.ValidateRancherVersion(template)
+	err = t.CatalogManager.ValidateRancherVersion(template)
 	if err != nil {
 		return false
 	}

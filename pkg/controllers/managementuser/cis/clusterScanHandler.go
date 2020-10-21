@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/rancher/rancher/pkg/catalog/catalogmanager"
 	"strings"
 
 	app2 "github.com/rancher/rancher/pkg/app"
@@ -15,7 +16,6 @@ import (
 	"github.com/pkg/errors"
 	v32 "github.com/rancher/rancher/pkg/apis/management.cattle.io/v3"
 	cutils "github.com/rancher/rancher/pkg/catalog/utils"
-	versionutil "github.com/rancher/rancher/pkg/catalog/utils"
 	appsv1 "github.com/rancher/rancher/pkg/generated/norman/apps/v1"
 	corev1 "github.com/rancher/rancher/pkg/generated/norman/core/v1"
 	rcorev1 "github.com/rancher/rancher/pkg/generated/norman/core/v1"
@@ -53,6 +53,7 @@ type cisScanHandler struct {
 	clusterNamespace             string
 	clusterClient                v3.ClusterInterface
 	clusterLister                v3.ClusterLister
+	catalogManager               catalogmanager.CatalogManager
 	projectLister                v3.ProjectLister
 	nodeLister                   corev1.NodeLister
 	appClient                    projv3.AppInterface
@@ -478,7 +479,7 @@ func (csh *cisScanHandler) ensureCleanup(cs *v3.ClusterScan) error {
 
 func (csh *cisScanHandler) getCISBenchmarkCatalogID(clusterName string) (string, error) {
 	templateVersionID := csh.getRancherCISBenchmarkTemplateID()
-	return versionutil.GetSystemAppCatalogID(templateVersionID, csh.templateLister, csh.clusterLister, clusterName)
+	return csh.catalogManager.GetSystemAppCatalogID(templateVersionID, clusterName)
 }
 
 func (csh *cisScanHandler) getRancherCISBenchmarkTemplateID() string {

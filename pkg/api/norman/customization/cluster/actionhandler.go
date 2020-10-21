@@ -2,6 +2,7 @@ package cluster
 
 import (
 	"fmt"
+	"github.com/rancher/rancher/pkg/catalog/catalogmanager"
 
 	v32 "github.com/rancher/rancher/pkg/apis/management.cattle.io/v3"
 
@@ -20,6 +21,7 @@ type ActionHandler struct {
 	NodepoolGetter                v3.NodePoolsGetter
 	ClusterClient                 v3.ClusterInterface
 	ClusterLister                 v3.ClusterLister
+	CatalogManager                catalogmanager.CatalogManager
 	NodeTemplateGetter            v3.NodeTemplatesGetter
 	UserMgr                       user.Manager
 	ClusterManager                *clustermanager.Manager

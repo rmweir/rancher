@@ -3,7 +3,7 @@ package deployer
 import (
 	"github.com/rancher/norman/controller"
 	v32 "github.com/rancher/rancher/pkg/apis/management.cattle.io/v3"
-	versionutil "github.com/rancher/rancher/pkg/catalog/utils"
+	"github.com/rancher/rancher/pkg/catalog/catalogmanager"
 	loggingconfig "github.com/rancher/rancher/pkg/controllers/managementuser/logging/config"
 	"github.com/rancher/rancher/pkg/controllers/managementuser/logging/configsyncer"
 	"github.com/rancher/rancher/pkg/controllers/managementuser/logging/utils"
@@ -37,6 +37,7 @@ type Deployer struct {
 	clusterName          string
 	clusterLister        mgmtv3.ClusterLister
 	clusterLoggingLister mgmtv3.ClusterLoggingLister
+	catalogManager       catalogmanager.CatalogManager
 	nodeLister           v1.NodeLister
 	projectLoggingLister mgmtv3.ProjectLoggingLister
 	projectLister        mgmtv3.ProjectLister
@@ -147,7 +148,7 @@ func (d *Deployer) deployRancherLogging(systemProjectID, appCreator string) erro
 		return errors.Wrapf(err, "failed to find template by ID %s", templateVersionID)
 	}
 
-	templateVersion, err := versionutil.LatestAvailableTemplateVersion(template, d.clusterLister, d.clusterName)
+	templateVersion, err := d.catalogManager.LatestAvailableTemplateVersion(template, d.clusterName)
 	if err != nil {
 		return err
 	}

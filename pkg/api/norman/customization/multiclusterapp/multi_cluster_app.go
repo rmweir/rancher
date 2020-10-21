@@ -17,7 +17,6 @@ import (
 	"github.com/rancher/norman/types"
 	"github.com/rancher/norman/types/convert"
 	gaccess "github.com/rancher/rancher/pkg/api/norman/customization/globalnamespaceaccess"
-	catUtil "github.com/rancher/rancher/pkg/catalog/utils"
 	client "github.com/rancher/rancher/pkg/client/generated/management/v3"
 	"github.com/rancher/rancher/pkg/namespace"
 	managementschema "github.com/rancher/rancher/pkg/schemas/management.cattle.io/v3"
@@ -288,12 +287,12 @@ func (w Wrapper) validateChartCompatibility(tempVersion string, targets []v32.Ta
 		return err
 	}
 
-	if err := catUtil.ValidateRancherVersion(template); err != nil {
+	if err := w.CatalogManager.ValidateRancherVersion(template); err != nil {
 		return err
 	}
 
 	for _, target := range targets {
-		if err := catUtil.ValidateKubeVersion(template, w.ClusterLister, target.ObjClusterName()); err != nil {
+		if err := w.CatalogManager.ValidateKubeVersion(template, target.ObjClusterName()); err != nil {
 			return err
 		}
 	}

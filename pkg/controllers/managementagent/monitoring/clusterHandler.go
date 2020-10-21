@@ -3,6 +3,7 @@ package monitoring
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/rancher/rancher/pkg/catalog/catalogmanager"
 	"reflect"
 	"sort"
 	"strings"
@@ -45,7 +46,7 @@ type etcdTLSConfig struct {
 type clusterHandler struct {
 	clusterName          string
 	cattleClustersClient mgmtv3.ClusterInterface
-	cattleClusterLister  mgmtv3.ClusterLister
+	cattleCatalogManager catalogmanager.CatalogManager
 	agentEndpointsLister corev1.EndpointsLister
 	app                  *appHandler
 }
@@ -347,7 +348,7 @@ func (ch *clusterHandler) deployApp(appName, appTargetNamespace string, appProje
 		"prometheus.ruleSelector.matchExpressions[0].values[1]":                             monitoring.CattleMonitoringPrometheusRuleLabelValue,
 	}
 
-	appAnswers, appCatalogID, err := monitoring.OverwriteAppAnswersAndCatalogID(optionalAppAnswers, cluster.Annotations, ch.app.catalogTemplateLister, ch.cattleClusterLister, ch.clusterName)
+	appAnswers, appCatalogID, err := monitoring.OverwriteAppAnswersAndCatalogID(optionalAppAnswers, cluster.Annotations, ch.app.catalogTemplateLister, ch.cattleCatalogManager, ch.clusterName)
 	if err != nil {
 		return nil, err
 	}

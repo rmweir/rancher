@@ -258,6 +258,7 @@ func Clusters(schemas *types.Schemas, managementContext *config.ScaledContext, c
 		NodepoolGetter:                managementContext.Management,
 		ClusterClient:                 managementContext.Management.Clusters(""),
 		ClusterLister:                 managementContext.Management.Clusters("").Controller().Lister(),
+		CatalogManager:                managementContext.CatalogManager,
 		UserMgr:                       managementContext.UserManager,
 		ClusterManager:                clusterManager,
 		CatalogTemplateVersionLister:  managementContext.Management.CatalogTemplateVersions("").Controller().Lister(),

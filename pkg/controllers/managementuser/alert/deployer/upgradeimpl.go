@@ -2,6 +2,8 @@ package deployer
 
 import (
 	"fmt"
+	"github.com/rancher/rancher/pkg/catalog/catalogmanager"
+	"github.com/rancher/rancher/pkg/catalog/manager"
 	"reflect"
 	"strings"
 	"time"
@@ -10,7 +12,6 @@ import (
 	v33 "github.com/rancher/rancher/pkg/apis/project.cattle.io/v3"
 
 	"github.com/rancher/norman/controller"
-	versionutil "github.com/rancher/rancher/pkg/catalog/utils"
 	alertutil "github.com/rancher/rancher/pkg/controllers/managementuser/alert/common"
 	"github.com/rancher/rancher/pkg/controllers/managementuser/helm/common"
 	v1 "github.com/rancher/rancher/pkg/generated/norman/core/v1"
@@ -44,6 +45,7 @@ type AlertService struct {
 	clusterName           string
 	clusterLister         v3.ClusterLister
 	catalogLister         v3.CatalogLister
+	catalogManager        catalogmanager.CatalogManager
 	apps                  projectv3.AppInterface
 	appLister             projectv3.AppLister
 	oldClusterAlerts      v3.ClusterAlertInterface
@@ -78,7 +80,7 @@ func (l *AlertService) Init(cluster *config.UserContext) {
 	l.appLister = cluster.Management.Project.Apps("").Controller().Lister()
 	l.namespaces = cluster.Core.Namespaces(metav1.NamespaceAll)
 	l.templateLister = cluster.Management.Management.CatalogTemplates(metav1.NamespaceAll).Controller().Lister()
-
+	l.catalogManager = manager.New(cluster.Management)
 }
 
 func (l *AlertService) Version() (string, error) {
@@ -91,7 +93,7 @@ func (l *AlertService) Upgrade(currentVersion string) (string, error) {
 		return "", fmt.Errorf("get template %s:%s failed, %v", namespace.GlobalNamespace, monitorutil.RancherMonitoringTemplateName, err)
 	}
 
-	templateVersion, err := versionutil.LatestAvailableTemplateVersion(template, l.clusterLister, l.clusterName)
+	templateVersion, err := l.catalogManager.LatestAvailableTemplateVersion(template, l.clusterName)
 	if err != nil {
 		return "", err
 	}

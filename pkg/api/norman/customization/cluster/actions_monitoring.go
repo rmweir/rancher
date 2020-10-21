@@ -11,7 +11,6 @@ import (
 	"github.com/rancher/norman/httperror"
 	"github.com/rancher/norman/types"
 	"github.com/rancher/norman/types/convert"
-	"github.com/rancher/rancher/pkg/catalog/utils"
 	"github.com/rancher/rancher/pkg/monitoring"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -160,7 +159,7 @@ func (a ActionHandler) validateChartCompatibility(version, clusterName string) e
 	if err != nil {
 		return err
 	}
-	if err := utils.ValidateChartCompatibility(templateVersion, a.ClusterLister, clusterName); err != nil {
+	if err := a.CatalogManager.ValidateChartCompatibility(templateVersion, clusterName); err != nil {
 		return httperror.NewAPIError(httperror.InvalidBodyContent, err.Error())
 	}
 	return nil

@@ -2,6 +2,7 @@ package multiclusterapp
 
 import (
 	"fmt"
+	"github.com/rancher/rancher/pkg/catalog/catalogmanager"
 	"net/http"
 	"reflect"
 	"sort"
@@ -44,6 +45,7 @@ type Wrapper struct {
 	ClusterLister                 v3.ClusterLister
 	Apps                          pv3.AppInterface
 	TemplateVersionLister         v3.CatalogTemplateVersionLister
+	CatalogManager                catalogmanager.CatalogManager
 }
 
 const (
