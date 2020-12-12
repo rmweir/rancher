@@ -24,7 +24,6 @@ import (
 	"github.com/rancher/norman/types/definition"
 	"github.com/rancher/norman/types/slice"
 	"github.com/rancher/norman/types/values"
-	ccluster "github.com/rancher/rancher/pkg/api/norman/customization/cluster"
 	"github.com/rancher/rancher/pkg/api/norman/customization/clustertemplate"
 	managementv3 "github.com/rancher/rancher/pkg/client/generated/management/v3"
 	"github.com/rancher/rancher/pkg/clustermanager"
@@ -56,7 +55,6 @@ const (
 
 type Store struct {
 	types.Store
-	ShellHandler                  types.RequestHandler
 	mu                            sync.Mutex
 	KontainerDriverLister         v3.KontainerDriverLister
 	ClusterTemplateLister         v3.ClusterTemplateLister
@@ -122,15 +120,9 @@ func GetClusterStore(schema *types.Schema, mgmt *config.ScaledContext, clusterMa
 		Transformer: transformer.TransformerFunc,
 	}
 
-	linkHandler := &ccluster.ShellLinkHandler{
-		Proxy:          k8sProxy,
-		ClusterManager: clusterManager,
-	}
-
 	s := &Store{
 		Store:                         t,
 		KontainerDriverLister:         mgmt.Management.KontainerDrivers("").Controller().Lister(),
-		ShellHandler:                  linkHandler.LinkHandler,
 		ClusterTemplateLister:         mgmt.Management.ClusterTemplates("").Controller().Lister(),
 		ClusterTemplateRevisionLister: mgmt.Management.ClusterTemplateRevisions("").Controller().Lister(),
 		ClusterLister:                 mgmt.Management.Clusters("").Controller().Lister(),
@@ -166,16 +158,6 @@ func transformSetNilSnapshotFalse(data map[string]interface{}) map[string]interf
 	}
 
 	return data
-}
-
-func (r *Store) ByID(apiContext *types.APIContext, schema *types.Schema, id string) (map[string]interface{}, error) {
-	// Really we want a link handler but the URL parse makes it impossible to add links to clusters for now.  So this
-	// is basically a hack
-	if apiContext.Query.Get("shell") == "true" {
-		return nil, r.ShellHandler(apiContext, nil)
-	}
-
-	return r.Store.ByID(apiContext, schema, id)
 }
 
 func (r *Store) Create(apiContext *types.APIContext, schema *types.Schema, data map[string]interface{}) (map[string]interface{}, error) {
