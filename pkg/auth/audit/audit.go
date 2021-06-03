@@ -152,11 +152,11 @@ func (a *auditLog) write(userInfo *User, reqHeaders, resHeaders http.Header, res
 	buffer.Write(bytes.TrimSuffix(alByte, []byte("}")))
 	if a.writer.Level >= levelRequest && len(a.reqBody) > 0 {
 		buffer.WriteString(`,"requestBody":`)
-		buffer.Write(bytes.TrimSuffix(a.reqBody, []byte("\n")))
+		buffer.Write(bytes.TrimSuffix(censorPassword(a.reqBody), []byte("\n")))
 	}
 	if a.writer.Level >= levelRequestResponse && resHeaders.Get("Content-Type") == contentTypeJSON && len(resBody) > 0 {
 		buffer.WriteString(`,"responseBody":`)
-		buffer.Write(bytes.TrimSuffix(resBody, []byte("\n")))
+		buffer.Write(bytes.TrimSuffix(censorPassword(resBody), []byte("\n")))
 	}
 	buffer.WriteString("}")
 
@@ -169,6 +169,42 @@ func (a *auditLog) write(userInfo *User, reqHeaders, resHeaders http.Header, res
 	compactBuffer.WriteString("\n")
 	_, err = a.writer.Output.Write(compactBuffer.Bytes())
 	return err
+}
+
+// censorPassowrd attempts to censor any string field ending in password from API logs
+func censorPassword(body []byte) []byte {
+	passwordField := []byte("password\":\"")
+	lowerBody := bytes.ToLower(body)
+
+	newBody := make([]byte, len(body))
+	copy(newBody, body)
+	passwordFieldIndex := bytes.Index(lowerBody, passwordField)
+	for passwordFieldIndex != -1 {
+		censorStartingIndex := passwordFieldIndex + len(passwordField)
+		var censorEndingIndex int
+		for subIndex := range newBody[censorStartingIndex:] {
+			if newBody[censorStartingIndex+subIndex] != '"' {
+				continue
+			}
+			if subIndex == 0 {
+				// empty string
+				break
+			}
+			if newBody[censorStartingIndex+subIndex-1] != '\\' || newBody[censorStartingIndex+subIndex-2] == '\\' {
+				censorEndingIndex = censorStartingIndex + subIndex
+				break
+			}
+		}
+
+		firstHalfBody := append(newBody[:censorStartingIndex], '*')
+		secondHalfBody := newBody[censorEndingIndex:]
+		newBody = append(firstHalfBody, secondHalfBody...)
+		passwordFieldIndex = bytes.Index(bytes.ToLower(newBody[len(firstHalfBody):]), passwordField)
+		if passwordFieldIndex != -1 {
+			passwordFieldIndex += len(firstHalfBody)
+		}
+	}
+	return newBody
 }
 
 func isLoginRequest(uri string) bool {
